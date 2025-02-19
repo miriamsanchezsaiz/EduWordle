@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+
+</head>
+
+<body>
+
+    <header>
+        <div class="header-buttons" style= "left:1rem;">
+            <!-- TODO: onclick de este boton debe llevar a la pagina de inicio de sesion -->
+            <button class= "settings-button" aria-label="Boton back" onclick="window.location.href='inicio-de-sesion.html'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="header-title">
+            <h1>Wordle cloned</h1>
+        </div>
+
+        <div class="header-buttons">
+            <button class="settings-button" aria-label="Boton ranking"><svg xmlns="http://www.w3.org/2000/svg"
+                    width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                    <polyline points="16 7 22 7 22 13"></polyline>
+                </svg></button>
+
+            <button id="settings-button" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" class="settings-button" onclick="toggleSettings()">
+                <!-- Puedes usar un ícono de engranaje aquí -->
+                ⚙️
+            </button>
+
+    </header>
+
+    <div id="settings-overlay"></div>
+
+    <div id="settings-panel" class="settings-panel">
+        <button class="close-button" onclick="toggleSettings()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="grey" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-x h-4 w-4">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+            </svg>
+
+        </button>
+        <div class="settings-element">
+            <p >Daltonic Mode</p> <label class="switch">
+                <input type="checkbox" id="daltonic-mode" onchange="toggleDaltonicMode()" unchecked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+
+    <!-- Questions -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+        </div>
+    </div>
+
+
+    <div id="game-board">
+         <!-- Hint-button -->
+        <button title ="Pista" id="hint-button" class="hint-button" onclick="askForHint()"></button>
+
+    </div>
+
+    <div id="keyboard-cont">
+        <div class="first-row">
+            <button class="keyboard-button">q</button>
+            <button class="keyboard-button">w</button>
+            <button class="keyboard-button">e</button>
+            <button class="keyboard-button">r</button>
+            <button class="keyboard-button">t</button>
+            <button class="keyboard-button">y</button>
+            <button class="keyboard-button">u</button>
+            <button class="keyboard-button">i</button>
+            <button class="keyboard-button">o</button>
+            <button class="keyboard-button">p</button>
+        </div>
+        <div class="second-row">
+            <button class="keyboard-button">a</button>
+            <button class="keyboard-button">s</button>
+            <button class="keyboard-button">d</button>
+            <button class="keyboard-button">f</button>
+            <button class="keyboard-button">g</button>
+            <button class="keyboard-button">h</button>
+            <button class="keyboard-button">j</button>
+            <button class="keyboard-button">k</button>
+            <button class="keyboard-button">l</button>
+            <button class="keyboard-button">ñ</button>
+        </div>
+        <div class="third-row">
+            <button class="keyboard-button">Enter</button>
+            <button class="keyboard-button">z</button>
+            <button class="keyboard-button">x</button>
+            <button class="keyboard-button">c</button>
+            <button class="keyboard-button">v</button>
+            <button class="keyboard-button">b</button>
+            <button class="keyboard-button">n</button>
+            <button class="keyboard-button">m</button>
+            <button class="keyboard-button delete-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z">
+                    </path>
+                    <path d="m12 9 6 6"></path>
+                    <path d="m18 9-6 6"></path>
+                </svg>
+            </button>
+
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="script.js" type="module"></script>
+</body>
+
+</html>
