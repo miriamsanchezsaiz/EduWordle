@@ -342,7 +342,7 @@ input:checked+.slider:before {
 .hint-button {
   width: 70px;
   height: 70px;
-  background-image: url("hint_icon.png");
+  background-image: url("../img/hint_icon.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
