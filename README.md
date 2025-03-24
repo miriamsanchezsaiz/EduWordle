@@ -40,37 +40,32 @@ La plataforma sigue una arquitectura modular, con un backend basado en Node.js, 
 │   ├── 📜 group.html     # Pantalla de edición/creación de grupo
 │
 │── 📂 backend/           # Lógica del servidor (Node.js, Express)
-│   ├── 📂 models/        # Declaración de clases 
-│   │   ├── User.js  
-│   │   ├── Game.js  
-│   │   ├── Wordle.js  
+│   ├── 📂 utils/        # Declaración de clases usables (Game es algo así como sesión)
+│   │   ├── Game.js       
 │   │  
-│   ├── 📂 controllers/   # Controladores (manejo de peticiones HTTP)
-│   │   ├── UserController.js  
-│   │   ├── GameController.js  
-│   │   ├── WordleController.js  
-│   │  
-│   ├── 📂 services/      # Lógica de negocio
-│   │   ├── AuthService.js  
-│   │   ├── GameService.js  
-│   │   ├── WordleService.js  
+│   ├── 📂 routes/      # Lógica de negocio y rutas server -> definirán las actuaciones del server según la request (post, get, put, delete...) 
+│   │   ├── AuthRoutes.js  
+│   │   ├── GameRoutes.js  
+│   │   ├── TeacherRoutes.js
+│   │   ├── StudentRoutes.js
+│   │   ├── RankingRoutes.js   
 │   │  
 │   ├── 📂 persistence/    # Acceso a la base de datos
 │   │   ├── UserPersistence.js  
 │   │   ├── GamePersistence.js  
 │   │   ├── WordlePersistence.js  
 │   │  
-│   ├── 📜 server.js      # Configuración del servidor  
-│   ├── 📜 routes.js      # Rutas de la API (en caso de que haya que  programar server)
-│   ├── 📜 app.js         # Configuración de Express  
+│   ├── 📜 server.js      # Configuración del servidor ^
+│   ├── 📜 routes.js      # Rutas de la API (en caso de que haya que programar server : puerto por el que el servidor está escuchando)
+│   ├── 📜 app.js         # Configuración de Express (declarar rutas y usar -> const authRoutes = require('./routes/auth'); + app.use('/auth', authRoutes);) 
 │
 │── 📂 database/          # *** Base de datos y configuración Docker ***
 │   ├── 📜 init.sql       # Script de creación de tablas
 │   ├── 📜 docker-compose.yml  # Configuración de contenedores
 │
-│── 📂 node_modules/      # ********** Ni idea ***********
+│── 📂 node_modules/      
 │
-│── 📜 package-lock.json  # ********** Ni idea ***********  
+│── 📜 package-lock.json    
 │── 📜 package.json       # Dependencias y configuración del proyecto  
 │── 📜 README.md          # Documentación del proyecto 
 │── 📜 .env               # Variables de entorno  
