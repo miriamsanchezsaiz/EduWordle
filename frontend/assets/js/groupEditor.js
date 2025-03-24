@@ -81,7 +81,7 @@ function dispalyData(Group, mode) {
             if (saveButton) {
                 saveButton.remove();
             }
-        if (teacherId) {
+        if (teacherId !== "null") {
             
             const div = document.createElement("div");
             div.classList.add("buttonSection");

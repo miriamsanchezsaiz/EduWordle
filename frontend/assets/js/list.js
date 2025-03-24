@@ -89,7 +89,7 @@ function displayItems(items, urlBase) {
         itemElement.classList.add("item");
         itemElement.textContent = item.nombre;
         itemElement.onclick = () => {
-            if(!teacherId && urlBase.includes("wordle")){
+            if(teacherId===null && urlBase.includes("wordle")){
                 window.location.href = `index.html?&id=${item.id}`;
             }
             else {
