@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista</title>
+    <link rel="stylesheet" href="/frontend/assets/css/list.css">
+    <link rel="stylesheet" href="/frontend/assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="/frontend/assets/js/list.js" defer></script>
+</head>
+<body>
+    <!-- Header compartido por dashboard -->
+    <header> 
+        <div class="header-buttons" style= "left:1rem;">
+
+            <button class= "back-button" aria-label="Boton back" onclick="window.history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="header-title">
+            <h1 id="pageTitle"></h1>
+        </div>
+        
+    </header>
+
+    <div class="main">
+        <!-- Barra de búsqueda -->
+        
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Buscar grupo..." onkeyup="filterItems()">
+        </div>
+        
+        
+
+        <!-- Contenedor de la lista de grupos -->
+        <div class="itemsContainer" id="itemsContainer">
+            <div class ="item hidden" id = "createButtonContainer"></div>
+        </div>
+    </div>
+
+</body>
+</html>

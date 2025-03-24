@@ -1,0 +1,177 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    font-size: 1rem;
+}
+
+header {
+    background-color: #333;
+}
+
+/*TODO: este elemento está en más de un css*/
+.settings-button {
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    max-width: 28rem;
+    width: 32rem;
+    margin: 2rem auto;
+    padding: 3rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    
+}
+
+.wordle-name {
+    text-align: left;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.wordle-name input {
+
+    padding: 8px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 1rem;
+    margin-top: 10px;
+
+}
+
+.wordle-section h2 {
+    text-align: left;
+    margin-bottom: 10px;
+
+}
+
+.add-button {
+    background-color: #79b851;
+    color: white;
+    padding: 0.8rem;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 5rem;
+    margin: 0.5rem;
+}
+
+.add-button:hover {
+    background-color: #6ca449;
+}
+
+.action-button {
+    
+    color: white;
+    padding: 10px 35px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 30px;
+    font-weight: bold;
+    width: 12rem;
+    
+}
+
+.action-button:hover {
+    filter: brightness(80%);    
+}
+
+.buttonSection{
+    display: flex;
+    justify-content: space-between;
+    padding-inline: 7px;
+    margin-top: 3.125rem;
+
+}
+
+/*TODO: save con width y align y botones de edit y delete se meterán en un div */
+.save-button{
+    margin-top: 50px;
+    background-color: #79b851;
+    width: 16rem;
+    align-self: center;
+}
+
+.delete-button{
+    background-color: #f44336;
+    
+}
+
+.edit-button{
+    background-color: #51b8b6;
+}
+
+.words-item{
+    border: none;
+    background-color: #f3c237;
+    padding: 0.8rem;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0.5rem;
+}
+
+
+
+.show-more {
+    background-color: #ccc;
+    color: black;
+    text-align: center;
+    cursor: pointer;
+    margin: 20px auto 10px auto;
+    border-radius: 5px;
+}
+
+.hidden {
+    display: none;
+} 
+
+.list-item{
+    border: none;
+    background-color: #f3c237;
+    padding: 0.8rem;
+    text-align: left;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0.5rem;
+
+    max-height: 1.5rem;
+    overflow: hidden;  
+    -webkit-box-orient: vertical;
+}
+
+
+
+.container-section {
+    max-height: 13.2rem; /* 3 items */
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.container-section.expanded{
+    max-height: none !important;
+}
+
+#container-words {
+    display: flex;
+    flex-wrap: wrap;
+    max-height: 7.4rem; /* 2 items */ 
+}
+
+

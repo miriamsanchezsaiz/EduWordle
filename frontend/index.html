@@ -18,8 +18,8 @@
     <header>
         <div class="header-buttons" style= "left:1rem;">
             <!-- TODO: onclick de este boton debe llevar a la pagina de inicio de sesion -->
-            <button class= "settings-button" aria-label="Boton back" onclick="window.location.href='inicio-de-sesion.html'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class= "settings-button" aria-label="Boton back" onclick="window.history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 18l-6-6 6-6"></path>
                 </svg>
             </button>
@@ -43,7 +43,7 @@
                 <!-- Puedes usar un ícono de engranaje aquí -->
                 ⚙️
             </button>
-
+        </div>
     </header>
 
     <div id="settings-overlay"></div>
@@ -72,6 +72,15 @@
         <div class="modal-content">
         </div>
     </div>
+
+    <!-- Game Points Display -->
+    <div id="pointsBox" class="points-box">
+        <span>Points:</span> <span id="pointsDisplay">0</span>
+    </div>
+
+
+
+
 
 
     <div id="game-board">

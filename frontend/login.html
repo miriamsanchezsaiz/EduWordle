@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDU_WORDLE</title>
-    <link rel="stylesheet" href="/frontend/assets/css/style_inicio.css">
+    <title>Login</title>
+    <link rel="stylesheet" href="/frontend/assets/css/login.css">
     
 </head>
 <body>
-    <header>
-        <h1>EDU WORDLE</h1>
-    </header>
+    
     <main class="main-container">
         <div class="container">
             <h2 id="titulo">Iniciar sesión</h2>
-            <form id="loginForm" method="post">
+            <form id="loginForm" method="POST">
                 <label for="username">Email:</label>
                 <input type="email" id="email" name="email" required>
                 
@@ -30,6 +28,9 @@
             <p id="error-message" class="error-message"></p>
         </div>
     </main>
-    <script src="/frontend/assets/js/iniciar-sesion.js"></script>
+
+    <div class="background-circles"></div>
+
+    <script src="/frontend/assets/js/login.js"></script>
 </body>
 </html>

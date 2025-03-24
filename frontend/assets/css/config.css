@@ -1,0 +1,64 @@
+/* Fondo gris oscuro */
+body{
+    background-color: rgba(0, 0, 0, 0.35);
+}
+main {
+    height: 100vh; /* Ocupa toda la pantalla */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10%;
+    }
+
+/* Contenedor centrado con fondo blanco */
+.settings {
+    background-color: white;
+    padding: 50px 40px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    width: 320px;
+    text-align: center;
+}
+
+/* Labels encima del input */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    text-align: left;
+    font-weight: bold;
+}
+
+/*TODO: fusionar con crear que tiene el mismo input*/
+input {
+    padding: 8px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+}
+
+/* Botón verde centrado fuera del form */
+.change-password-btn {
+    background-color: #79b851;
+    color: white;
+    padding: 10px 35px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 30px;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+/* TODO: Este elemento aparece igual en list.css */
+.back-button {
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+  }

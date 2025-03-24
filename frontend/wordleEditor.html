@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Editor</title>
+    <link rel="stylesheet" href="/frontend/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/frontend/assets/css/wordleEditor.css">
+    <link rel="stylesheet" href="/frontend/assets/css/popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+    
+    <script src="/frontend/assets/js/wordleEditor.js" defer></script>
+    <script src="/frontend/assets/js/popup.js"></script> 
+
+</head>
+<body>
+
+    <header>
+        <div class="header-buttons" style= "left:1rem;">
+            <button class= "settings-button" aria-label="Boton back" onclick="backFromEdit()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+            </button>
+            
+        </div>
+        <div class="header-title">
+            <h1 id="pageTitle"></h1>
+        </div>
+       
+
+            
+    </header>
+
+    <div id="popup-placeholder" class="hidden"></div>
+
+    <main>
+        <div class="container">
+            <section class="wordle-name">
+                <label for="wordleTitle">Nombre del Wordle:</label>
+                <input type="text" id="wordleTitle" placeholder="Introduce el nombre del Wordle">
+            </section>
+
+            <section class="wordle-section" >
+                <h2>Palabras</h2>
+                <div class="container-section" id="container-words">
+                </div>
+            </section>
+
+            <section class="wordle-section">
+                <h2>Preguntas</h2>
+                <div class="container-section" id="container-questions"></div>
+            </section>
+
+            <section class="wordle-section">
+                <h2>Grupos Asociados</h2>
+                <div class="container-section" id="container-groups"></div>
+            </section>
+
+            <button class="action-button save-button ">Guardar</button>
+        </div>
+    </main>
+
+</body>
+</html>

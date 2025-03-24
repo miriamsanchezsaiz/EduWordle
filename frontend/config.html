@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Config</title>
+    <link rel="stylesheet" href="/frontend/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/frontend/assets/css/config.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+   
+
+</head>
+<body>
+    <header>
+
+        <div class="header-buttons" style= "left:1rem;">
+            <button class= "back-button" aria-label="Boton back" onclick="window.history.back()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="header-title">
+            <h1>Configuración de Usuario</h1>
+        </div>
+        
+
+            
+    </header>
+    <main>
+            <div class="settings">
+                <form action="/backend/config.php" method="POST" class="form">
+                    <div class="form-group">
+                        <label for="password">Nueva contraseña</label>
+                        <input type="password" name="password" id="password" required>
+                        
+                        <label for="confirm-password">Repetir contraseña</label>
+                        <input type="password" name="confirm-password" id="confirm-password" required>
+                    </div>
+                </form>
+            </div>
+            <button class="change-password-btn" type="submit">Guardar</button>        
+        
+    </main>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="/frontend/assets/js/dashboardProfesor.js" type="module"></script>
+</body>
+
+</html>

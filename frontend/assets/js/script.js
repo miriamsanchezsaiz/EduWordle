@@ -453,6 +453,25 @@ document.getElementById("keyboard-cont").addEventListener("click", (e) => {
 });
 
 
+
+
+//Puntos de partida
+function updateDisplayPoints(points) {
+  document.getElementById("pointsDisplay").textContent = points;
+}
+
+function updatePoints(points) {
+  let currentPoints = localStorage.getItem("points") || 0;
+  let newPoints = parseInt(currentPoints) + points;
+  localStorage.setItem("points", newPoints);
+  updateDisplayPoints(newPoints);
+}
+
+// Ejemplo de actualización 
+updatePoints(0);
+
+
+
 initGame();
 window.toggleDaltonicMode = toggleDaltonicMode;
 window.toggleSettings = toggleSettings;

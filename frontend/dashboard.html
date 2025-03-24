@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/frontend/assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+   
+
+</head>
+<body>
+    <header>
+        <div class="header-buttons" style= "left:1rem;">
+            <button class="settings-icon" onclick="window.location.href='config.html'">
+                <i class="fas fa-cog"></i>
+            </button>
+            
+        </div>
+        <div class="header-title">
+            <h1 id="pageTitle">Dashboard Alumno</h1>
+        </div>
+        <div class="header-buttons">
+            <button id="logout"></button>
+        </div>
+
+            
+    </header>
+    <main>
+        <!-- TODO: pasar wordle id correcto (y groupId also) -->
+        <section class="menu-options">
+            <div class="option" onclick="window.location.href='list.html?type=group'">Mis Grupos</div>
+            <div class="option" onclick="window.location.href='index.html?wordleId=111'">Mis Wordles</div>
+        </section>
+
+        
+    </main>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="/frontend/assets/js/dashboard.js" type="module"></script>
+</body>
+
+</html>

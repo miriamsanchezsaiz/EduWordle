@@ -1,0 +1,86 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f8f8f8;
+}
+
+.main{
+    max-width: 32rem;
+    width: 100%;
+}
+
+/* Barra de búsqueda */
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content:center;
+}
+
+.search-icon {
+    position: relative;
+    left: 29px; 
+    color: #a4aec4;
+}
+
+#searchInput {
+    padding-left: 40px; 
+    height: 35px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    width: 70%;
+    
+}
+
+
+/* Contenedor de grupos */
+.itemsContainer {
+    margin: 20px auto;
+    padding: 20px;
+    background: #faeecd; 
+    border: 1px solid #ccc; 
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos de cada grupo */
+.item {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.item:last-child {
+    border-bottom: none;
+}
+
+.item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* TODO: Este elemento aparece igual en config.css */
+
+.back-button {
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  /* TODO: Este elemento aparece igual en dashboard.css */
+
+.create-button {
+background-color: #79b851;
+color: white;
+border: none;
+padding: 15px 30px;
+font-size: 1.2em;
+cursor: pointer;
+border-radius: 5px;
+width: 100%;
+}
+.hidden {
+    display: none;
+}

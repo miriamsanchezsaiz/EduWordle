@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Editor</title>
+    <link rel="stylesheet" href="/frontend/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/frontend/assets/css/wordleEditor.css">
+    <link rel="stylesheet" href="/frontend/assets/css/groupEditor.css">
+    <link rel="stylesheet" href="/frontend/assets/css/popup.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="/frontend/assets/js/groupEditor.js" defer></script>
+    <script src="/frontend/assets/js/popup.js"></script> 
+</head>
+<body>
+
+    <header>
+        <div class="header-buttons" style= "left:1rem;">
+            <button class= "settings-button" aria-label="Boton back" onclick="backFromEdit()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="header-title">
+            <h1 id="pageTitle"></h1>
+        </div>
+    
+
+            
+    </header>
+
+    <div id="popup-placeholder" class="hidden"></div>
+
+    <main>
+        <div class="container">
+            <section class="group-name">
+                <label for="groupName">Nombre del Grupo:</label>
+                <input type="text" id="groupName" placeholder="Introduce el nombre del Grupo">
+            </section>
+
+            <section class="group-section" >
+                <h2>Alumnos</h2>
+                <div class="container-section" id="container-students">
+                </div>
+            </section>
+
+            <section class="group-section">
+                <h2>Wordles Asociados</h2>
+                <div class="container-section" id="container-wordles"></div>
+            </section>
+
+            <section class="group-section group-config">
+                <h2>Configuración</h2>
+                <label for="initDate">Fecha de inicio :</label>
+                <input type="date" id="initDate" >
+
+                <label>Fecha de fin :</label>
+                <label >
+                    <input type="radio" name="dateOption" id="noEndDate" checked>
+                    No definir fecha de fin
+                </label>
+                <label>
+                    <input type="radio" name="dateOption" id="setEndDate">
+                    Definir fecha de fin
+                </label>
+                <input type="date" id="endDate" disabled>
+            </section>
+           
+
+            <button class="action-button save-button ">Guardar</button>
+        </div>
+    </main>
+
+</body>
+</html>
