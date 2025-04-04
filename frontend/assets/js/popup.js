@@ -15,10 +15,30 @@ function openPopup(popupType) {
         
         popupBody.innerHTML = template.innerHTML;
         document.getElementById("popup-placeholder").classList.remove("hidden");
-        if(popupType in ["groups", "wordles"] )
-            {
-                popupType ==="groups" ? loadListGroups(): loadListWordles();
-            }
+        if (["groups", "wordles"].includes(popupType)) {
+            popupType === "groups" ? loadListGroups() : loadListWordles();
+        }
+        
+    }
+
+}
+
+function openPopupPoints(type, points){
+    const popupBody = document.getElementById("popup-body");
+    const template = document.getElementById(type);
+
+    const overlay = document.getElementById("settings-overlay");
+    
+
+    if (template) {
+        overlay.style.display = 'block';
+
+        popupBody.innerHTML = template.innerHTML;
+        document.getElementById("popup-placeholder").classList.remove("hidden");
+        
+        const pointSpan = document.getElementById("points");
+        pointSpan.textContent= points;
+        
     }
 
 }
@@ -28,31 +48,50 @@ function closePopup() {
 }
 
 function loadListGroups(teacherId){
+    console.log("LoadGroups llamada");
     //TODO: cambiar a servidor
-    const grupos = ["Grupo 1", "Grupo 2", "Grupo 3", "Grupo 4", "Grupo 5"];
-    
-    const datalist = document.getElementById("group-list");
-    datalist.innerHTML = '';  
+    const grupos = [
+        { groupId: "11111", name: "FIS", fechaInicio: "2021-10-01", fechaFin: "2021-10-30", fechaFin: "2021-10-15" },
+        { groupId: "22222", name: "IPS", fechaInicio: "2021-10-01", fechaFin: "2021-10-30", fechaFin: "2021-10-15" },
+        { groupId: "33333", name: "MAT", fechaInicio: "2021-10-01", fechaFin: "2021-10-30", fechaFin: "2021-10-15" },
+        { groupId: "44444", name: "PROG", fechaInicio: "2021-10-01", fechaFin: "2021-10-30", fechaFin: "2021-10-15" }
+    ];    
+    const select = document.getElementById("group-select");
+    select.innerHTML = '<option value="" disabled selected>Selecciona un grupo</option>'; 
 
     grupos.forEach(grupo => {
         const option = document.createElement("option");
-        option.value = grupo;
-        datalist.appendChild(option);
+        option.value = grupo.groupId;  
+        option.textContent = grupo.name;
+        select.appendChild(option);
     });
+    console.log("Grupos cargados:", grupos); 
 }
 
 function loadListWordles(teacherId){
-    //TODO: cambiar a servidor
-    const grupos = ["Wordle 1", "Wordle 2", "IPS", "IRM", "FIS"];
-    
-    const datalist = document.getElementById("wordle-list");
-    datalist.innerHTML = '';  
+    console.log("LoadGroups llamada");
 
-    grupos.forEach(grupo => {
+    //TODO: cambiar a servidor
+    const wordles = [
+        {wordleId: "11111", name: "Wordle 1"},
+        {wordleId: "22222", name: "Wordle 2"},
+        {wordleId: "33333", name: "Wordle 3"},  
+        {wordleId: "44444", name: "IPS"},
+        {wordleId: "55555", name: "IRM"},
+        {wordleId: "66666", name: "FIS"},
+        {wordleId: "77777", name: "PROG"}
+    ]
+    
+    const select = document.getElementById("wordle-select");
+    select.innerHTML = '<option value="" disabled selected>Selecciona un wordle</option>';
+
+    wordles.forEach(wordle => {
         const option = document.createElement("option");
-        option.value = grupo;
-        datalist.appendChild(option);
+        option.value = wordle.wordleId;
+        option.textContent = wordle.name;
+        select.appendChild(option);
     });
+    console.log("Wordles cargados:", wordles); 
 }
 
 

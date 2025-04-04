@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wordle</title>
     <link rel="stylesheet" href="/frontend/assets/css/style.css">
+    <link rel="stylesheet" href="/frontend/assets/css/popup.css">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
@@ -17,7 +19,6 @@
 
     <header>
         <div class="header-buttons" style= "left:1rem;">
-            <!-- TODO: onclick de este boton debe llevar a la pagina de inicio de sesion -->
             <button class= "settings-button" aria-label="Boton back" onclick="window.history.back()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 18l-6-6 6-6"></path>
@@ -46,8 +47,11 @@
         </div>
     </header>
 
-    <div id="settings-overlay"></div>
 
+    <div id="settings-overlay"></div>
+    <div id="popup-placeholder" class="hidden"></div>
+
+    <!-- Settings modal -->
     <div id="settings-panel" class="settings-panel">
         <button class="close-button" onclick="toggleSettings()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -82,11 +86,9 @@
 
 
 
-
+    <!-- Hint-button -->
     <div id="game-board">
-         <!-- Hint-button -->
         <button title ="Pista" id="hint-button" class="hint-button" onclick="askForHint()"></button>
-
     </div>
 
     <div id="keyboard-cont">
@@ -141,6 +143,8 @@
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="/frontend/assets/js/script.js" type="module"></script>
+    <script src="/frontend/assets/js/popup.js"></script> 
+
 </body>
 
 </html>

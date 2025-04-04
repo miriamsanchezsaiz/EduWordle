@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("logout").addEventListener("click", logout);
 
 function logout() {
+    //TODO: rellenar esta función
     console.log("Sesión cerrada");
     window.location.href = "login.html"; 
 }

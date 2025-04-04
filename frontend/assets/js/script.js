@@ -1,5 +1,6 @@
+
 // Editable variables for an specific wordle
-const NUMBER_OF_GUESSES = 6;
+const NUMBER_OF_GUESSES = 5;
 let guessesRemaining = NUMBER_OF_GUESSES;
 
 let currentGuess = [];
@@ -7,39 +8,67 @@ let nextLetter = 0;
 let rightGuessString = "";
 let wordsize = 0;
 let selectedWordObj = null;
+let words = [];
 
 async function fetchWords() {
-  try {
-      let response = await fetch('http://localhost:3000/words');
-      let words = await response.json();
-      return words;
-  } catch (error) {
-      console.error("Error al obtener palabras:", error);
-      return [];
-  }
+  // try {
+  //     let response = await fetch('http://localhost:3000/words');
+  //     let words = await response.json();
+  //     return words;
+  // } catch (error) {
+  //     console.error("Error al obtener palabras:", error);
+  //     return [];
+  // }
+  return [
+    {
+      word: "hola",
+      hint: "Saludo"
+    }];
 }
 
+// InitGame es fetch de words e iniciar el juego con cada palabra
 async function initGame() {
-  let words = await fetchWords();
+  localStorage.removeItem("points");
+
+  words = await fetchWords();
 
   if (words.length === 0) {
       console.error("No se pudieron cargar las palabras.");
       return;
   }
 
-  selectedWordObj = words[Math.floor(Math.random() * words.length)];
+  loadWord();
+  
+}
+
+function loadWord() {
+  selectedWordObj = words.shift();
+  if (!selectedWordObj) {
+    console.error("No hay más palabras para jugar.");
+    endGame();
+    return;
+  }
+  
   rightGuessString = selectedWordObj.word;
   wordsize = rightGuessString.length;
   let config_hint = selectedWordObj.hint ? true : false;
 
+  
   console.log("Palabra seleccionada:", rightGuessString);
   console.log("Hint disponible:", config_hint ? selectedWordObj.hint : "No hay hint");
 
+  currentGuess = [];
+  nextLetter = 0;  
   initBoard();
 }
 
+
 function initBoard() {
+  
+  resetKeyboard();
   let board = document.getElementById("game-board");
+
+  board.innerHTML = `<button title ="Pista" id="hint-button" class="hint-button" onclick="askForHint()"></button>`;
 
   for (let i = 0; i < NUMBER_OF_GUESSES; i++) {
       let row = document.createElement("div");
@@ -52,6 +81,12 @@ function initBoard() {
       }
 
       board.appendChild(row);
+  }
+}
+
+function resetKeyboard() {
+  for (const elem of document.getElementsByClassName("keyboard-button")) {
+    elem.classList.remove("letter-grey", "letter-yellow", "letter-green");
   }
 }
 
@@ -121,24 +156,22 @@ async function checkGuess() {
   }
 
   // **3️⃣ Aplicar los colores al tablero**
-  for (let i = 0; i < wordsize; i++) {
-    let box = row.children[i];
-    let delay = 250 * i;
-    setTimeout(() => {
-      animateCSS(box, "flipInX");
-      box.classList.remove("letter-grey", "letter-yellow", "letter-green");
-      box.classList.add(letterColor[i]);
-      shadeKeyBoard(guessString[i], letterColor[i]);
-    }, delay);
-  }
+  await animateRow(row, letterColor, guessString);
 
   // **4️⃣ Si la palabra es correcta, hacer pregunta**
   if (guessString === rightGuessString) {
-    let answer = await popup_quest();
+    // TODO: quitar coment here
+    // let answer = await popup_quest();
+    let answer = true;
     if (answer) {
-      toastr.success("You guessed right! Game over!");
-      guessesRemaining = 0;
+      toastr.success("Bien hecho! Siguiente Palabra!");
+      guessesRemaining = NUMBER_OF_GUESSES;
       delete_popup();
+
+      updatePoints(1);
+      setTimeout(() => {
+        loadWord();
+      }, 2000);
       return;
     }
   }
@@ -149,10 +182,36 @@ async function checkGuess() {
   nextLetter = 0;
 
   if (guessesRemaining === 0) {
-    toastr.error(`Game over! The word was: "${rightGuessString}"`);
+    toastr.error(`Fin del juego! La palabra era: "${rightGuessString}"`);
+    setTimeout(() => {
+      loadWord();
+    }, 2000);
   }
 }
 
+//************************* animateRow() ************************************* */
+function animateRow(row, letterColor, guessString) {
+  return new Promise((resolve) => {
+    let completedAnimations = 0; // Contador de animaciones completadas
+
+    for (let i = 0; i < wordsize; i++) {
+      let box = row.children[i];
+      let delay = 250 * i;
+
+      setTimeout(() => {
+        animateCSS(box, "flipInX");
+        box.classList.remove("letter-grey", "letter-yellow", "letter-green");
+        box.classList.add(letterColor[i]);
+        shadeKeyBoard(guessString[i], letterColor[i]);
+
+        completedAnimations++;
+        if (completedAnimations === wordsize) {
+          resolve();
+        }
+      }, delay);
+    }
+  });
+}
 
 
 //************************* toggleSettings() ************************************* */
@@ -269,14 +328,24 @@ function delete_popup() {
 //************************* TODO : Trasladar al script ************************************* */
 
 async function fetchQuestions() {
-  try {
-      let response = await fetch('http://localhost:3000/questions');
-      let questions = await response.json();
-      return questions;
-  } catch (error) {
-      console.error("Error al obtener preguntas:", error);
-      return [];
-  }
+  //TODO: Quitar comentario
+  // try {
+  //     let response = await fetch('http://localhost:3000/questions');
+  //     let questions = await response.json();
+  //     return questions;
+  // } catch (error) {
+  //     console.error("Error al obtener preguntas:", error);
+  //     return [];
+  // }
+
+  return[
+    {
+      question: "¿Cuál es la capital de Francia?",
+      options: ["Madrid", "París", "Roma", "Berlín"],
+      correctAnswer: ["París"],
+      type: "single"
+
+  }];
 }
 
 
@@ -376,7 +445,6 @@ function checkAnswer(selected, correct) {
 }
 
 function insertLetter(pressedKey) {
-  //************************************** DONE : Hacer adaptable a tamaño de la palabra **************************************** */
   if (nextLetter >= wordsize) {
     return;
   }
@@ -467,8 +535,20 @@ function updatePoints(points) {
   updateDisplayPoints(newPoints);
 }
 
-// Ejemplo de actualización 
-updatePoints(0);
+function endGame() {
+  // Se obtiene la puntuación final
+  let points = localStorage.getItem("points");
+  localStorage.removeItem("points");
+
+  
+  //Se muestra popup de fin de wordle
+  openPopupPoints("game",points);
+
+  
+  //Se suman los puntos en la BD
+  //*********** TODO: terminar esto *****************
+  return points;
+}
 
 
 

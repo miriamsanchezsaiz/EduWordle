@@ -28,7 +28,7 @@
             <label for="hint-input">PISTA</label>
             <textarea id="hint-input" class="text-area" placeholder="Introduce una pista"></textarea>
 
-            <button class="save-button" onclick="saveWord()">Guardar</button>
+            <button id= "save-word" class="save-button" >Guardar</button>
         </div>
     </template>
 
@@ -63,7 +63,7 @@
 
 
 
-            <button class="save-button" onclick="saveQuestion()">Guardar</button>
+            <button id= "save-question" class="save-button" >Guardar</button>
         </div>
     </template>
 
@@ -71,12 +71,11 @@
         <div class="words-container">
 
             <label for="group-select">GRUPO</label>
-            <input type="text" id="group-select" class="text-input" placeholder="Nombre del grupo" list="group-list" required>
-            <datalist id="group-list">
-                <!-- Las opciones se cargarán aquí dinámicamente -->
-            </datalist>
+            <select id="group-select" class="text-input" required>
+                <option value="" disabled selected>Selecciona un grupo</option>
+            </select>
 
-            <button class="save-button" onclick="saveGroup()">Guardar</button>
+            <button id= "save-group" class="save-button" >Guardar</button>
         </div>
     </template>
 
@@ -87,10 +86,10 @@
                 <i class="fa-solid fa-upload"></i>
             </button>
 
-            <label for="word-input">E-MAIL</label>
+            <label for="email">E-MAIL</label>
             <input type="email" id="email" class="text-input" name="email" required>
 
-            <button class="save-button" onclick="saveStudent()">Guardar</button>
+            <button id= "save-student" class="save-button" onclick="saveStudent()">Guardar</button>
         </div>
     </template>
 
@@ -98,12 +97,21 @@
         <div class="words-container">
 
             <label for="wordle-select">WORDLE</label>
-            <input type="text" id="wordle-select" class="text-input" placeholder="Nombre del wordle" list="wordle-list" required>
-            <datalist id="wordle-list">
-                <!-- Las opciones se cargarán aquí dinámicamente -->
-            </datalist>
+            <select id="wordle-select" class="text-input" required>
+                <option value="" disabled selected>Selecciona un wordle</option>
+            </select>
+            <button id= "save-wordle" class="save-button" onclick="saveWordle()">Guardar</button>
+        </div>
+    </template>
 
-            <button class="save-button" onclick="saveWordle()">Guardar</button>
+
+    <template id="game">
+        <div class="endGame-container">
+            <h1 >FIN DEL JUEGO</h1>
+
+            Has obtenido <span id="points">XXX</span> puntos !
+            <!-- TODO: Cambiar este onclick porque no estoy segura de que esté bien -->
+            <button id="endButton" class="save-button" onclick="window.location.href=`dashboard.html`">Volver al inicio</button>
         </div>
     </template>
 
