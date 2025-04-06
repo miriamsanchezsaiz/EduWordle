@@ -10,6 +10,9 @@ let wordsize = 0;
 let selectedWordObj = null;
 let words = [];
 
+let isProcessingGuess = false;
+
+
 async function fetchWords() {
   // try {
   //     let response = await fetch('http://localhost:3000/words');
@@ -23,7 +26,11 @@ async function fetchWords() {
     {
       word: "hola",
       hint: "Saludo"
-    }];
+    },
+    {
+      word: "adios"
+    }
+  ];
 }
 
 // InitGame es fetch de words e iniciar el juego con cada palabra
@@ -110,6 +117,7 @@ function shadeKeyBoard(letter, colorClass) {
 
 
 function deleteLetter() {
+  if (isProcessingGuess) return; //No permite interactuar con el string que se está procesando
   if (nextLetter === 0) return;  // Evita eliminar si no hay letras ingresadas
 
   let row = document.getElementsByClassName("letter-row")[NUMBER_OF_GUESSES - guessesRemaining];
@@ -123,6 +131,10 @@ function deleteLetter() {
 
 
 async function checkGuess() {
+  if (isProcessingGuess) return;
+  isProcessingGuess = true;
+
+
   let row = document.getElementsByClassName("letter-row")[NUMBER_OF_GUESSES - guessesRemaining];
   let guessString = currentGuess.join("");
   let rightGuess = Array.from(rightGuessString); // Copia de la palabra correcta
@@ -131,6 +143,7 @@ async function checkGuess() {
 
   if (guessString.length !== wordsize) {
     toastr.error("Not enough letters!");
+    isProcessingGuess = false;
     return;
   }
 
@@ -171,6 +184,7 @@ async function checkGuess() {
       updatePoints(1);
       setTimeout(() => {
         loadWord();
+        isProcessingGuess = false;
       }, 2000);
       return;
     }
@@ -182,10 +196,14 @@ async function checkGuess() {
   nextLetter = 0;
 
   if (guessesRemaining === 0) {
-    toastr.error(`Fin del juego! La palabra era: "${rightGuessString}"`);
+    toastr.error(`Has fallado! La palabra era: "${rightGuessString}"`);
     setTimeout(() => {
       loadWord();
+      isProcessingGuess = false;
     }, 2000);
+  }
+  else{
+    isProcessingGuess = false;
   }
 }
 
@@ -445,6 +463,7 @@ function checkAnswer(selected, correct) {
 }
 
 function insertLetter(pressedKey) {
+  if(isProcessingGuess) return; //No permite interactuar con el string que se está procesando
   if (nextLetter >= wordsize) {
     return;
   }
@@ -529,7 +548,7 @@ function updateDisplayPoints(points) {
 }
 
 function updatePoints(points) {
-  let currentPoints = localStorage.getItem("points") || 0;
+  let currentPoints = localStorage.getItem("points") ?? 0;
   let newPoints = parseInt(currentPoints) + points;
   localStorage.setItem("points", newPoints);
   updateDisplayPoints(newPoints);
@@ -550,6 +569,10 @@ function endGame() {
   return points;
 }
 
+
+window.backFromWordle = function backFromWordle(){
+  openPopup("wordle-back");
+}
 
 
 initGame();

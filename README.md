@@ -32,16 +32,25 @@ La plataforma sigue una arquitectura modular, con un backend basado en Node.js, 
 │   │   ├── 📂 css/       # Estilos de la UI
 │   │   ├── 📂 img/       # Imágenes e iconos 
 │   │   ├── 📂 js/        # Scripts de la aplicación
-│   ├── 📜 ranking.html   # Pantallas de rankings grupo/wordle
+│   ├── 📜 config.html      # Pantalla de configuración de contraseña
+│   ├── 📜 dashboard.html     # Panel de profesores/alumnos
+│   ├── 📜 groupEditor.html       # Pantalla de edición//visualización/creación de grupo
+│   ├── 📜 index.html      # Pantalla del juego
+│   ├── 📜 init.html      # Pantalla del inicio de la aplicación
+│   ├── 📜 list.html      # Pantalla de listas de wordles y grupos
 │   ├── 📜 login.html     # Pantalla de inicio de sesión
-│   ├── 📜 game.html      # Pantalla del juego
-│   ├── 📜 dashboard.html # Panel de profesores/alumnos
-│   ├── 📜 wordle.html    # Pantalla de edición/creación de worlde
-│   ├── 📜 group.html     # Pantalla de edición/creación de grupo
+│   ├── 📜 popups.html      # Templates de popups
+│   ├── 📜 wordleEditor.html    # Pantalla de edición/visualización/creación de worlde
 │
 │── 📂 backend/           # Lógica del servidor (Node.js, Express)
 │   ├── 📂 utils/        # Declaración de clases usables (Game es algo así como sesión)
-│   │   ├── Game.js       
+│   │   ├── Game.js
+│   │   ├── Group.js
+│   │   ├── Question.js
+│   │   ├── Session.js
+│   │   ├── Student.js    
+│   │   ├── Word.js  
+│   │   ├── Wordle.js 
 │   │  
 │   ├── 📂 routes/      # Lógica de negocio y rutas server -> definirán las actuaciones del server según la request (post, get, put, delete...) 
 │   │   ├── AuthRoutes.js  

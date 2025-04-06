@@ -24,6 +24,9 @@ function openPopup(popupType) {
 }
 
 function openPopupPoints(type, points){
+    const closeButton = document.getElementsByClassName("close-button")[0];
+    closeButton.remove();
+    
     const popupBody = document.getElementById("popup-body");
     const template = document.getElementById(type);
 
@@ -37,7 +40,13 @@ function openPopupPoints(type, points){
         document.getElementById("popup-placeholder").classList.remove("hidden");
         
         const pointSpan = document.getElementById("points");
-        pointSpan.textContent= points;
+        if(!points){
+            pointSpan.textContent = 0 ;
+        }
+        else{
+            pointSpan.textContent= parseInt(points) ;
+        }
+        
         
     }
 
@@ -147,7 +156,6 @@ function backFromEdit(){
         `;
 
         document.getElementById("popup-placeholder").classList.remove("hidden");   
-        // TODO: cuando se pulse este botón, se deberá de preguntar si se quiere salir de la página sin guardar los cambios  
 
     }
     else{

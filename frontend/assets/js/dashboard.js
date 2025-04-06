@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pageTitle = "Dashboard Profesor";
         const mainElement = document.querySelector("main");
 
-        //TODO: en los botones, pasar el teacherId
+        //TODO: en los botones, pasar el teacherId real
         mainElement.innerHTML = `
             <section class="create-wordle">
                 <button onclick="window.location.href='wordleEditor.html?mode=create'">Crear Wordle</button>

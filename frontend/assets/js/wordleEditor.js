@@ -91,34 +91,39 @@ function dispalyData(Wordle) {
         if (saveButton) {
             saveButton.remove();
         }
-        const div = document.createElement("div");
-        div.classList.add("buttonSection");
 
-        // Crear el botón de Editar
-        const editButton = document.createElement("button");
-        editButton.textContent = "Editar";
-        editButton.classList.add("action-button");
-        editButton.classList.add("edit-button");
+        if (teacherId) {
+            const div = document.createElement("div");
+            div.classList.add("buttonSection");
 
-        editButton.onclick = function () {
-            const url = new URL(window.location.href);
-            url.searchParams.set("mode", "edit");
-            window.location.href = url.toString();
-        };
+            // Crear el botón de Editar
+            const editButton = document.createElement("button");
+            editButton.textContent = "Editar";
+            editButton.classList.add("action-button");
+            editButton.classList.add("edit-button");
 
-
-        // Crear el botón de Eliminar
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Eliminar";
-        deleteButton.classList.add("action-button");
-        deleteButton.classList.add("delete-button");
-        //TODO: añadir el onclick para eliminar el grupo
+            editButton.onclick = function () {
+                const url = new URL(window.location.href);
+                url.searchParams.set("mode", "edit");
+                window.location.href = url.toString();
+            };
 
 
-        // Agregar los nuevos botones al contenedor
-        div.appendChild(editButton);
-        div.appendChild(deleteButton);
-        container.appendChild(div);
+            // Crear el botón de Eliminar
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Eliminar";
+            deleteButton.classList.add("action-button");
+            deleteButton.classList.add("delete-button");
+            //TODO: añadir el onclick para eliminar el grupo
+            deleteButton.onclick = function () {
+                openPopup('delete');
+            }
+
+            // Agregar los nuevos botones al contenedor
+            div.appendChild(editButton);
+            div.appendChild(deleteButton);
+            container.appendChild(div);
+        }
     }
     else {
         document.getElementById("wordleTitle").value = Wordle.getName();
@@ -290,9 +295,9 @@ function checkOverflow() {
         if (element === "words") {
             const wasExpanded = container.classList.contains("expanded");
             if (wasExpanded) container.classList.remove("expanded");
-           
+
             const isOverflow = container.scrollHeight > container.clientHeight + 5;
-            
+
             if (wasExpanded) container.classList.add("expanded");
 
             if (isOverflow) {
@@ -478,3 +483,9 @@ document.body.addEventListener("click", (event) => {
         saveGroup();
     }
 });
+
+function deleteElement() {
+    //TODO: eliminar de la bd
+
+    window.location.href = "/frontend/dashboard.html";
+};

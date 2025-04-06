@@ -8,13 +8,13 @@ import { Student } from "/backend/utils/Student.js";
 // TODO: especificar que cuando se cree un nuevo group, initDate sea hoy
 // TODO: conectar BD
 
-//ONGOING: copiar de wordleEditor.js
+//ONGOING: delete element
 
 let sessionGroup = null;
 const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode"); // ["create", "edit", "visual"]
 const groupId = params.get("id"); // solo existe en "edit" y "visual"
-const teacherId = params.get("teacherId");
+const teacherId = params.get("teacherId") ;
 
 
 // function generateSafeId() {
@@ -66,6 +66,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // const today = new Date().toISOString().split("T")[0];
         //sessionGroup = new Group("", teacherId, [], [], today, null);
+
+
         displayAddButton();
         dispalyData(sessionGroup, "edit");
 
@@ -103,35 +105,40 @@ function dispalyData(Group) {
             saveButton.remove();
         }
 
+        if (teacherId) {
+            const div = document.createElement("div");
+            div.classList.add("buttonSection");
 
-        const div = document.createElement("div");
-        div.classList.add("buttonSection");
+            // Crear el botón de Editar
+            const editButton = document.createElement("button");
+            editButton.textContent = "Editar";
+            editButton.classList.add("action-button");
+            editButton.classList.add("edit-button");
 
-        // Crear el botón de Editar
-        const editButton = document.createElement("button");
-        editButton.textContent = "Editar";
-        editButton.classList.add("action-button");
-        editButton.classList.add("edit-button");
-
-        editButton.onclick = function () {
-            const url = new URL(window.location.href);
-            url.searchParams.set("mode", "edit");
-            window.location.href = url.toString();
-        };
+            editButton.onclick = function () {
+                const url = new URL(window.location.href);
+                url.searchParams.set("mode", "edit");
+                window.location.href = url.toString();
+            };
 
 
-        // Crear el botón de Eliminar
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Eliminar";
-        deleteButton.classList.add("action-button");
-        deleteButton.classList.add("delete-button");
-        //TODO: añadir el onclick para eliminar el grupo
+            // Crear el botón de Eliminar
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Eliminar";
+            deleteButton.classList.add("action-button");
+            deleteButton.classList.add("delete-button");
+            //TODO: añadir el onclick para eliminar el grupo
+            deleteButton.onclick = function () {
+                openPopup('delete');
+            }
 
-        // Agregar los nuevos botones al contenedor
-        div.appendChild(editButton);
-        div.appendChild(deleteButton);
-        container.appendChild(div);
+            // Agregar los nuevos botones al contenedor
+            div.appendChild(editButton);
+            div.appendChild(deleteButton);
+            container.appendChild(div);
 
+
+        }
 
 
         toggleDateDisplay(Group);
@@ -209,7 +216,7 @@ function newGroup() {
         new Wordle("Wordle Ejemplo8", 888)
     ];
 
-    sampleInitDate = "2025-10-10";
+    let sampleInitDate = "2025-10-10";
 
 
     return new Group(
@@ -341,9 +348,9 @@ function checkOverflow() {
         if (element === "students") {
             const wasExpanded = container.classList.contains("expanded");
             if (wasExpanded) container.classList.remove("expanded");
-           
+
             const isOverflow = container.scrollHeight > container.clientHeight + 5;
-            
+
             if (wasExpanded) container.classList.add("expanded");
 
             if (isOverflow) {
@@ -363,7 +370,7 @@ function checkOverflow() {
             }
         }
 
-        
+
     });
 }
 
@@ -406,7 +413,7 @@ window.saveStudent = function () {
     if (dominio.length < 2 || dominio.some(part => part.length < 2)) {
         toastr.error("El dominio del mail no es válido.");
         return;
-    }	
+    }
 
     const existingMails = sessionGroup.getStudents();
     const alreadyExists = existingMails.some(student => student.getMail() === studentInput);
@@ -478,6 +485,11 @@ window.saveWordle = function () {
 //     //TODO: conectar con la bd para que guarde el Wordle
 // }
 
+function deleteElement() {
 
+    //TODO: eliminar de la bd
+
+    window.location.href = "/frontend/dashboard.html";
+};
 
 

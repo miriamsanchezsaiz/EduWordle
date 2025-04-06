@@ -89,11 +89,16 @@ function displayItems(items, urlBase) {
         itemElement.classList.add("item");
         itemElement.textContent = item.nombre;
         itemElement.onclick = () => {
-            if(teacherId===null && urlBase.includes("wordle")){
-                window.location.href = `index.html?&id=${item.id}`;
+            if(!teacherId && urlBase.includes("wordle")){
+                window.location.href = `game.html?&id=${item.id}`;
             }
             else {
-                window.location.href = `${urlBase}?mode=visual&id=${item.id}&teacherId=${teacherId}`;
+                if(teacherId){
+                    window.location.href = `${urlBase}?mode=visual&id=${item.id}&teacherId=${teacherId}`;
+                }
+                else {
+                    window.location.href = `${urlBase}?mode=visual&id=${item.id}`;
+                }
             }
         };
 

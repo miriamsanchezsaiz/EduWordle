@@ -1,4 +1,5 @@
 // Obtener elementos del DOM
+const email = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const togglePassword = document.getElementById('togglePassword');
 
@@ -16,6 +17,12 @@ togglePassword.addEventListener('click', function() {
   }
 });
 
+
+
+
+/********************************************** */
+/****************** VISUALS ******************* */
+/********************************************** */
 
 document.addEventListener("DOMContentLoaded", function () {
   const NUM_CIRCULOS = 40; // Número de círculos
@@ -73,4 +80,10 @@ document.addEventListener("DOMContentLoaded", function () {
   for (let i = 0; i < NUM_CIRCULOS; i++) {
       createCircle();
   }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  //limpiar inputs
+  email.value = "";
+  passwordInput.value = "";
 });

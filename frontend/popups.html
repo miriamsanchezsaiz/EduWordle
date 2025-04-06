@@ -15,6 +15,8 @@
     </div>
 
     <!-- Diferentes tipos de popups -->
+
+    <!-- add word popup -->
     <template id="words">
         <div class="words-container">
             <button class="upload-icon">
@@ -31,6 +33,8 @@
             <button id= "save-word" class="save-button" >Guardar</button>
         </div>
     </template>
+
+    <!-- add question popup -->
 
     <template id="questions">
         <div class="words-container">
@@ -67,6 +71,8 @@
         </div>
     </template>
 
+    <!-- add group popup -->
+
     <template id="groups">
         <div class="words-container">
 
@@ -78,6 +84,8 @@
             <button id= "save-group" class="save-button" >Guardar</button>
         </div>
     </template>
+
+    <!-- add student popup -->
 
     <template id="students">
         <div class="words-container">
@@ -93,6 +101,8 @@
         </div>
     </template>
 
+    <!-- add wordle popup -->
+
     <template id="wordles">
         <div class="words-container">
 
@@ -104,15 +114,42 @@
         </div>
     </template>
 
-
+    <!-- Game popup -->
     <template id="game">
         <div class="endGame-container">
             <h1 >FIN DEL JUEGO</h1>
 
-            Has obtenido <span id="points">XXX</span> puntos !
+            Has obtenido <span id="points"> 0 </span> puntos !
             <!-- TODO: Cambiar este onclick porque no estoy segura de que esté bien -->
-            <button id="endButton" class="save-button" onclick="window.location.href=`dashboard.html`">Volver al inicio</button>
+            <button id="endButton" class="save-button" onclick="window.location.href=`/frontend/dashboard.html`">Volver al inicio</button>
         </div>
     </template>
+
+    <!-- Delete Element popup -->
+
+    <template id="delete">
+        <div class="delete-container">
+            <h2>¿Estás seguro de que quieres eliminar este elemento?</h2>
+            <p>Esta acción no se puede deshacer.</p>
+            <div class="buttonSection">
+                <button class = "exit-button" onclick="deleteElement()">Eliminar</button>
+            </div>
+
+        </div>
+    </template>
+
+    <!-- Back from Wordle popup -->
+
+    <template id="wordle-back">
+        <div class="delete-container">
+            <h2>¿Estás seguro de que quieres salir?</h2>
+            <p>La partida no se guardará y los puntos se perderán</p>
+            <div class="buttonSection">
+                <button class = "exit-button" onclick="window.history.back()">Salir</button>
+            </div>
+
+        </div>
+    </template>
+
 
 </body>
