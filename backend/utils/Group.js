@@ -1,17 +1,17 @@
-export class Group{
+export class Group {
 
-    constructor(name = "", teacherId, students= [], wordles=[], initDate, endDate = null){
-        this.groupId = crypto.randomUUID().replace(/-/g, ""); 
+    constructor(name = "", teacherId, students = [], wordles = [], initDate, endDate = null) {
+        this.groupId = crypto.randomUUID().replace(/-/g, "");
         this.name = name;
         this.teacherId = teacherId;
         this.students = students;
         this.wordles = wordles;
-        this.initDate = initDate || new Date().toISOString().split("T")[0]; ;
+        this.initDate = initDate || new Date().toISOString().split("T")[0];;
         this.endDate = endDate;
     }
 
 
-    updateGroup(Group){
+    updateGroup(Group) {
         this.name = Group.name;
         this.students = Group.students;
         this.wordles = Group.wordles;
@@ -20,7 +20,7 @@ export class Group{
     }
 
     //Getters
-    getId(){
+    getId() {
         return this.groupId;
     }
     getName() {
@@ -41,13 +41,25 @@ export class Group{
     getEndDate() {
         return this.endDate;
     }
+    isActive() {
+        const now = new Date();
+
+        const startTime = this.startDate ? new Date(this.startDate).getTime() : null;
+        const endTime = this.endDate ? new Date(this.endDate).getTime() : null;
+
+        const hasStarted = startTime === null || startTime <= now;
+        const notEnded = endTime === null || endTime > now;
+
+        return hasStarted && notEnded;
+    }
+
 
 
     //Adders
-    addStudent(student){
+    addStudent(student) {
         this.students.push(student);
     }
-    addWordle(wordle){
+    addWordle(wordle) {
         this.wordles.push(wordle);
     }
 
@@ -62,7 +74,7 @@ export class Group{
         console.log("Lista final estudiantes: ", this.students);
 
     }
-    
+
     removeWordle(wordleId) {
         console.log("Lista final wordles: ", this.wordles);
         newWordles = this.wordles.filter(item => {

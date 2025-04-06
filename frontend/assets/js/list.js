@@ -1,4 +1,5 @@
-//TODO: Hacer algo cuando no haya grupos / wordles que mostrar
+//TODO: Hacer algo cuando no haya grupos / wordles que mostrar?
+//ONGOING : al alumno no le salen grupos inactivos
 
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
@@ -52,7 +53,9 @@ function fetchGroups() {
     // fetch("/api/grupos") 
     //     .then(response => response.json())
     //     .then(data => {
-    //         displayItems(data);
+    //         // Filtrar grupos inactivos
+    //         const activeGroups = data.filter(group => group.isActive() === true);
+    //         displayItems(activeGroups, "groupEditor.html");
     //     })
     //     .catch(error => console.error("Error al obtener grupos:", error));
 }
