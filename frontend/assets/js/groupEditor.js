@@ -1,495 +1,210 @@
-import { Wordle } from "/backend/utils/Wordle.js";
-import { Group } from "/backend/utils/Group.js";
-import { Student } from "/backend/utils/Student.js";
+// ==================== groupEditor.js ====================
+// Frontend logic para crear, editar o visualizar un grupo en EduWordle
 
-
-
-// TODO: especificar formato fecha
-// TODO: especificar que cuando se cree un nuevo group, initDate sea hoy
-// TODO: conectar BD
-
-//ONGOING: delete element
-
+// Obtener parámetros de URL
+const params    = new URLSearchParams(window.location.search);
+const mode      = params.get("mode");       // "create", "edit", "visual"
+const groupId   = params.get("id");
+const teacherId = params.get("teacherId");
 let sessionGroup = null;
-const params = new URLSearchParams(window.location.search);
-const mode = params.get("mode"); // ["create", "edit", "visual"]
-const groupId = params.get("id"); // solo existe en "edit" y "visual"
-const teacherId = params.get("teacherId") ;
 
+// DOMContentLoaded: inicialización general
+document.addEventListener("DOMContentLoaded", async () => {
+  // 1) Configuración de fechas
+  const today    = new Date().toISOString().split("T")[0];
+  const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+                   .toISOString().split("T")[0];
+  document.getElementById("initDate").value = today;
+  document.getElementById("endDate").value  = nextYear;
 
-// function generateSafeId() {
-//     return crypto.randomUUID().replace(/-/g, "");
-// }
+  // Radios para habilitar/deshabilitar endDate
+  document.getElementById("noEndDate").addEventListener("change", () => {
+    document.getElementById("endDate").disabled = true;
+  });
+  document.getElementById("setEndDate").addEventListener("change", () => {
+    document.getElementById("endDate").disabled = false;
+  });
 
+  // Ajustar título de la página
+  const pageTitle = mode === "edit"   ? "Editar Grupo"
+                      : mode === "visual" ? "Ver Grupo"
+                      : "Crear Grupo";
+  document.getElementById("pageTitle").textContent = pageTitle;
 
-document.addEventListener("DOMContentLoaded", function () {
-    const today = new Date().toISOString().split("T")[0];
-    const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split("T")[0];
+  // Exponer en window para popups
+  window.removeItemById  = removeItemById;
+  window.displayItem     = displayItem;
 
-    document.getElementById("initDate").value = today;
-    document.getElementById("endDate").value = nextYear;
-
-    const noEndDate = document.getElementById("noEndDate");
-    const setEndDate = document.getElementById("setEndDate");
-    const endDateInput = document.getElementById("endDate");
-
-    noEndDate.addEventListener("change", function () {
-        endDateInput.disabled = true;
-    });
-
-    setEndDate.addEventListener("change", function () {
-        endDateInput.disabled = false;
-    });
+  // 2) Cargar datos si edit o visual, o inicializar vacío
+  if ((mode === "edit" || mode === "visual") && groupId) {
+    try {
+      sessionGroup = await loadGroupData(groupId);
+      window.sessionGroup = sessionGroup;
+      displayData(sessionGroup);
+    } catch (err) {
+      console.error("Error cargando el grupo:", err);
+      toastr.error("No se pudo cargar los datos del grupo.");
+    }
+  } else {
+    // Crear nuevo grupo
+    sessionGroup = {
+      id:       null,
+      nombre:   "",
+      initDate: today,
+      endDate:  null,
+      students: [],
+      wordles:  []
+    };
+    window.sessionGroup = sessionGroup;
+    displayData(sessionGroup);
+  }
 });
 
-
-document.addEventListener("DOMContentLoaded", function () {
-
-
-    document.getElementById("pageTitle").textContent =
-        mode === "edit" ? "Editar Grupo" : mode === "visual" ? "Ver Grupo" : "Crear Grupo";
-
-
-    // carga de datos
-    if ((mode === "edit" || mode === "visual") && groupId) {
-        sessionGroup = loadGroupData(groupId);
-
-        if (mode === "edit") {
-            displayAddButton();
-        }
-
-        dispalyData(sessionGroup);
-    }
-    else {
-        // TODO: fase pruebas
-        sessionGroup = newGroup();
-
-        // const today = new Date().toISOString().split("T")[0];
-        //sessionGroup = new Group("", teacherId, [], [], today, null);
-
-
-        displayAddButton();
-        dispalyData(sessionGroup, "edit");
-
-    }
-});
-
-function loadGroupData(wordleId) {
-    //FETCH
-    const students = [
-        new Student("example1@mail.com"),
-        new Student("example2@mail.com"),
-        new Student("example3@mail.com")
-    ];
-    const wordles = [
-        new Wordle("Wordle A"),
-        new Wordle("Wordle B"),
-        new Wordle("Wordle C")
-
-    ];
-    const initDate = "2021-10-10";
-
-
-    return new Group("Grupo de prueba", teacherId, students, wordles, initDate);
+// loadGroupData: obtiene JSON del servidor y normaliza
+async function loadGroupData(groupId) {
+  const res = await fetch(`/grupos/${groupId}`);
+  if (!res.ok) throw new Error("Error al cargar datos del grupo");
+  const g = await res.json();
+  return {
+    id:       g.id,
+    nombre:   g.nombre,
+    initDate: g.initDate,
+    endDate:  g.endDate,
+    students: Array.isArray(g.students)
+              ? g.students.map(s => ({ email: s.email, id: s.id }))
+              : [],
+    wordles: Array.isArray(g.wordles)
+              ? g.wordles.map(w => ({ nombre: w.nombre, id: w.id }))
+              : []
+  };
 }
 
-function dispalyData(Group) {
-
-    if (mode === "visual") {
-        const groupSection = document.querySelector(".group-name");
-        groupSection.innerHTML = `<h1>${Group.getName()}</h1>`;
-
-        const container = document.querySelector(".container");
-        const saveButton = container.querySelector(".save-button");
-        if (saveButton) {
-            saveButton.remove();
-        }
-
-        if (teacherId) {
-            const div = document.createElement("div");
-            div.classList.add("buttonSection");
-
-            // Crear el botón de Editar
-            const editButton = document.createElement("button");
-            editButton.textContent = "Editar";
-            editButton.classList.add("action-button");
-            editButton.classList.add("edit-button");
-
-            editButton.onclick = function () {
-                const url = new URL(window.location.href);
-                url.searchParams.set("mode", "edit");
-                window.location.href = url.toString();
-            };
-
-
-            // Crear el botón de Eliminar
-            const deleteButton = document.createElement("button");
-            deleteButton.textContent = "Eliminar";
-            deleteButton.classList.add("action-button");
-            deleteButton.classList.add("delete-button");
-            //TODO: añadir el onclick para eliminar el grupo
-            deleteButton.onclick = function () {
-                openPopup('delete');
-            }
-
-            // Agregar los nuevos botones al contenedor
-            div.appendChild(editButton);
-            div.appendChild(deleteButton);
-            container.appendChild(div);
-
-
-        }
-
-
-        toggleDateDisplay(Group);
+// displayData: rellena la UI según modo y datos
+function displayData(group) {
+  const saveBtn = document.querySelector(".save-button");
+  if (mode === "visual") {
+    // Nombre como H1
+    document.querySelector(".group-name").innerHTML = `<h1>${group.nombre}</h1>`;
+    // Ocultar botón 'Guardar'
+    if (saveBtn) saveBtn.remove();
+    // Botones editar y borrar
+    if (teacherId) {
+      const cont = document.querySelector(".container");
+      const opts = document.createElement("div");
+      opts.classList.add("buttonSection");
+      const btnEdit = document.createElement("button");
+      btnEdit.textContent = "Editar";
+      btnEdit.classList.add("action-button","edit-button");
+      btnEdit.onclick = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("mode","edit");
+        window.location.href = url;
+      };
+      const btnDel = document.createElement("button");
+      btnDel.textContent = "Eliminar";
+      btnDel.classList.add("action-button","delete-button");
+      btnDel.onclick = () => openPopup('delete');
+      opts.append(btnEdit, btnDel);
+      cont.appendChild(opts);
     }
-    else {
-        document.getElementById("groupName").value = Group.getName();
-        diplayConfig(Group.getInitDate(), Group.getEndDate());
-    }
-
-    //DISPLAY
-    displayItems(Group.getStudents(), "students");
-    displayItems(Group.getWordles(), "wordles");
-
-
-    //CHECK OVERFLOW
-    checkOverflow();
+    // Fechas como texto
+    toggleDateDisplay(group);
+  } else {
+    // Modo edit/create: rellenar inputs
+    document.getElementById("groupName").value = group.nombre;
+    displayConfig(group.initDate, group.endDate);
+  }
+  // Listados (añade '+' en edit/create)
+  displayItems(group.students, "students");
+  displayItems(group.wordles,  "wordles");
 }
 
-function toggleDateDisplay(Group) {
-    const initDateInput = document.getElementById("initDate");
-    const endDateInput = document.getElementById("endDate");
-    const noEndDateRadio = document.getElementById("noEndDate");
-    const setEndDateRadio = document.getElementById("setEndDate");
-
-
-    const initDateText = document.createElement("div");
-    initDateText.classList.add("date-box");
-    initDateText.textContent = Group.getInitDate();
-
-    const endDateText = document.createElement("div");
-    endDateText.classList.add("date-box");
-    endDateText.textContent = Group.getEndDate() || "Fecha no definida";
-
-    // Reemplazar los inputs por los divs con fecha
-    initDateInput.replaceWith(initDateText);
-    endDateInput.replaceWith(endDateText);
-
-    // Ocultar los radio buttons y etiquetas asociadas
-    noEndDateRadio.parentElement.style.display = "none";
-    setEndDateRadio.parentElement.style.display = "none";
+// displayItems: pinta alumnos o wordles en su contenedor
+  function displayItems(items, type) {
+  const cont = document.getElementById(`container-${type}`);
+  cont.innerHTML = "";
+  items.forEach(item => displayItem(item,type));
+  if (mode !== "visual" && !cont.querySelector('.add-button')) {
+    const btn = document.createElement('div');
+    btn.classList.add('add-button');
+    btn.textContent = '+';
+    btn.onclick = () => openPopup(type);
+    cont.appendChild(btn);
+  }
 }
 
-function displayAddButton() {
-    let elements = ["students", "wordles"];
-    elements.forEach(element => {
-        const container = document.getElementById("container-" + element);
-        container.innerHTML = `<div class='add-button' onclick="openPopup('${element}')">+</div>`;
+// displayItem: crea un elemento para un alumno o wordle
+function displayItem(item, type) {
+  const cont = document.getElementById(`container-${type}`);
+  const div  = document.createElement('div');
+  div.classList.add('list-item');
+  div.id = `item-${item.id}`;
+  const a = document.createElement('a');
+  a.textContent = type === 'students' ? item.email : item.nombre;
+  div.appendChild(a);
+  if (mode !== 'visual') {
+    const btnX = document.createElement('button');
+    btnX.classList.add('item-remove');
+    btnX.onclick = () => removeItemById(item.id, type);
+    div.appendChild(btnX);
+  }
+  cont.appendChild(div);
+}
+
+// removeItemById: elimina del DOM y de sessionGroup
+function removeItemById(id,type) {
+  const el = document.getElementById(`item-${id}`);
+  if (el) el.remove();
+  if (window.sessionGroup) {
+    window.sessionGroup[type] = window.sessionGroup[type]
+      .filter(x => x.id !== id);
+  }
+}
+
+// displayConfig: inputs de fecha en edit/create
+function displayConfig(initDate, endDate) {
+  document.getElementById("initDate").value = initDate;
+  const end = document.getElementById("endDate");
+  if (endDate) { end.value = endDate; end.disabled = false; document.getElementById("setEndDate").checked = true; }
+  else      { end.value = ''     ; end.disabled = true ; document.getElementById("noEndDate").checked = true; }
+}
+
+// toggleDateDisplay: muestra fechas como div en modo visual
+function toggleDateDisplay(group) {
+  const inp1 = document.getElementById("initDate"), inp2 = document.getElementById("endDate");
+  const no   = document.getElementById("noEndDate"), si   = document.getElementById("setEndDate");
+  const d1 = document.createElement('div'), d2 = document.createElement('div');
+  d1.classList.add('date-box'); d1.textContent = group.initDate;
+  d2.classList.add('date-box'); d2.textContent = group.endDate || 'Fecha no definida';
+  inp1.replaceWith(d1); inp2.replaceWith(d2);
+  no.parentElement.style.display = 'none'; si.parentElement.style.display = 'none';
+}
+
+// saveGroup: persiste cambios via PUT
+window.saveGroup = async function() {
+  const nombre   = document.getElementById("groupName").value.trim();
+  const initDate = document.getElementById("initDate").value;
+  const endDate  = document.getElementById("endDate").value || null;
+  sessionGroup.nombre   = nombre;
+  sessionGroup.initDate = initDate;
+  sessionGroup.endDate  = endDate;
+  const alumnos = sessionGroup.students.map(s => s.id);
+  const wordles = sessionGroup.wordles.map(w => w.id);
+  if (!sessionGroup.id) {
+    toastr.error('Debes guardar el grupo primero');
+    return;
+  }
+  try {
+    const res = await fetch(`/grupos/${sessionGroup.id}`, {
+      method: 'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ nombre, initDate, endDate, alumnos, wordles })
     });
-}
-
-
-
-function newGroup() {
-    //TODO: esto hay que cambiarlo para que haga un fetch real y quitar el display y checkOverflow
-    // función sin servidor
-    const sampleStudents = [
-        new Student("example1@gmail.com"),
-        new Student("example2@gmail.com"),
-        new Student("example3@gmail.com"),
-        new Student("example4@gmail.com"),
-        new Student("example5@gmail.com"),
-        new Student("example6@gmail.com"),
-        new Student("example7@gmail.com"),
-        new Student("example8@gmail.com")
-    ];
-
-    const sampleWordles = [
-        new Wordle("Wordle Ejemplo1", 111),
-        new Wordle("Wordle Ejemplo2", 222),
-        new Wordle("Wordle Ejemplo3", 333),
-        new Wordle("Wordle Ejemplo4", 444),
-        new Wordle("Wordle Ejemplo5", 555),
-        new Wordle("Wordle Ejemplo6", 666),
-        new Wordle("Wordle Ejemplo7", 777),
-        new Wordle("Wordle Ejemplo8", 888)
-    ];
-
-    let sampleInitDate = "2025-10-10";
-
-
-    return new Group(
-        "Wordle ejemplo muchos datos",
-        teacherId,
-        sampleStudents,
-        sampleWordles,
-        sampleInitDate
-    );
-
-}
-
-function displayItems(items, element) {
-    //items = [Student, Wordle]
-    const container = document.getElementById("container-" + element);
-    items.forEach(item => displayItem(item, element));
-
-
-    const section = container.parentElement;
-    let showMoreButton = section.querySelector(".show-more");
-    if (!showMoreButton) {
-        showMoreButton = document.createElement("div");
-        showMoreButton.classList.add("show-more", "hidden");
-        showMoreButton.id = "showMoreButton";
-        showMoreButton.textContent = "+";
-        showMoreButton.onclick = function () { toggle(this); };
-        section.appendChild(showMoreButton);
-    }
-}
-
-function displayItem(item, element) {
-    const container = document.getElementById("container-" + element);
-
-    let elementId = "";
-    let form = "list";
-    let displayedText = "";
-
-
-    switch (element) {
-        case "students":
-            displayedText = "mail";
-            elementId = "studentId";
-            break;
-        case "wordles":
-            displayedText = "name";
-            elementId = "wordleId";
-            break;
-
-    }
-
-
-    const itemElement = document.createElement("div");
-    itemElement.classList.add((form || element) + "-item");
-    itemElement.id = `item-${item[elementId]}`;
-
-    //text item
-    const textElement = document.createElement("a");
-    textElement.textContent = displayedText === "mail" ? item[displayedText].split("@")[0] : item[displayedText];
-    itemElement.appendChild(textElement);
-
-    //button item
-    if (mode !== "visual") {
-        const closeButton = document.createElement("button");
-        closeButton.classList.add("item-remove");
-        closeButton.setAttribute("aria-label", "Remove");
-        closeButton.setAttribute("onclick", `removeItemById('${item[elementId]}' , '${element}')`);
-        itemElement.appendChild(closeButton);
-
-    }
-    container.appendChild(itemElement);
-
-
-}
-
-function diplayConfig(initDate, endDate) {
-    document.getElementById("initDate").value = initDate;
-    if (endDate) {
-        document.getElementById("setEndDate").checked = true;
-        document.getElementById("endDate").value = endDate;
-    } else {
-        document.getElementById("noEndDate").checked = true;
-        document.getElementById("endDate").disabled = true;
-    }
-}
-
-//*************************************************************************************** 
-// Remove Item from list
-//***************************************************************************************
-window.removeItemById = function removeItemById(objectID, type) {
-
-    console.log("remove function called");
-    //TODO: cambiar cuando se use un wordle real con Students y Wordles
-    // console.log("type: ", type);
-    // // Remove from storage
-    // const functionName = `remove${type.charAt(0).toUpperCase()}${type.slice(1)}`;
-
-    // //removeWordles() / removeStudents()
-    // sessionGroup[functionName](objectID);
-
-
-
-    //Remove HTML element
-    const itemElement = document.getElementById(`item-${objectID}`);
-    if (itemElement) {
-        itemElement.remove();
-    }
-
-    checkOverflow();
+    if (!res.ok) throw new Error('Error actualizando grupo');
+    toastr.success('Grupo guardado correctamente');
+  } catch(e) {
+    console.error(e);
+    toastr.error(e.message);
+  }
 };
 
-
-
-//*************************************************************************************** 
-//***************************************************************************************
-// Funciones visuales
-
-function checkOverflow() {
-    let elements = ["students", "wordles"];
-    const VISIBLE_LIMIT = 3;
-
-
-    elements.forEach(element => {
-
-        const container = document.getElementById("container-" + element);
-        const section = container.closest(".group-section");
-        const showMoreButton = section.querySelector(".show-more");
-
-
-        if (element === "students") {
-            const wasExpanded = container.classList.contains("expanded");
-            if (wasExpanded) container.classList.remove("expanded");
-
-            const isOverflow = container.scrollHeight > container.clientHeight + 5;
-
-            if (wasExpanded) container.classList.add("expanded");
-
-            if (isOverflow) {
-                showMoreButton.classList.remove("hidden");
-            } else {
-                showMoreButton.classList.add("hidden");
-            }
-        }
-        else {
-            const items = container.querySelectorAll(".list-item");
-            const isOverflow = items.length > VISIBLE_LIMIT;
-
-            if (isOverflow) {
-                showMoreButton.classList.remove("hidden");
-            } else {
-                showMoreButton.classList.add("hidden");
-            }
-        }
-
-
-    });
-}
-
-window.toggle = function toggle(button) {
-    const section = button.closest(".group-section");
-    const container = section.querySelector(".container-section");
-    const showMoreButton = section.querySelector(".show-more");
-
-
-    if (container.classList.contains("expanded")) {
-        container.classList.remove("expanded");
-        showMoreButton.textContent = "+";
-    } else {
-        container.classList.add("expanded");
-        showMoreButton.textContent = "-";
-    }
-}
-
-//**********************************************************************
-//********************* Save Data Functions ****************************
-//**********************************************************************
-
-window.saveStudent = function () {
-
-    console.log("sessionGroup students pre saveStudent: ", sessionGroup.getStudents());
-    const studentInput = document.getElementById("email").value.trim();
-
-    if (!studentInput) {
-        toastr.error("El mail es obligatorio.");
-        return;
-    }
-
-    const partes = studentInput.split("@");
-    if (partes.length !== 2 || !partes[0] || !partes[1]) {
-        toastr.error("El mail no es válido.");
-        return;
-    }
-
-    const dominio = partes[1].split(".");
-    if (dominio.length < 2 || dominio.some(part => part.length < 2)) {
-        toastr.error("El dominio del mail no es válido.");
-        return;
-    }
-
-    const existingMails = sessionGroup.getStudents();
-    const alreadyExists = existingMails.some(student => student.getMail() === studentInput);
-
-
-    if (alreadyExists) {
-        toastr.error("Este alumno ya ha sido añadido.");
-        return;
-    }
-
-
-    // Crear un nuevo estudiante
-    const student = new Student(studentInput);
-
-
-    document.getElementById("email").value = "";
-
-    sessionGroup.addStudent(student);
-    console.log("Nuevo alumno guardado:", student);
-    console.log("sessionGroup students: ", sessionGroup.getStudents());
-
-    toastr.success("Alumno añadido");
-    closePopup();
-
-    displayItem(student, "students");
-    checkOverflow();
-};
-
-window.saveWordle = function () {
-    console.log("saveWordle called");
-
-    const wordleSelect = document.getElementById("wordle-select");
-    const selectedWordleId = wordleSelect.value.trim();
-    const selectedWordleName = wordleSelect.options[wordleSelect.selectedIndex]?.textContent;
-
-
-    if (!selectedWordleName) {
-        toastr.error("Debes seleccionar un wordle");
-        return;
-    }
-
-    const existingWordles = sessionGroup.getWordles();
-    const alreadyExists = existingWordles.some(wordle => wordle.wordleId === selectedWordleId);
-
-    if (alreadyExists) {
-        toastr.error("Este wordle ya ha sido añadido.");
-        return;
-    }
-
-
-
-    // Crear objeto de wordle
-    const wordleObject = { wordleId: selectedWordleId, name: selectedWordleName };
-
-    sessionGroup.addWordle(wordleObject);
-    console.log("Wordle guardado:", wordleObject);
-
-    wordleSelect.value = "";
-
-    console.log("sessionGroup actual: ", sessionGroup.getWordles());
-
-    toastr.success("Wordle añadido");
-    closePopup();
-    displayItem(wordleObject, "wordles");
-    checkOverflow();
-};
-
-// function saveGroup(){
-//     //TODO: conectar con la bd para que guarde el Wordle
-// }
-
-function deleteElement() {
-
-    //TODO: eliminar de la bd
-
-    window.location.href = "/frontend/dashboard.html";
-};
-
-
+// ===============================================================

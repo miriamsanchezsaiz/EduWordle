@@ -2,6 +2,8 @@
 const email = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const togglePassword = document.getElementById('togglePassword');
+const loginForm = document.getElementById('loginForm');
+const errorMessage = document.getElementById('error-message');
 
 // Evento para alternar la visibilidad de la contraseña
 togglePassword.addEventListener('click', function() {
@@ -14,6 +16,32 @@ togglePassword.addEventListener('click', function() {
     passwordInput.setAttribute('type', 'password');
     // Cambiar el ícono a uno de mostrar
     togglePassword.textContent = '🐵';
+  }
+});
+
+
+loginForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const email = document.getElementById('email').value;
+  const password = passwordInput.value;
+
+  try {
+      const response = await fetch('http://localhost:3000/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+          throw new Error('Credenciales incorrectas');
+      }
+
+      const data = await response.json();
+      window.location.href = data.redirect; // Redirigir según el rol
+  } catch (error) {
+      errorMessage.innerText = error.message;
+      errorMessage.style.color = 'red';
   }
 });
 

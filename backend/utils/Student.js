@@ -1,4 +1,4 @@
-export class Student{
+class Student{
     constructor(mail){
         this.studentId = crypto.randomUUID().replace(/-/g, ""); 
         this.mail = mail;
@@ -31,4 +31,4 @@ export class Student{
 
     
 }
-export default Student;
+module.exports = Student;
