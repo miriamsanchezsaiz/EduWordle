@@ -106,3 +106,51 @@ En caso de no tener instalado live-server, ejecuta el siguiente comando:
 ```bash
   npm install -g live-server
 ```
+
+## Memoria TFG
+```plaintext
+## Index
+
+1. Descripción del proyecto
+2. Descripción del problema
+3. Estado actual de juegos educativos
+4. Propuesta de solución (nombre, descripción y arquitectura)
+    1. Alcance
+    2. Objetivos
+    3. Frontera (problemas de uso …)
+    4. Stakeholders (usuarios, operadores, clientes)
+5. Especificación de requisitos
+6. **Diseño de la plataforma**
+    - Arquitectura general del sistema.
+    - Diagramas UML:
+        - Diagrama de clases.
+        - Diagrama de casos de uso.
+        - Diagrama de secuencia.
+    - Diseño de la interfaz de usuario (UI/UX).
+        - Flujo de navegación.
+        - Diseño responsivo.
+7. Desarrollo
+    1. Técnicas utilizadas
+    2. Organización del código
+    3. Explicación del funcionamiento del juego
+8. Implementación de funcionalidades:
+    - Gestión de preguntas.
+    - Gestión de inicio de sesión
+    - Gestión de alumnos
+    - Cronómetro y sistema de puntuaciones.
+9. Pruebas y validación
+    - Plan de pruebas. → test
+        - Pruebas unitarias.
+        - Pruebas de integración.
+        - Pruebas de usabilidad.
+    - Resultados de las pruebas.
+    - Validación con usuarios y cliente.
+10. Despliegue en server
+11. **Conclusiones y trabajo futuro**
+    - Logros y retos superados.
+    - Posibles mejoras y funcionalidades futuras.
+    - Implicaciones educativas.
+    - ODSs
+12. Bibliografía
+13. Anexos
+```
