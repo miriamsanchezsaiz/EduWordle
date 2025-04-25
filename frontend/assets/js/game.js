@@ -66,6 +66,7 @@ function loadWord() {
 
   currentGuess = [];
   nextLetter = 0;  
+  guessesRemaining = NUMBER_OF_GUESSES;
   initBoard();
 }
 
