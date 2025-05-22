@@ -1,0 +1,14 @@
+Hi {{name}},
+
+Welcome to EduWordle! A teacher has created an account for you, so we are giving you a temporary password to enter the website.
+
+Your initial password is:
+
+{{password}}
+
+Please log in and change your password.
+
+Go to Login: https://www.google.es
+
+Made with 💡 for learning fun!
+www.eduwordle.es
