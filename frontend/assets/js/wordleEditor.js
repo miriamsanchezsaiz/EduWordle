@@ -1,3 +1,9 @@
+const role      = sessionStorage.getItem('role');
+const teacherId = sessionStorage.getItem('teacherId');
+const studentId = sessionStorage.getItem('studentId');
+if (!role || (!teacherId && !studentId)) {
+  window.location.replace('login.html');
+}
 // ==================== wordleEditor.js ====================
 // Frontend logic para crear, editar o visualizar un Wordle en EduWordle
 
@@ -5,7 +11,6 @@
 const params    = new URLSearchParams(window.location.search);
 const mode      = params.get("mode");       // "create", "edit", "visual"
 const wordleId  = params.get("id");
-const teacherId = params.get("teacherId");
 let sessionWordle = null;
 
 // Inicialización tras cargar el DOM
@@ -15,6 +20,20 @@ document.addEventListener("DOMContentLoaded", async () => {
                 : mode === "visual" ? "Ver Wordle"
                 : "Crear Wordle";
   document.getElementById("pageTitle").textContent = titulo;
+  /*if (mode === "create") {
+  document
+    .getElementById("container-words")
+    .closest("section")
+    .style.display = "none";
+  document
+    .getElementById("container-questions")
+    .closest("section")
+    .style.display = "none";
+  document
+    .getElementById("container-groups")
+    .closest("section")
+    .style.display = "none";
+}*/
 
   // Exponer para popups
   window.removeItemById  = removeItemById;
@@ -51,6 +70,7 @@ async function loadWordleData(wordleId) {
        return {
          id:        w.id,
          nombre:    w.nombre,
+         difficulty: w.difficulty, 
          words:     w.words,
          questions: w.questions,
         groups:    w.groups
@@ -81,8 +101,8 @@ function displayData(wordle) {
       cont.appendChild(opts);
     }
   } else {
-    // Modo edit/create: rellenar campo nombre
     document.getElementById("wordleTitle").value = wordle.nombre;
+    document.getElementById("difficulty").value   = wordle.difficulty;
   }
   // Listados dinámicos
   displayItems(wordle.words,     "words");
@@ -117,33 +137,79 @@ function displayItem(item, type) {
   cont.appendChild(div);
 }
 
-// removeItemById: elimina del DOM y del objeto sessionWordle
-function removeItemById(id, type) {
-  const el = document.getElementById(`item-${id}`); if (el) el.remove();
-  if (window.sessionWordle) {
-    window.sessionWordle[type] = window.sessionWordle[type].filter(x => x.id !== id);
+window.removeItemById = async function(id, type) {
+  try {
+    const url = type === 'words'
+                ? `/words/${id}`
+                : `/questions/${id}`;
+    const res = await fetch(url, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Error en servidor');
+
+    const el = document.getElementById(`item-${id}`);
+    if (el) el.remove();
+
+    window.sessionWordle[type] = window.sessionWordle[type]
+                                 .filter(x => x.id !== id);
+
+    toastr.success(
+      type === 'words'
+        ? 'Palabra eliminada'
+        : 'Pregunta eliminada'
+    );
+  } catch (err) {
+    console.error(`Error eliminando ${type}:`, err);
+    toastr.error(
+      type === 'words'
+        ? 'No se pudo eliminar la palabra'
+        : 'No se pudo eliminar la pregunta'
+    );
   }
-}
+};
+
 
 window.saveWordleEditor = async function() {
-    const titleInput = document.getElementById("wordleTitle");
-    const nuevoNombre = titleInput.value.trim();
-    if (!nuevoNombre) {
-      toastr.error("El nombre del Wordle es obligatorio");
-      return;
-    }
+  const nombre   = document.getElementById("wordleTitle").value.trim();
+  const difficulty = document.getElementById("difficulty").value;
+  if (!nombre) {
+    toastr.error("El nombre del Wordle es obligatorio");
+    return;
+  }
+
+  // CREATE: si no hay ID en sesión
+  if (!sessionWordle.id) {
     try {
-      const res = await fetch(`/wordles/${wordleId}`, {
-        method: 'PUT',
+      const res = await fetch('/wordles', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nuevoNombre })
+        body: JSON.stringify({ nombre, teacherId, difficulty })
       });
-      if (!res.ok) throw new Error('Error guardando Wordle');
-      toastr.success("Wordle guardado correctamente");
+      if (!res.ok) throw new Error('Error creando Wordle');
+      const data = await res.json();
+      window.location.href = 
+        `wordleEditor.html?mode=edit&id=${data.id}&teacherId=${teacherId}`;
+      toastr.success("Wordle creado correctamente");
     } catch (err) {
       console.error(err);
       toastr.error(err.message);
     }
-  };
+    return;
+  }
+  try {
+    const res = await fetch(`/wordles/${sessionWordle.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, difficulty })
+    });
+    if (!res.ok) throw new Error('Error guardando Wordle');
+    toastr.success("Wordle guardado correctamente");
+    setTimeout(() => {
+      window.location.href = `list.html?type=wordle&teacherId=${teacherId}`;
+    }, 500);
+  } catch (err) {
+    console.error(err);
+    toastr.error(err.message);
+  }
+};
+
   
   

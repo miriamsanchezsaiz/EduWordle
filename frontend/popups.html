@@ -19,10 +19,21 @@
     <!-- add word popup -->
     <template id="words">
         <div class="words-container">
-            <button class="upload-icon">
-                SUBIR CSV
-                <i class="fa-solid fa-upload"></i>
+            <input
+            type="file"
+            id="csvWordsUpload"
+            accept=".csv"
+            style="display: none"
+            onchange="uploadWordsCSV(event)"
+            />
+            <button
+            type="button"
+            class="upload-icon"
+            onclick="document.getElementById('csvWordsUpload').click()"
+            >
+            SUBIR CSV <i class="fa-solid fa-upload"></i>
             </button>
+
 
             <label for="word-input">PALABRA</label>
             <input type="text" id="word-input" class="text-input" placeholder="Introduce la palabra" required>
@@ -30,7 +41,7 @@
             <label for="hint-input">PISTA</label>
             <textarea id="hint-input" class="text-area" placeholder="Introduce una pista"></textarea>
 
-            <button id= "save-word" class="save-button" >Guardar</button>
+            <button id= "save-word" class="save-button" onclick="saveWord()">Guardar</button>
         </div>
     </template>
 
@@ -38,10 +49,23 @@
 
     <template id="questions">
         <div class="words-container">
-            <button class="upload-icon">
-                SUBIR XML
-                <i class="fa-solid fa-upload"></i>
+            <!-- Hidden file input -->
+            <input
+            type="file"
+            id="csvQuestionsUpload"
+            accept=".csv"
+            style="display: none"
+            onchange="uploadQuestionsCSV(event)"
+            />
+            <!-- Botón con estilo original -->
+            <button
+            type="button"
+            class="upload-icon"
+            onclick="document.getElementById('csvQuestionsUpload').click()"
+            >
+            SUBIR CSV <i class="fa-solid fa-upload"></i>
             </button>
+
 
             <label for="hint-input">ENUNCIADO</label>
             <textarea id="hint-input" class="text-area" placeholder="Introduce la pregunta" required></textarea>
@@ -67,7 +91,7 @@
 
 
 
-            <button id= "save-question" class="save-button" >Guardar</button>
+            <button id= "save-question" class="save-button" onclick="saveQuestion()">Guardar</button>
         </div>
     </template>
 
@@ -81,7 +105,7 @@
                 <option value="" disabled selected>Selecciona un grupo</option>
             </select>
 
-            <button id= "save-group" class="save-button" >Guardar</button>
+            <button id= "save-group" class="save-button" onclick="saveGroupToWordle()">Guardar</button>
         </div>
     </template>
 
@@ -89,9 +113,20 @@
 
     <template id="students">
         <div class="words-container">
-            <button class="upload-icon">
-                SUBIR CSV
-                <i class="fa-solid fa-upload"></i>
+            <input
+            type="file"
+            id="csvStudentUpload"
+            accept=".csv"
+            style="display: none"
+            onchange="uploadStudentsCSV(event)"
+            />
+
+            <button
+            type="button"
+            class="upload-icon"
+            onclick="document.getElementById('csvStudentUpload').click()"
+            >
+            SUBIR CSV <i class="fa-solid fa-upload"></i>
             </button>
 
             <label for="email">E-MAIL</label>
@@ -118,10 +153,8 @@
     <template id="game">
         <div class="endGame-container">
             <h1 >FIN DEL JUEGO</h1>
-
-            Has obtenido <span id="points"> 0 </span> puntos !
-            <!-- TODO: Cambiar este onclick porque no estoy segura de que esté bien -->
-            <button id="endButton" class="save-button" onclick="window.location.href=`/frontend/dashboard.html`">Volver al inicio</button>
+            Has obtenido <span id="points"> 0 </span> puntos !    
+        <button id="endButton" class="save-button">Volver al inicio</button>
         </div>
     </template>
 

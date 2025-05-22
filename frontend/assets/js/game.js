@@ -1,5 +1,12 @@
-
+const role      = sessionStorage.getItem('role');
+const teacherId = sessionStorage.getItem('teacherId');
+const studentId = sessionStorage.getItem('studentId');
+if (!role || (!teacherId && !studentId)) {
+  window.location.replace('login.html');
+}
 // Editable variables for an specific wordle
+const params     = new URLSearchParams(window.location.search);
+const wordleId   = params.get('id');
 const NUMBER_OF_GUESSES = 5;
 let guessesRemaining = NUMBER_OF_GUESSES;
 
@@ -9,33 +16,38 @@ let rightGuessString = "";
 let wordsize = 0;
 let selectedWordObj = null;
 let words = [];
+let difficulty = 'low'; 
 
 let isProcessingGuess = false;
 
+async function fetchWordleMeta() {
+  try {
+    const res = await fetch(`/wordles/${wordleId}`);
+    if (!res.ok) throw new Error();
+    const w = await res.json();
+    difficulty = w.difficulty;
+  } catch(e) {
+    console.warn("No se pudo leer dificultad, asumiendo 'low'");
+  }
+}
 
 async function fetchWords() {
-  // try {
-  //     let response = await fetch('http://localhost:3000/words');
-  //     let words = await response.json();
-  //     return words;
-  // } catch (error) {
-  //     console.error("Error al obtener palabras:", error);
-  //     return [];
-  // }
-  return [
-    {
-      word: "hola",
-      hint: "Saludo"
-    },
-    {
-      word: "adios"
-    }
-  ];
+  try {
+    const res = await fetch(`/wordles/${wordleId}/words`);
+    if (!res.ok) throw new Error(`Error ${res.status} cargando palabras`);
+    return await res.json();
+  } catch (err) {
+    console.error('Error al obtener palabras:', err);
+    return [];
+  }
 }
+
 
 // InitGame es fetch de words e iniciar el juego con cada palabra
 async function initGame() {
   localStorage.removeItem("points");
+  
+  await fetchWordleMeta();
 
   words = await fetchWords();
 
@@ -171,6 +183,11 @@ async function checkGuess() {
 
   // **3️⃣ Aplicar los colores al tablero**
   await animateRow(row, letterColor, guessString);
+  
+  if (difficulty === 'high') {
+    // generar preguntas para cada letra hallada
+    await generate_questions(guessedLetters, letterColor);
+  }
 
   // **4️⃣ Si la palabra es correcta, hacer pregunta**
   if (guessString === rightGuessString) {
@@ -347,24 +364,14 @@ function delete_popup() {
 //************************* TODO : Trasladar al script ************************************* */
 
 async function fetchQuestions() {
-  //TODO: Quitar comentario
-  // try {
-  //     let response = await fetch('http://localhost:3000/questions');
-  //     let questions = await response.json();
-  //     return questions;
-  // } catch (error) {
-  //     console.error("Error al obtener preguntas:", error);
-  //     return [];
-  // }
-
-  return[
-    {
-      question: "¿Cuál es la capital de Francia?",
-      options: ["Madrid", "París", "Roma", "Berlín"],
-      correctAnswer: ["París"],
-      type: "single"
-
-  }];
+  try {
+    const res = await fetch(`/wordles/${wordleId}/questions`);
+    if (!res.ok) throw new Error(`Error ${res.status} cargando preguntas`);
+    return await res.json();
+  } catch (err) {
+    console.error('Error al obtener preguntas:', err);
+    return [];
+  }
 }
 
 
@@ -383,9 +390,22 @@ async function popup_quest(i = 0, totalQuestions = 1) {
     // Asegurar que los datos sean 
     let options = [];
     let rightAnswers = [];
-    options = Array.isArray(question.options) ? question.options : JSON.parse(question.options);
-    rightAnswers = Array.isArray(question.correctAnswer) ? question.correctAnswer : JSON.parse(question.correctAnswer);
-
+    options = Array.isArray(question.options)
+    ? question.options
+    : JSON.parse(question.options);
+  options = options.map(opt =>
+    typeof opt === 'string'
+      ? opt.replace(/^"(.*)"$/, '$1').trim()
+      : opt
+  );
+    let raw = Array.isArray(question.correctAnswer)
+    ? question.correctAnswer
+    : JSON.parse(question.correctAnswer);
+  rightAnswers = raw.map(ans =>
+    typeof ans === 'string'
+      ? ans.replace(/^"(.*)"$/, '$1').trim()
+      : ans
+  );
     let quest = document.querySelector(".modal-content");
     quest.innerHTML = "";
 
@@ -555,9 +575,9 @@ function updatePoints(points) {
   updateDisplayPoints(newPoints);
 }
 
-function endGame() {
+async function endGame() {
   // Se obtiene la puntuación final
-  let points = localStorage.getItem("points");
+  const points = parseInt(localStorage.getItem("points") || 0, 10);
   localStorage.removeItem("points");
 
   
@@ -566,7 +586,23 @@ function endGame() {
 
   
   //Se suman los puntos en la BD
-  //*********** TODO: terminar esto *****************
+  try {
+      const res = await fetch('/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: parseInt(sessionStorage.getItem('studentId'), 10),
+          wordleId:  parseInt(wordleId, 10),
+          score:     points
+        })
+      });
+      const result = await res.json();
+      console.log('Score API:', result);
+      // opcional: mostrar mensaje de “mejor puntuación guardada”
+    } catch (err) {
+      console.error('Error guardando puntuación:', err);
+    }
+
   return points;
 }
 

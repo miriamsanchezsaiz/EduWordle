@@ -1,3 +1,9 @@
+const role      = sessionStorage.getItem('role');
+const teacherId = sessionStorage.getItem('teacherId');
+const studentId = sessionStorage.getItem('studentId');
+if (!role || (!teacherId && !studentId)) {
+  window.location.replace('login.html');
+}
 // ==================== groupEditor.js ====================
 // Frontend logic para crear, editar o visualizar un grupo en EduWordle
 
@@ -5,7 +11,6 @@
 const params    = new URLSearchParams(window.location.search);
 const mode      = params.get("mode");       // "create", "edit", "visual"
 const groupId   = params.get("id");
-const teacherId = params.get("teacherId");
 let sessionGroup = null;
 
 // DOMContentLoaded: inicialización general
@@ -30,6 +35,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                       : mode === "visual" ? "Ver Grupo"
                       : "Crear Grupo";
   document.getElementById("pageTitle").textContent = pageTitle;
+  /*if (mode === "create") {
+  document
+    .getElementById("container-students")
+    .closest("section")
+    .style.display = "none";
+  document
+    .getElementById("container-wordles")
+    .closest("section")
+    .style.display = "none";
+}*/
 
   // Exponer en window para popups
   window.removeItemById  = removeItemById;
@@ -180,31 +195,53 @@ function toggleDateDisplay(group) {
   no.parentElement.style.display = 'none'; si.parentElement.style.display = 'none';
 }
 
-// saveGroup: persiste cambios via PUT
 window.saveGroup = async function() {
   const nombre   = document.getElementById("groupName").value.trim();
   const initDate = document.getElementById("initDate").value;
   const endDate  = document.getElementById("endDate").value || null;
-  sessionGroup.nombre   = nombre;
-  sessionGroup.initDate = initDate;
-  sessionGroup.endDate  = endDate;
-  const alumnos = sessionGroup.students.map(s => s.id);
-  const wordles = sessionGroup.wordles.map(w => w.id);
+
+  if (!nombre || !initDate) {
+    toastr.error("Nombre y fecha de inicio son obligatorios.");
+    return;
+  }
+
   if (!sessionGroup.id) {
-    toastr.error('Debes guardar el grupo primero');
+    try {
+      const res = await fetch('/grupos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, initDate, endDate, teacherId })
+      });
+      if (!res.ok) throw new Error('Error creando grupo');
+      const data = await res.json();
+      sessionGroup.id = data.id;             // guardo el nuevo ID
+      window.location.href =               // recargo en modo edit
+        `groupEditor.html?mode=edit&id=${data.id}&teacherId=${teacherId}`;
+      toastr.success("Grupo creado correctamente");
+    } catch (e) {
+      console.error(e);
+      toastr.error(e.message);
+    }
     return;
   }
   try {
+    const alumnos = sessionGroup.students.map(s => s.id);
+    const wordles = sessionGroup.wordles.map(w => w.id);
     const res = await fetch(`/grupos/${sessionGroup.id}`, {
-      method: 'PUT', headers:{'Content-Type':'application/json'},
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre, initDate, endDate, alumnos, wordles })
     });
     if (!res.ok) throw new Error('Error actualizando grupo');
-    toastr.success('Grupo guardado correctamente');
-  } catch(e) {
+    toastr.success("Grupo actualizado correctamente");
+    setTimeout(() => {
+      window.location.href = `list.html?type=group&teacherId=${teacherId}`;
+    }, 500);
+  } catch (e) {
     console.error(e);
     toastr.error(e.message);
   }
 };
+
 
 // ===============================================================

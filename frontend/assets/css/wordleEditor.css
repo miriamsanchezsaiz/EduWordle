@@ -169,8 +169,8 @@ header {
 
 
 .container-section {
-    max-height: 13rem; /* 3 items */
-    overflow-y: hidden;
+    max-height: none !important;
+    overflow-y: auto;
     transition: max-height 0.3s ease-in-out;
 }
 
@@ -181,7 +181,8 @@ header {
 #container-words {
     display: flex;
     flex-wrap: wrap;
-    max-height: 7.4rem; /* 2 items */ 
+    max-height: none !important;
+    overflow-y: auto;
 }
 
 /* Boton de eliminación de elementos */

@@ -49,105 +49,121 @@ app.get('/questions', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-    console.log('Solicitud recibida en /login');
-
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Faltan datos' });
-    }
-
-// Autenticación de profesores
-db.query('SELECT * FROM profesores WHERE email = ? AND password = ?', [email, password], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Error en el servidor' });
-
-    if (results.length > 0) {
-        console.log('Profesor autenticado correctamente');
-        return res.json({ role: 'profesor', redirect: `http://localhost:3000/dashboard.html?type=teacher&teacherId=${results[0].id}` });
-    } else {
-        // Autenticación de alumnos
-        db.query('SELECT * FROM alumnos WHERE email = ? AND password = ?', [email, password], (err, results) => {
-            if (err) return res.status(500).json({ error: 'Error en el servidor' });
-
-            if (results.length > 0) {
-                console.log('Alumno autenticado correctamente');
-                return res.json({ role: 'alumno', redirect: `http://localhost:3000/dashboard.html?type=student&studentId=${results[0].id}` });
-            } else {
-                return res.status(401).json({ error: 'Credenciales incorrectas' });
-            }
+  const { email, password } = req.body;
+  db.query(
+    'SELECT id FROM profesores WHERE email=? AND password=?',
+    [email, password],
+    (err, profs) => {
+     if (err) return res.status(500).json({ error: 'Error en el servidor' });
+      if (profs.length > 0) {
+        const prof = profs[0];
+        const forceChange = password.length < 8;
+        return res.json({
+          role:       'profesor',
+          forceChange,
+          redirect:   forceChange
+            ? `/config.html?type=teacher&teacherId=${prof.id}&forceChange=1`
+            : `/dashboard.html?type=teacher&teacherId=${prof.id}`
         });
+      }
+      db.query(
+        'SELECT id FROM alumnos WHERE email=? AND password=?',
+        [email, password],
+        (err, studs) => {
+          if (err) return res.status(500).json({ error: 'Error en el servidor' });
+          if (studs.length > 0) {
+            const stu = studs[0];
+            const forceChange = password.length < 8;
+            return res.json({
+              role:       'alumno',
+              forceChange,
+              redirect:   forceChange
+                ? `/config.html?type=student&studentId=${stu.id}&forceChange=1`
+                : `/dashboard.html?type=student&studentId=${stu.id}`
+           });
+          }
+          return res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
+      );
     }
+  );
 });
 
-});
 
 
 app.get('/wordles', (req, res) => {
-    const teacherId = req.query.teacherId;
-    const studentId = req.query.studentId;
-    
-    if (teacherId) {
-        // Wordles asociados a un profesor
-        db.query('SELECT * FROM wordles WHERE teacher_id = ?', [teacherId], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error al obtener los wordles del profesor' });
-            }
-            return res.json(results);
-        });
-    } else if (studentId) {
-        // Wordles asociados a un alumno a través de los grupos a los que pertenece.
-        const query = `
-            SELECT w.* 
-            FROM wordles w 
-            INNER JOIN student_groups sg ON w.group_id = sg.group_id 
-            WHERE sg.student_id = ?
-        `;
-        db.query(query, [studentId], (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error al obtener los wordles para el alumno' });
-            }
-            return res.json(results);
-        });
-    } else {
-        return res.status(400).json({ error: 'Se requiere teacherId o studentId' });
-    }
+  const { teacherId, studentId } = req.query;
+
+  if (teacherId) {
+    return db.query(
+      'SELECT * FROM wordles WHERE teacher_id = ?',
+      [teacherId],
+      (err, results) => {
+        if (err) return res.status(500).json({ error: 'Error al obtener wordles del profesor' });
+        res.json(results);
+      }
+    );
+  }
+
+  if (studentId) {
+    const sql = `
+      SELECT DISTINCT w.*
+        FROM wordles w
+        JOIN wordle_groups wg   ON w.id = wg.wordle_id
+        JOIN student_groups sg  ON wg.group_id = sg.group_id
+       WHERE sg.student_id = ?
+    `;
+    return db.query(sql, [studentId], (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Error al obtener wordles para el alumno' });
+      }
+      res.json(results);
+    });
+  }
+
+  res.status(400).json({ error: 'Se requiere teacherId o studentId' });
 });
 
+
 app.get('/grupos', (req, res) => {
-    const teacherId = req.query.teacherId;
-    const studentId = req.query.studentId;
-  
-    if (teacherId) {
-      db.query(
-        'SELECT * FROM grupos WHERE teacher_id = ?',
-        [teacherId],
-        (err, results) => {
-          if (err) return res.status(500).json({ error: 'Error al obtener los grupos del profesor' });
-          return res.json(results);
-        }
-      );
-    }
-    else if (studentId) {
-      db.query(
-        `SELECT g.* 
-           FROM grupos g
-           JOIN student_groups sg ON g.id = sg.group_id
-          WHERE sg.student_id = ?`,
-        [studentId],
-        (err, results) => {
-          if (err) return res.status(500).json({ error: 'Error al obtener los grupos del alumno' });
-          return res.json(results);
-        }
-      );
-    }
-    else {
-      return res.status(400).json({ error: 'Se requiere teacherId o studentId' });
-    }
-  });
+  const { studentId, teacherId } = req.query;
+
+  if (studentId) {
+    db.query(
+      `SELECT g.* 
+         FROM grupos g 
+         JOIN student_groups sg ON g.id = sg.group_id 
+        WHERE sg.student_id = ?`,
+      [studentId],
+      (err, results) => {
+        if (err) return res.status(500).json({ error: 'Error al obtener los grupos del alumno' });
+        return res.json(results);
+      }
+    );
+
+  } else if (teacherId) {
+    db.query(
+      'SELECT * FROM grupos WHERE teacher_id = ?',
+      [teacherId],
+      (err, results) => {
+        if (err) return res.status(500).json({ error: 'Error al obtener los grupos del profesor' });
+        return res.json(results);
+      }
+    );
+
+  } else {
+    db.query('SELECT * FROM grupos', (err, results) => {
+      if (err) return res.status(500).json({ error: 'Error al obtener los grupos' });
+      return res.json(results);
+    });
+  }
+});
+
   
 
 app.get('/grupos/:id', (req, res) => {
     const groupId = req.params.id;
-    // Consultar datos del grupo
     db.query(`SELECT 
                 id, 
                 nombre, 
@@ -159,7 +175,6 @@ app.get('/grupos/:id', (req, res) => {
             return res.status(500).json({ error: 'Error al obtener el grupo' });
         }
         const group = groupResults[0];
-        // Consultar alumnos del grupo
         db.query(
             `SELECT a.* 
              FROM alumnos a 
@@ -170,7 +185,6 @@ app.get('/grupos/:id', (req, res) => {
                 if (err) {
                     return res.status(500).json({ error: 'Error al obtener los alumnos' });
                 }
-                // Consultar wordles asociados al grupo
                 db.query(
                     `SELECT w.* 
                        FROM wordles w 
@@ -197,8 +211,6 @@ app.get('/grupos/:id', (req, res) => {
 app.put('/grupos/:id', (req, res) => {
   const groupId    = req.params.id;
   const { nombre, initDate, endDate, alumnos, wordles } = req.body;
-
-  // 1) Actualizar datos básicos del grupo
   db.query(
     'UPDATE grupos SET nombre = ?, initDate = ?, endDate = ? WHERE id = ?',
     [nombre, initDate, endDate, groupId],
@@ -207,8 +219,6 @@ app.put('/grupos/:id', (req, res) => {
         console.error(err);
         return res.status(500).json({ error: 'Error al actualizar el grupo' });
       }
-
-      // 2) Gestionar asociaciones alumno ↔ grupo
       db.query(
         'DELETE FROM student_groups WHERE group_id = ?',
         [groupId],
@@ -228,20 +238,16 @@ app.put('/grupos/:id', (req, res) => {
                   console.error(err);
                   return res.status(500).json({ error: 'Error al insertar asociaciones alumno' });
                 }
-                // Tras actualizar alumnos, pasamos a wordles
                 syncWordles();
               }
             );
           } else {
-            // No hay alumnos: directamente sincronizamos wordles
             syncWordles();
           }
         }
       );
 
-      // 3) Función interna para sincronizar wordles ↔ grupo
       function syncWordles() {
-        // 3.1) Borrar relaciones previas
         db.query(
           'DELETE FROM wordle_groups WHERE group_id = ?',
           [groupId],
@@ -250,8 +256,6 @@ app.put('/grupos/:id', (req, res) => {
               console.error(err);
               return res.status(500).json({ error: 'Error al limpiar asociaciones wordle' });
             }
-
-            // 3.2) Insertar nuevas asociaciones
             if (Array.isArray(wordles) && wordles.length) {
               const valsWor = wordles.map(wordleId => [wordleId, groupId]);
               db.query(
@@ -266,7 +270,6 @@ app.put('/grupos/:id', (req, res) => {
                 }
               );
             } else {
-              // No hay wordles: terminamos aquí
               return res.json({ success: true });
             }
           }
@@ -279,37 +282,46 @@ app.put('/grupos/:id', (req, res) => {
 const Student = require('./utils/Student');
 
 app.post('/alumnos', (req, res) => {
-    const { email } = req.body;
-    if (!email) {
-        return res.status(400).json({ error: 'Falta email' });
+  const { email, nombre } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Falta el email' });
+  }
+  const nombreAlumno = nombre && nombre.trim()
+    ? nombre.trim()
+    : email.split('@')[0];
+
+  db.query(
+    'SELECT * FROM alumnos WHERE email = ?',
+    [email],
+    (err, results) => {
+      if (err) {
+        console.error('Error al buscar alumno:', err);
+        return res.status(500).json({ error: 'Error en el servidor' });
+      }
+      if (results.length > 0) {
+        return res.json(results[0]);
+      }
+      const nuevoAlumno = new Student(email); 
+      db.query(
+        'INSERT INTO alumnos (email, nombre, password) VALUES (?, ?, ?)',
+        [email, nombreAlumno, nuevoAlumno.password],
+        (err, result) => {
+          if (err) {
+            console.error('Error al crear alumno:', err);
+            return res.status(500).json({ error: 'Error al crear el alumno' });
+          }
+          res.json({
+            id:       result.insertId,
+            email:    email,
+            nombre:   nombreAlumno,
+            password: nuevoAlumno.password
+          });
+        }
+      );
     }
-    
-    const nombre = email.split("@")[0];
-    db.query('SELECT * FROM alumnos WHERE email = ?', [email], (err, results) => {
-        if (err) {
-            console.error('Error al buscar alumno:', err);
-            return res.status(500).json({ error: 'Error en el servidor' });
-        }
-        if (results.length > 0) {
-            const alumno = results[0];
-            return res.json(alumno);
-        } else {
-            const nuevoAlumno = new Student(email);
-            db.query(
-                'INSERT INTO alumnos (email, nombre, password) VALUES (?, ?, ?)',
-                [email, nombre, nuevoAlumno.password],
-                (err, result) => {
-                    if (err) {
-                        console.error('Error al crear alumno:', err);
-                        return res.status(500).json({ error: 'Error al crear el alumno' });
-                    }
-                    const insertId = result.insertId;
-                    return res.json({ id: insertId, email: email, nombre: nombre, password: nuevoAlumno.password });
-                }
-            );
-        }
-    });
+  );
 });
+
 
 app.post('/student_groups', (req, res) => {
     const { studentId, groupId } = req.body;
@@ -341,11 +353,10 @@ app.post('/grupos', (req, res) => {
     );
   });
 
-app.get('/wordles/:id', (req, res) => {
+  app.get('/wordles/:id', (req, res) => {
     const wordleId = req.params.id;
-    // 1) Consultar datos básicos del wordle
     db.query(
-      `SELECT id, nombre, teacher_id
+      `SELECT id, nombre, teacher_id, difficulty
          FROM wordles
         WHERE id = ?`,
       [wordleId],
@@ -355,7 +366,6 @@ app.get('/wordles/:id', (req, res) => {
         }
         const wordle = results[0];
   
-        // 2) Obtener palabras asociadas
         db.query(
           `SELECT id, word AS tittle, hint
              FROM words
@@ -364,7 +374,6 @@ app.get('/wordles/:id', (req, res) => {
           (err, wordResults) => {
             if (err) return res.status(500).json({ error: 'Error al cargar palabras' });
   
-            // 3) Obtener preguntas asociadas
             db.query(
               `SELECT id, question AS statement, options, correctAnswer, type
                  FROM questions
@@ -372,8 +381,7 @@ app.get('/wordles/:id', (req, res) => {
               [wordleId],
               (err, questionResults) => {
                 if (err) return res.status(500).json({ error: 'Error al cargar preguntas' });
-  
-                // 4) Obtener grupos asociados (si usas wordle_groups N-M)
+
                 db.query(
                   `SELECT g.id, g.nombre
                      FROM grupos g
@@ -382,14 +390,13 @@ app.get('/wordles/:id', (req, res) => {
                   [wordleId],
                   (err, groupResults) => {
                     if (err) return res.status(500).json({ error: 'Error al cargar grupos' });
-  
-                    // 5) Devolver JSON completo
                     return res.json({
-                      id:        wordle.id,
-                      nombre:    wordle.nombre,
-                      words:     wordResults,
-                      questions: questionResults,
-                      groups:    groupResults
+                      id:         wordle.id,
+                      nombre:     wordle.nombre,
+                      difficulty: wordle.difficulty,
+                      words:      wordResults,
+                      questions:  questionResults,
+                      groups:     groupResults
                     });
                   }
                 );
@@ -401,27 +408,376 @@ app.get('/wordles/:id', (req, res) => {
     );
   });
   
+  
   app.put('/wordles/:id', (req, res) => {
-    const wordleId = req.params.id;
-    const { nombre } = req.body;
+    const wordleId    = req.params.id;
+    const { nombre, difficulty } = req.body;
+  
+    if (!nombre || !['low','high'].includes(difficulty)) {
+      return res.status(400).json({ error: 'Falta nombre o difficulty inválida' });
+    }
+  
     db.query(
-      'UPDATE wordles SET nombre = ? WHERE id = ?',
-      [nombre, wordleId],
-      (err, result) => {
+      'UPDATE wordles SET nombre = ?, difficulty = ? WHERE id = ?',
+      [nombre, difficulty, wordleId],
+      (err) => {
         if (err) {
-          console.error(err);
-          return res.status(500).json({ error: 'Error actualizando wordle' });
+          console.error('Error actualizando wordle:', err);
+          return res.status(500).json({ error: 'Error al actualizar wordle' });
         }
-        return res.json({ success: true });
+        res.json({ success: true });
       }
     );
   });
   
-
-
+  
 app.get('/dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dashboard.html'));
 });
+
+app.post('/words', (req, res) => {
+  const { word, hint, wordleId } = req.body;
+  if (!word || !wordleId) {
+    return res.status(400).json({ error: 'Faltan datos: word y wordleId son obligatorios' });
+  }
+  db.query(
+    'INSERT INTO words (word, hint, wordle_id) VALUES (?, ?, ?)',
+    [word, hint || null, wordleId],
+    (err, result) => {
+      if (err) {
+        console.error('Error al crear palabra:', err);
+        return res.status(500).json({ error: 'Error en el servidor al crear la palabra' });
+      }
+      res.json({ id: result.insertId, tittle: word, hint });
+    }
+  );
+});
+
+app.post('/questions', (req, res) => {
+  const { statement, options, correctAnswers, type, wordleId } = req.body;
+  if (!statement || !Array.isArray(options) || !correctAnswers || !wordleId) {
+    return res.status(400).json({ error: 'Datos incompletos para crear pregunta' });
+  }
+  const optsJson = JSON.stringify(options);
+  const corrJson = JSON.stringify(correctAnswers);
+  db.query(
+    'INSERT INTO questions (question, options, correctAnswer, type, wordle_id) VALUES (?, ?, ?, ?, ?)',
+    [statement, optsJson, corrJson, type, wordleId],
+    (err, result) => {
+      if (err) {
+        console.error('Error al crear pregunta:', err);
+        return res.status(500).json({ error: 'Error en el servidor al crear la pregunta' });
+      }
+      res.json({
+        id: result.insertId,
+        statement,
+        options,
+        correctAnswers,
+        type
+      });
+    }
+  );
+});
+
+app.delete('/words/:id', (req, res) => {
+  const wordId = req.params.id;
+  db.query('DELETE FROM words WHERE id = ?', [wordId], err => {
+    if (err) {
+      console.error('Error al eliminar la palabra:', err);
+      return res.status(500).json({ error: 'Error al eliminar la palabra' });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.delete('/questions/:id', (req, res) => {
+  const qId = req.params.id;
+  db.query('DELETE FROM questions WHERE id = ?', [qId], err => {
+    if (err) {
+      console.error('Error al eliminar la pregunta:', err);
+      return res.status(500).json({ error: 'Error al eliminar la pregunta' });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.post('/wordle_groups', (req, res) => {
+  const { wordleId, groupId } = req.body;
+  if (!wordleId || !groupId) {
+    return res.status(400).json({ error: 'Faltan datos: wordleId y groupId son obligatorios' });
+  }
+  db.query(
+    'INSERT INTO wordle_groups (wordle_id, group_id) VALUES (?, ?)',
+    [wordleId, groupId],
+    (err) => {
+      if (err) {
+        console.error('Error al asociar grupo a wordle:', err);
+        return res.status(500).json({ error: 'Error en el servidor al asociar grupo a wordle' });
+      }
+      res.json({ success: true });
+    }
+  );
+});
+
+app.post('/grupos', (req, res) => {
+  const { nombre, initDate, endDate, teacherId } = req.body;
+  if (!nombre || !initDate || !teacherId) {
+    return res.status(400).json({ error: 'Faltan datos obligatorios' });
+  }
+  db.query(
+    'INSERT INTO grupos (nombre, initDate, endDate, teacher_id) VALUES (?, ?, ?, ?)',
+    [nombre, initDate, endDate || null, teacherId],
+    (err, result) => {
+      if (err) {
+        console.error('Error al crear grupo:', err);
+        return res.status(500).json({ error: 'Error en el servidor' });
+      }
+      res.json({ id: result.insertId });
+    }
+  );
+});
+
+app.post('/wordles', (req, res) => {
+  const { nombre, teacherId, difficulty } = req.body;
+  if (!nombre || !teacherId || !['low','high'].includes(difficulty)) {
+    return res.status(400).json({ error: 'Faltan datos o difficulty inválida' });
+  }
+  db.query(
+    'INSERT INTO wordles (nombre, teacher_id, difficulty) VALUES (?,?,?)',
+    [nombre, teacherId, difficulty],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'Error creando wordle' });
+      res.json({ id: result.insertId, difficulty });
+    }
+  );
+});
+
+
+app.get('/wordles/:id/words', (req, res) => {
+  const wordleId = req.params.id;
+  db.query(
+    'SELECT word AS word, hint AS hint FROM words WHERE wordle_id = ?',
+    [wordleId],
+    (err, results) => {
+      if (err) {
+        console.error('Error al obtener palabras para wordle', wordleId, err);
+        return res.status(500).json({ error: 'Error al obtener palabras' });
+      }
+      res.json(results);
+    }
+  );
+});
+
+app.get('/wordles/:id/questions', (req, res) => {
+  const wordleId = req.params.id;
+  db.query(
+    'SELECT question AS question, options AS options, correctAnswer AS correctAnswer, type AS type FROM questions WHERE wordle_id = ?',
+    [wordleId],
+    (err, results) => {
+      if (err) {
+        console.error('Error al obtener preguntas para wordle', wordleId, err);
+        return res.status(500).json({ error: 'Error al obtener preguntas' });
+      }
+      res.json(results);
+    }
+  );
+});
+
+
+app.put('/profesores/:id/password', (req, res) => {
+  const profId = req.params.id;
+  const { password } = req.body;
+  if (password.length < 8) {   return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });}
+  if (!password) return res.status(400).json({ error: 'Falta nueva contraseña' });
+  db.query(
+    'UPDATE profesores SET password = ? WHERE id = ?',
+    [password, profId],
+    (err) => {
+      if (err) {
+        console.error('Error actualizando clave profesor:', err);
+        return res.status(500).json({ error: 'Error en servidor' });
+      }
+      res.json({ success: true });
+    }
+  );
+});
+
+// Cambiar contraseña de alumno
+app.put('/alumnos/:id/password', (req, res) => {
+  const alumId = req.params.id;
+  const { password } = req.body;
+  if (password.length < 8) {   return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });}
+  if (!password) return res.status(400).json({ error: 'Falta nueva contraseña' });
+  db.query(
+    'UPDATE alumnos SET password = ? WHERE id = ?',
+    [password, alumId],
+    (err) => {
+      if (err) {
+        console.error('Error actualizando clave alumno:', err);
+        return res.status(500).json({ error: 'Error en servidor' });
+      }
+      res.json({ success: true });
+    }
+  );
+});
+
+app.post('/wordles/:id/words', (req, res) => {
+  const wordleId = req.params.id;
+  const { word, hint } = req.body;
+  if (!word) return res.status(400).json({ error: 'Falta la palabra' });
+  db.query(
+    'INSERT INTO words (word, hint, wordle_id) VALUES (?,?,?)',
+    [word, hint || null, wordleId],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'Error al crear palabra' });
+      res.json({ id: result.insertId, tittle: word, hint });
+    }
+  );
+});
+
+app.post('/wordles/:id/questions', (req, res) => {
+  const wordleId    = req.params.id;
+  const { statement, options, correctAnswer, type } = req.body;
+  if (!statement || !Array.isArray(options) || !Array.isArray(correctAnswer) || !type) {
+    return res.status(400).json({ error: 'Datos incompletos' });
+  }
+  db.query(
+    'INSERT INTO questions (question, options, correctAnswer, type, wordle_id) VALUES (?,?,?,?,?)',
+    [statement, JSON.stringify(options), JSON.stringify(correctAnswer), type, wordleId],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: 'Error al crear pregunta' });
+      res.json({
+        id: result.insertId,
+        statement,
+        options,
+        correctAnswer,
+        type
+      });
+    }
+  );
+});
+
+app.post('/scores', (req, res) => {
+  const { studentId, wordleId, score } = req.body;
+  if (!studentId || !wordleId || typeof score !== 'number') {
+    return res.status(400).json({ error: 'Faltan datos' });
+  }
+
+  db.query(
+    'SELECT score FROM student_wordle_scores WHERE student_id = ? AND wordle_id = ?',
+    [studentId, wordleId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Error en SELECT' });
+
+      if (rows.length === 0) {
+        db.query(
+          'INSERT INTO student_wordle_scores (student_id, wordle_id, score) VALUES (?, ?, ?)',
+          [studentId, wordleId, score],
+          err2 => {
+            if (err2) return res.status(500).json({ error: 'Error en INSERT' });
+            return res.json({ success: true, action: 'inserted', score });
+          }
+        );
+      } else {
+        const best = rows[0].score;
+        if (score > best) {
+          db.query(
+            'UPDATE student_wordle_scores SET score = ? WHERE student_id = ? AND wordle_id = ?',
+            [score, studentId, wordleId],
+            err3 => {
+              if (err3) return res.status(500).json({ error: 'Error en UPDATE' });
+              return res.json({ success: true, action: 'updated', score });
+            }
+          );
+        } else {
+          return res.json({ success: true, action: 'skipped', best });
+        }
+      }
+    }
+  );
+});
+
+// 1A) Resumen por grupo: suma de los mejores scores del alumno en cada wordle de ese grupo
+app.get('/teachers/:teacherId/group-scores', (req, res) => {
+  const teacherId = req.params.teacherId;
+  const sql = `
+    SELECT 
+      g.id           AS groupId,
+      g.nombre       AS groupName,
+      a.id           AS studentId,
+      a.nombre       AS studentName,
+      COALESCE(SUM(sws.score), 0) AS totalScore
+    FROM grupos g
+    JOIN wordle_groups wg
+      ON wg.group_id = g.id
+    JOIN wordles w
+      ON w.id = wg.wordle_id
+    JOIN student_groups sg
+      ON sg.group_id = g.id
+    JOIN alumnos a
+      ON a.id = sg.student_id
+    LEFT JOIN student_wordle_scores sws
+      ON sws.wordle_id  = w.id
+     AND sws.student_id = a.id
+    WHERE g.teacher_id = ?
+    GROUP BY g.id, a.id
+    ORDER BY g.id, totalScore DESC;
+  `;
+  db.query(sql, [teacherId], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al obtener clasificaciones por grupo' });
+    // Agrupar por grupoId en JSON
+    const result = rows.reduce((acc, r) => {
+      let grp = acc.find(g => g.groupId === r.groupId);
+      if (!grp) {
+        grp = { groupId: r.groupId, groupName: r.groupName, students: [] };
+        acc.push(grp);
+      }
+      grp.students.push({
+        studentId:   r.studentId,
+        studentName: r.studentName,
+        totalScore:  r.totalScore
+      });
+      return acc;
+    }, []);
+    res.json(result);
+  });
+});
+
+// 1B) Resumen por wordle: mejor score por alumno en cada wordle
+app.get('/teachers/:teacherId/wordle-scores', (req, res) => {
+  const teacherId = req.params.teacherId;
+  const sql = `
+    SELECT 
+      w.id           AS wordleId,
+      w.nombre       AS wordleName,
+      a.id           AS studentId,
+      a.nombre       AS studentName,
+      sws.score      AS bestScore
+    FROM wordles w
+    JOIN student_wordle_scores sws ON sws.wordle_id = w.id
+    JOIN alumnos a                ON a.id = sws.student_id
+    WHERE w.teacher_id = ?
+    ORDER BY w.id, bestScore DESC;
+  `;
+  db.query(sql, [teacherId], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'Error al obtener clasificaciones por wordle' });
+    const result = rows.reduce((acc, r) => {
+      let wl = acc.find(x => x.wordleId === r.wordleId);
+      if (!wl) {
+        wl = { wordleId: r.wordleId, wordleName: r.wordleName, students: [] };
+        acc.push(wl);
+      }
+      wl.students.push({
+        studentId:   r.studentId,
+        studentName: r.studentName,
+        bestScore:   r.bestScore
+      });
+      return acc;
+    }, []);
+    res.json(result);
+  });
+});
+
 
 app.listen(3000, () => {
     console.log('Servidor ejecutándose en http://localhost:3000');

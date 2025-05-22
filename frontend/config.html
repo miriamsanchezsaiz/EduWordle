@@ -32,7 +32,7 @@
     </header>
     <main>
             <div class="settings">
-                <form action="/backend/config.php" method="POST" class="form">
+                <form id="configForm" class="form">
                     <div class="form-group">
                         <label for="password">Nueva contraseña</label>
                         <input type="password" name="password" id="password" required>
@@ -40,9 +40,18 @@
                         <label for="confirm-password">Repetir contraseña</label>
                         <input type="password" name="confirm-password" id="confirm-password" required>
                     </div>
-                </form>
-            </div>
-            <button class="change-password-btn" type="submit">Guardar</button>        
+                  </form>
+                   </div>
+                    <button id="savePasswordBtn" class="change-password-btn" type="button">
+                     Guardar
+                    </button>
+                    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+                    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+                    crossorigin="anonymous"></script>
+                    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+                    rel="stylesheet" />
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+                    <script src="assets/js/config.js"></script>   
         
     </main>
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>

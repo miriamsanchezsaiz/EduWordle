@@ -1,117 +1,119 @@
-// Obtener elementos del DOM
-const email = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const togglePassword = document.getElementById('togglePassword');
-const loginForm = document.getElementById('loginForm');
-const errorMessage = document.getElementById('error-message');
+// login.js
 
-// Evento para alternar la visibilidad de la contraseña
-togglePassword.addEventListener('click', function() {
-  const currentType = passwordInput.getAttribute('type');
-  if (currentType === 'password') {
-    passwordInput.setAttribute('type', 'text');
-    // Cambiar el ícono a uno de ocultar (puedes poner cualquier otro símbolo si lo prefieres)
-    togglePassword.textContent = '🙈';
-  } else {
-    passwordInput.setAttribute('type', 'password');
-    // Cambiar el ícono a uno de mostrar
-    togglePassword.textContent = '🐵';
-  }
+// Elementos del DOM
+const emailInput     = document.getElementById('email');
+const passwordInput  = document.getElementById('password');
+const togglePassword = document.getElementById('togglePassword');
+const loginForm      = document.getElementById('loginForm');
+const errorMessage   = document.getElementById('error-message');
+
+// Toggle de visibilidad de la contraseña
+togglePassword.addEventListener('click', () => {
+  const tipo = passwordInput.type === 'password' ? 'text' : 'password';
+  passwordInput.type = tipo;
+  togglePassword.textContent = tipo === 'password' ? '🐵' : '🙈';
 });
 
-
+// Envío del formulario de login
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
+  errorMessage.textContent = '';
 
-  const email = document.getElementById('email').value;
+  const email    = emailInput.value.trim();
   const password = passwordInput.value;
 
   try {
-      const response = await fetch('http://localhost:3000/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-      });
+    // Petición al servidor
+    const res = await fetch('http://localhost:3000/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, password })
+    });
+    if (!res.ok) throw new Error('Credenciales incorrectas');
 
-      if (!response.ok) {
-          throw new Error('Credenciales incorrectas');
-      }
+    const data = await res.json();
+    // data: { role, redirect, forceChange }
 
-      const data = await response.json();
-      window.location.href = data.redirect; // Redirigir según el rol
-  } catch (error) {
-      errorMessage.innerText = error.message;
-      errorMessage.style.color = 'red';
+    // Guardar rol e ID en sessionStorage
+    sessionStorage.setItem('role', data.role);
+    const params = new URL(data.redirect, window.location.origin).searchParams;
+    let userId;
+    if (data.role === 'profesor') {
+      userId = params.get('teacherId');
+      sessionStorage.setItem('teacherId', userId);
+    } else {
+      userId = params.get('studentId');
+      sessionStorage.setItem('studentId', userId);
+    }
+
+    // Decidir a dónde redirigir
+    let targetURL;
+    if (data.forceChange) {
+      // Primer login: forzar cambio de contraseña
+      const tipo = data.role === 'profesor' ? 'teacher' : 'student';
+      const key  = tipo === 'teacher' ? 'teacherId' : 'studentId';
+      targetURL = `config.html?type=${tipo}&${key}=${userId}&forceChange=1`;
+    } else {
+      // Login normal: ir al dashboard
+      const tipo = data.role === 'profesor' ? 'teacher' : 'student';
+      const key  = tipo === 'teacher' ? 'teacherId' : 'studentId';
+      targetURL = `dashboard.html?type=${tipo}&${key}=${userId}`;
+    }
+
+    // Redirigir sin dejar historial
+    window.location.replace(targetURL);
+
+  } catch (err) {
+    errorMessage.innerText = err.message;
+    errorMessage.style.color = 'red';
   }
 });
 
-
-
-
-/********************************************** */
-/****************** VISUALS ******************* */
-/********************************************** */
-
+// === Decorativo: círculos de fondo ===
 document.addEventListener("DOMContentLoaded", function () {
-  const NUM_CIRCULOS = 40; // Número de círculos
-  const circlesContainer = document.body;
-  const existingCircles = [];
+  const NUM_CIRCULOS = 40;
+  const container    = document.body;
+  const circles      = [];
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight / 2;
+  const maxDist = Math.hypot(cx, cy);
 
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
-  const maxDistance = Math.sqrt(centerX ** 2 + centerY ** 2); // Distancia máxima desde el centro
-
-  function getRandomPosition(size) {
-      let overlap = true;
-      let x, y;
-
-      while (overlap) {
-          x = Math.random() * (window.innerWidth - size);
-          y = Math.random() * (window.innerHeight - size);
-
-          // Verificar si se superpone con círculos existentes
-          overlap = existingCircles.some(circle => {
-              const dx = circle.x - x;
-              const dy = circle.y - y;
-              const distance = Math.sqrt(dx * dx + dy * dy);
-              return distance < (circle.size / 2 + size / 2);
-          });
-      }
-
-      existingCircles.push({ x, y, size });
-      return { x, y };
+  function randPos(size) {
+    let x, y, overlap;
+    do {
+      x = Math.random() * (window.innerWidth  - size);
+      y = Math.random() * (window.innerHeight - size);
+      overlap = circles.some(c => 
+        Math.hypot(c.x - x, c.y - y) < (c.size + size) / 2
+      );
+    } while (overlap);
+    circles.push({ x, y, size });
+    return { x, y };
   }
 
   function createCircle() {
-      const size = Math.random() * (150 - 30) + 30; // Tamaño entre 30px y 120px
-      const { x, y } = getRandomPosition(size);
+    const size = 30 + Math.random() * 120;
+    const { x, y } = randPos(size);
+    const dist = Math.hypot(x + size/2 - cx, y + size/2 - cy);
+    const opacity = Math.max(0.2, 1.3 - dist / maxDist);
 
-      // Calcular la distancia al centro
-      const dx = x + size / 2 - centerX;
-      const dy = y + size / 2 - centerY;
-      const distance = Math.sqrt(dx ** 2 + dy ** 2);
-
-      // Ajustar opacidad en función de la distancia (más lejos = más transparente)
-      const opacity = Math.max(0.2, 1.3 - distance / maxDistance); // Rango entre 0.2 y 1
-
-      const circle = document.createElement("div");
-      circle.classList.add("circle");
-      circle.style.width = `${size}px`;
-      circle.style.height = `${size}px`;
-      circle.style.left = `${x}px`;
-      circle.style.top = `${y}px`;
-      circle.style.opacity = opacity;
-
-      circlesContainer.appendChild(circle);
+    const circle = document.createElement("div");
+    circle.classList.add("circle");
+    Object.assign(circle.style, {
+      width:   `${size}px`,
+      height:  `${size}px`,
+      left:    `${x}px`,
+      top:     `${y}px`,
+      opacity
+    });
+    container.appendChild(circle);
   }
 
-  for (let i = 0; i < NUM_CIRCULOS; i++) {
-      createCircle();
-  }
+  for (let i = 0; i < NUM_CIRCULOS; i++) createCircle();
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  //limpiar inputs
-  email.value = "";
+// Limpiar inputs al cargar la página
+document.addEventListener("DOMContentLoaded", () => {
+  emailInput.value    = "";
   passwordInput.value = "";
 });
