@@ -1,20 +1,20 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "./backend/index.js",
+  "main": "./index.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=development node ./backend/index.js",
-    "test:uno": "cross-env NODE_ENV=test jest  backend/src/tests/authService.test.js --verbose --runInBand",
+    "start": "cross-env NODE_ENV=development node ./index.js",
+    "test:uno": "cross-env NODE_ENV=test jest  src/tests/authService.test.js --verbose --runInBand",
     "test": "cross-env NODE_ENV=test jest --watchAll --verbose --runInBand",
-    "seed": "cross-env NODE_ENV=development node ./backend/src/seeders/seed.js"
+    "seed": "cross-env NODE_ENV=development node ./src/seeders/seed.js"
   },
   "jest": {
     "testEnvironment": "node",
     "setupFilesAfterEnv": [
-      "./backend/src/tests/setup.js"
+      "./src/tests/setup.js"
     ],
     "transform": {
       "^.+\\.js$": "babel-jest"
