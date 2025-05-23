@@ -29,16 +29,16 @@ const seedDatabase = async () => {
 
     // 2. Create Users
     console.log('Creating users...');
-    const hashedPasswordManuela = await bcrypt.hash("password456", SALT_ROUNDS);
-    const hashedPasswordJuan = await bcrypt.hash("password123", SALT_ROUNDS);
-    const hashedPasswordOtherTeacher = await bcrypt.hash("teacherpass", SALT_ROUNDS);
-    const hashedPasswordOtherStudent = await bcrypt.hash("studentpass", SALT_ROUNDS);
+    const hashedPasswordManuela = await bcrypt.hash("Password_456!", SALT_ROUNDS);
+    const hashedPasswordJuan = await bcrypt.hash("Password_123!", SALT_ROUNDS);
+    const hashedPasswordDani = await bcrypt.hash("Teacher_pass25!", SALT_ROUNDS);
+    const hashedPasswordOtherStudent = await bcrypt.hash("Student_pass25!", SALT_ROUNDS);
 
 
     const users = await User.bulkCreate([
-      { name: 'Manuela Maestro', email: 'manuela.m@example.com', password: hashedPasswordManuela, role: 'teacher' },
+      { name: 'Manuela Malasaña', email: 'manuela.m@example.com', password: hashedPasswordManuela, role: 'teacher' },
       { name: 'Juan Perez', email: 'juan.perez@example.com', password: hashedPasswordJuan, role: 'student' },
-      { name: 'Otro Profesor', email: 'otro.profesor@example.com', password: hashedPasswordOtherTeacher, role: 'teacher' },
+      { name: 'Dani', email: 'dani@example.com', password: hashedPasswordDani, role: 'teacher' },
       { name: 'Otro Alumno', email: 'otro.alumno@example.com', password: hashedPasswordOtherStudent, role: 'student' },
        { name: 'Alumno Sin Grupo', email: 'alumno.singrupo@example.com', password: await bcrypt.hash("nogrouppass", SALT_ROUNDS), role: 'student' },
     ], { transaction, individualHooks: true }); // individualHooks: true ensures hooks (like password hashing if defined in model) run
@@ -70,10 +70,10 @@ const seedDatabase = async () => {
     // 4. Link Students to Groups (StudentGroup join table)
     console.log('Linking students to groups...');
     await StudentGroup.bulkCreate([
-      { user_id: juan.id, group_id: grupoA.id }, // Juan in Grupo A
-      { user_id: juan.id, group_id: grupoB.id }, // Juan in Grupo B
-      { user_id: otroAlumno.id, group_id: grupoA.id }, // Otro Alumno in Grupo A
-      { user_id: otroAlumno.id, group_id: grupoC.id }, // Otro Alumno in Grupo C (different teacher)
+      { userId: juan.id, groupId: grupoA.id }, // Juan in Grupo A
+      { userId: juan.id, groupId: grupoB.id }, // Juan in Grupo B
+      { userId: otroAlumno.id, groupId: grupoA.id }, // Otro Alumno in Grupo A
+      { userId: otroAlumno.id, groupId: grupoC.id }, // Otro Alumno in Grupo C (different teacher)
     ], { transaction, ignore: true }); // ignore: true is useful if you run seeder multiple times without force: true
     console.log('Students linked to groups.');
 
@@ -119,10 +119,10 @@ const seedDatabase = async () => {
     // 6. Link Wordles to Groups (WordleGroup join table)
     console.log('Linking wordles to groups...');
     await WordleGroup.bulkCreate([
-      { wordle_id: wordle1.id, group_id: grupoA.id }, // Wordle 1 accessible to Grupo A
-      { wordle_id: wordle2.id, group_id: grupoB.id }, // Wordle 2 accessible to Grupo B
-      { wordle_id: wordle3.id, group_id: grupoC.id }, // Wordle 3 accessible to Grupo C
-      { wordle_id: wordle1.id, group_id: grupoB.id }, // Wordle 1 also accessible to Grupo B
+      { wordleId: wordle1.id, groupId: grupoA.id }, // Wordle 1 accessible to Grupo A
+      { wordleId: wordle2.id, groupId: grupoB.id }, // Wordle 2 accessible to Grupo B
+      { wordleId: wordle3.id, groupId: grupoC.id }, // Wordle 3 accessible to Grupo C
+      { wordleId: wordle1.id, groupId: grupoB.id }, // Wordle 1 also accessible to Grupo B
     ], { transaction, ignore: true }); // ignore: true to prevent duplicates if linking same wordle/group combo
     console.log('Wordles linked to groups.');
 

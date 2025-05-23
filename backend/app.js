@@ -12,7 +12,14 @@ const swaggerDocument = YAML.load('./docs/api/swagger.yaml');
 
 const app = express();
 
+
 // --- Middleware Setup ---
+
+// Parse JSON request bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
 
 // Enable CORS for all origins
 //CHANGE (23/05): si front y back se ejecutan en puertos diferentes, esto es necesario
@@ -23,9 +30,7 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Parse JSON request bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 
@@ -59,6 +64,7 @@ sequelize.sync()
 
 // Mount the main API router under the /api path
 app.use('/api', apiRoutes);
+
 
 
 // --- Error Handling Middleware ---

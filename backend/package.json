@@ -6,8 +6,9 @@
     "doc": "docs"
   },
   "scripts": {
+    "prestart": "node ./src/utils/generateFrontendConfig.js",
     "start": "cross-env NODE_ENV=development node ./index.js",
-    "test:uno": "cross-env NODE_ENV=test jest  src/tests/authService.test.js --verbose --runInBand",
+    "test:uno": "cross-env NODE_ENV=test jest  ./src/tests/authService.test.js --verbose --runInBand",
     "test": "cross-env NODE_ENV=test jest --watchAll --verbose --runInBand",
     "seed": "cross-env NODE_ENV=development node ./src/seeders/seed.js"
   },
