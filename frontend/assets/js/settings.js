@@ -1,10 +1,11 @@
+// assets/js/settings.js
+
 const role      = sessionStorage.getItem('role');
 const teacherId = sessionStorage.getItem('teacherId');
 const studentId = sessionStorage.getItem('studentId');
 if (!role || (!teacherId && !studentId)) {
   window.location.replace('login.html');
 }
-// assets/js/config.js
 
 // Leer params de URL para saber si es alumno o profesor
 const params      = new URLSearchParams(window.location.search);
@@ -14,7 +15,7 @@ const btnSave     = document.getElementById("savePasswordBtn");
 const inpPass     = document.getElementById("password");
 const inpConfirm  = document.getElementById("confirm-password");
 
-// Toastr ya está cargado en config.html
+// Toastr ya está cargado en settings.html
 
 btnSave.addEventListener("click", async () => {
   const pass = inpPass.value.trim();

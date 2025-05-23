@@ -52,7 +52,7 @@ loginForm.addEventListener('submit', async (event) => {
       // Primer login: forzar cambio de contraseña
       const tipo = data.role === 'profesor' ? 'teacher' : 'student';
       const key  = tipo === 'teacher' ? 'teacherId' : 'studentId';
-      targetURL = `config.html?type=${tipo}&${key}=${userId}&forceChange=1`;
+      targetURL = `settings.html?type=${tipo}&${key}=${userId}&forceChange=1`;
     } else {
       // Login normal: ir al dashboard
       const tipo = data.role === 'profesor' ? 'teacher' : 'student';
