@@ -1,7 +1,6 @@
 // frontend/assets/js/login.js
 
-//TEST: es para saber si se importa correctamente desde apiConfig.js
-console.log("API Base URL para login.js:", API_BASE_URL);
+import { apiService } from './apiService.js';
 // Elementos del DOM
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
@@ -26,20 +25,7 @@ loginForm.addEventListener('submit', async (event) => {
 
   try {
     // Petición al servidor
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || 'Error desconocido en la autenticación.');
-    }
-
-
-    // data: { role, redirect, forceChange }
-
+    const data = await apiService.login(email, password);
     sessionStorage.setItem('authToken', data.token);
     sessionStorage.setItem('currentUser', JSON.stringify(data.user));
 

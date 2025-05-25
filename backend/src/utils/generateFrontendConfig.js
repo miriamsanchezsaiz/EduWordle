@@ -13,8 +13,8 @@ const configContent = `
 // de la API que se quiera llamar.
 // Poe ejemplo: fetch(\`\${API_BASE_URL}/auth/login\`)
 // Este archivo es generado automáticamente por el backend. ¡No editar manualmente!
-const API_BASE_URL = "${API_BASE_URL_FOR_BACKEND}";
-const FRONT_URL = "${API_BASE_URL_FOR_FRONTEND}";
+export const API_BASE_URL = "${API_BASE_URL_FOR_BACKEND}";
+export const FRONT_URL = "${API_BASE_URL_FOR_FRONTEND}";
 
 
 //ATENCIÓN: hay que cambiar los href y los src de los html tal que:

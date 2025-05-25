@@ -3,8 +3,8 @@
 // de la API que se quiera llamar.
 // Poe ejemplo: fetch(`${API_BASE_URL}/auth/login`)
 // Este archivo es generado automáticamente por el backend. ¡No editar manualmente!
-const API_BASE_URL = "http://localhost:5000/api";
-const FRONT_URL = "http://localhost:5000/frontend";
+export const API_BASE_URL = "http://localhost:5000/api";
+export const FRONT_URL = "http://localhost:5000/frontend";
 
 
 //ATENCIÓN: hay que cambiar los href y los src de los html tal que:
