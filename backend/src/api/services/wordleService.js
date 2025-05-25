@@ -123,7 +123,7 @@ const getAccessibleWordlesForStudent = async (userId) => {
                     attributes: ['id', 'name'],
                     include: {
                         model: Word,
-                        as: 'word',
+                        as: 'words',
                         attributes: ['word', 'hint']
                     }
                 }
@@ -165,7 +165,7 @@ const getWordleDataForGame = async (wordleId, studentId) => {
             include: [
                 {
                     model: Word,
-                    as: 'word',
+                    as: 'words',
                     attributes: ['word', 'hint']
                 },
                 {
@@ -331,7 +331,7 @@ const createWordle = async (teacherId, wordleData) => {
         const createdWordleDetails = await Wordle.findByPk(newWordle.id, {
             include: [
                { model: User, as: 'creator', attributes: ['id', 'name', 'email'] },
-               { model: Word, as: 'word', attributes: ['word', 'hint'] },
+               { model: Word, as: 'words', attributes: ['word', 'hint'] },
                { model: Question, as: 'questions', attributes: ['id', 'question', 'options', 'correctAnswer', 'type'] },
                { model: Group, as: 'groupsWithAccess', attributes: ['id', 'name'], through: { attributes: [] } }
             ],
@@ -363,7 +363,7 @@ const getWordlesByTeacher = async (teacherId) => {
             attributes: ['id', 'name'], // Select necessary attributes
             include: { // Include the main word for the list view
                 model: Word,
-                as: 'word', // Alias for Wordle -> Word 1:1 relationship
+                as: 'words', // Alias for Wordle -> Word 1:1 relationship
                 attributes: ['word'] // Only need the word title for the list
             }
         });
@@ -388,7 +388,7 @@ const getWordleDetails = async (wordleId, teacherId) => {
             include: [
                 {
                     model: Word,
-                    as: 'word', // Alias for the 1:1 relationship
+                    as: 'words', 
                     attributes: ['id', 'word', 'hint'] // Include word details
                 },
                 {

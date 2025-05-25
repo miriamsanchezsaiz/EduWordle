@@ -1,183 +1,161 @@
 
-//TODO: Hacer algo cuando no haya grupos / wordles que mostrar?
-//ONGOING : al alumno no le salen grupos inactivos
-const role      = sessionStorage.getItem('role');
-const teacherId = sessionStorage.getItem('teacherId');
-const studentId = sessionStorage.getItem('studentId');
-if (!role || (!teacherId && !studentId)) {
+import { apiService } from './apiService.js';
+const authToken = sessionStorage.getItem('authToken');
+const currentUserString = sessionStorage.getItem('currentUser');
+
+
+let role = null;
+let userId = null;
+
+if (authToken && currentUserString) {
+  try {
+    const currentUser = JSON.parse(currentUserString); 
+    role = currentUser.role; 
+    userId = currentUser.id; 
+    console.log("List: User autenticated. Rol:", role, "ID:", userId);
+  } catch (e) {
+    console.error("List: Error parsing currentUser from sessionStorage:", e);
+    sessionStorage.clear();
+    window.location.replace('login.html');
+  }
+}
+
+if (!authToken || !userId || !role) {
+  console.warn("List: No authenticated user found. Redirecting to login.");
   window.location.replace('login.html');
 }
+
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const type = params.get("type"); // "group" o "wordle"
-    const teacherId = params.get("teacherId");
-    const studentId = params.get("studentId");
+    const groupIdFromURL = params.get("groupId");
 
     let pageTitle = "";
     let fetchFunction = null;
-    
+
     if (type === "group") {
-            pageTitle = "Lista de Grupos";
-            if (studentId) {
-                // Si soy alumno, al clicar iré a ?type=wordle&groupId=…
-            fetchFunction = () => fetchGroupsForStudent(studentId);
-            } else {
-            fetchFunction = () => fetchGroupsForTeacher(teacherId);
-            }
-        } 
+        pageTitle = "Lista de Grupos";
+        fetchFunction = () => fetchGroups(role);
+    }
     else if (type === "wordle") {
-            pageTitle = "Lista de Wordles";
-            const groupId = params.get("groupId");
-        if (groupId) {
-            // Estoy viendo los wordles de un grupo concreto
-                fetchFunction = () => fetchWordlesForGroup(groupId);
-        } else if (teacherId) {
-            fetchFunction = () => fetchWordlesForTeacher(teacherId);
-            } else if (studentId) {
-                fetchFunction = () => fetchWordlesForStudent(studentId);
-            } else {
-                console.error("Se requiere teacherId, studentId o groupId para ver wordles.");
+        pageTitle = "Lista de Wordles";
+        if (groupIdFromURL) {
+            fetchFunction = () => fetchWordlesForGroup(groupIdFromURL);
+        } else {
+            fetchFunction = () => fetchWordles(role); 
         }
+        
     } else {
         pageTitle = "Lista";
     }
-    
+
     // Mostrar botón de creación solo para profesores
-    if (teacherId) {
+    if (role === 'teacher') {
         const createButton = document.createElement("button");
         createButton.textContent = "Crear nuevo";
         createButton.classList.add("create-button");
         createButton.onclick = () => {
-            window.location.href = `${type}Editor.html?mode=create&teacherId=${teacherId}`;
+            window.location.href = `${type}Editor.html?mode=create&userId=${userId}`;
         };
         const buttonContainer = document.getElementById("createButtonContainer");
         buttonContainer.appendChild(createButton);
         buttonContainer.classList.remove("hidden");
     }
-    
+
     document.getElementById("pageTitle").textContent = pageTitle;
 
     if (fetchFunction) fetchFunction();
 });
 
-/**
- * Obtiene los grupos creados por un profesor
- */
-function fetchGroupsForTeacher(teacherId) {
-    fetch(`/grupos?teacherId=${teacherId}`)
-        .then(response => response.json())
-        .then(data => {
+
+
+async function fetchGroups(userRole) {
+    try {
+        const data = await apiService.fetchGroups(userRole);
+        // Si el usuario es estudiante, `displayItems` necesita saberlo para redirigir a wordles del grupo.
+        if (userRole === 'student') {
+            displayItemsForStudentGroups(data);
+        } else {
             displayItems(data, "groupEditor.html");
-        })
-        .catch(error => console.error("Error al obtener grupos para profesor:", error));
+        }
+    } catch (error) {
+        console.error("Error al obtener grupos:", error);
+        toastr.error(error.message || "Error al cargar los grupos."); // Asumiendo que usas toastr
+    }
 }
 
-/**
- * Obtiene los wordles asociados a un profesor
- */
-function fetchWordlesForTeacher(teacherId) {
-    fetch(`/wordles?teacherId=${teacherId}`)
-        .then(response => response.json())
-        .then(data => {
-            displayItems(data, "wordleEditor.html");
-        })
-        .catch(error => console.error("Error al obtener wordles para profesor:", error));
+async function fetchWordles(userRole) {
+    try {
+        const data = await apiService.fetchWordles(userRole);
+        // La URL base para wordles depende del rol
+        const urlBase = userRole === 'teacher' ? "wordleEditor.html" : "game.html";
+        displayItems(data, urlBase);
+    } catch (error) {
+        console.error("Error al obtener wordles:", error);
+        toastr.error(error.message || "Error al cargar los wordles.");
+    }
 }
 
-/**
- * Obtiene los wordles asociados a un alumno
- */
-function fetchWordlesForStudent(studentId) {
-    fetch(`/wordles?studentId=${studentId}`)
-      .then(response => {
-        if (!response.ok) 
-          throw new Error(`Error ${response.status}: no se pudieron cargar los wordles`);
-        return response.json();
-      })
-       .then(data => {
-        // data es siempre un array aquí
-        displayItems(data, "game.html");
-      })
-        .catch(error => console.error("Error al obtener wordles para alumno:", error));
+async function fetchWordlesForGroup(groupId) {
+    try {
+        const groupData = await apiService.fetchWordlesForGroup(groupId);
+        displayItems(groupData.wordles, "game.html");
+    } catch (err) {
+        console.error("Error al obtener wordles para el grupo:", err);
+        toastr.error(err.message || "Error al cargar los wordles del grupo.");
+    }
 }
 
 /**
  * Función existente para mostrar los elementos en el DOM.
- * Se espera que cada elemento tenga propiedades "id" y "nombre".
+ * Se espera que cada elemento tenga propiedades "id" y "name".
  */
 function displayItems(items, urlBase) {
     const container = document.getElementById("itemsContainer");
-    const params = new URLSearchParams(window.location.search);
-    const teacherId = params.get("teacherId");
-    const studentId = params.get("studentId");
+    container.innerHTML = ""; 
+    
+    if (!items || items.length === 0) {
+        container.innerHTML = "<p>No hay elementos para mostrar.</p>";
+        return;
+    }
 
     items.forEach(item => {
         const itemElement = document.createElement("div");
         itemElement.classList.add("item");
-        itemElement.textContent = item.nombre; // Asegúrate que en la BD el campo es "nombre" o adapta el nombre de propiedad.
+        itemElement.textContent = item.name; 
         itemElement.onclick = () => {
-            if(teacherId){
-                window.location.href = `${urlBase}?mode=visual&id=${item.id}&teacherId=${teacherId}`;
-            } else if(studentId){
-                // Para alumnos, redirige directamente a la página de juego
-                window.location.href = `${urlBase}?id=${item.id}&studentId=${studentId}`;
-            } else {
-                window.location.href = `${urlBase}?id=${item.id}`;
-            }
-        };
+            let redirectUrl = `${urlBase}?id=${item.id}`;
 
+            // Siempre añadir `userId` como el ID del usuario logeado
+            redirectUrl += `&userId=${userId}`; 
+            
+            // Lógica específica para profesores que editan/visualizan
+            if (role === 'teacher' && (urlBase === "groupEditor.html" || urlBase === "wordleEditor.html")) {
+                redirectUrl += "&mode=visual";
+            }
+            
+            window.location.href = redirectUrl;
+        };
         container.appendChild(itemElement);
     });
 }
 
 
-function fetchGroups() {
-    fetch("/grupos")
-        .then(response => response.json())
-        .then(data => {
-            displayItems(data, "groupEditor.html");
-        })
-        .catch(error => console.error("Error al obtener grupos:", error));
-}
-
-function fetchGroupsForStudent(studentId) {
-    fetch(`/grupos?studentId=${studentId}`)
-        .then(r => {
-            if (!r.ok) throw new Error("Error al cargar grupos");
-            return r.json();
-        })
-        .then(groups => {
-            const container = document.getElementById("itemsContainer");
-            container.innerHTML = "";
-            groups.forEach(g => {
-                const item = document.createElement("div");
-                item.classList.add("item");
-                item.textContent = g.nombre;
-                item.onclick = () => {
-                    window.location.href =
-                      `list.html?type=wordle&studentId=${studentId}&groupId=${g.id}`;
-                };
-                container.appendChild(item);
-            });
-        })
-        .catch(err => {
-            console.error("Error al obtener grupos para el alumno:", err);
-            toastr.error(err.message);
-        });
-}
-
-function fetchWordlesForGroup(groupId) {
-    fetch(`/grupos/${groupId}`)
-        .then(r => {
-            if (!r.ok) throw new Error("Error al cargar datos de grupo");
-            return r.json();
-        })
-        .then(group => {
-            // el endpoint /grupos/:id devuelve { wordles: [...] }
-            displayItems(group.wordles, "game.html");
-        })
-        .catch(err => {
-            console.error("Error al obtener wordles para el grupo:", err);
-            toastr.error(err.message);
-        });
+function displayItemsForStudentGroups(groups) {
+    const container = document.getElementById("itemsContainer");
+    container.innerHTML = "";
+    if (!groups || groups.length === 0) {
+        container.innerHTML = "<p>No hay grupos para mostrar.</p>";
+        return;
+    }
+    groups.forEach(g => {
+        const item = document.createElement("div");
+        item.classList.add("item");
+        item.textContent = g.name;
+        item.onclick = () => {
+            // Redirige a la lista de wordles de ese grupo para el alumno
+            window.location.href = `list.html?type=wordle&userId=${userId}&groupId=${g.id}`;
+        };
+        container.appendChild(item);
+    });
 }

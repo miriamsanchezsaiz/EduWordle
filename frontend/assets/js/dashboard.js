@@ -37,12 +37,12 @@ document.addEventListener("DOMContentLoaded", () => {
     pageTitle = "Dashboard Profesor";
     mainElement.innerHTML = `
       <section class="create-wordle">
-        <button onclick="window.location.href='wordleEditor.html?mode=create&teacherId=${userId}'">Crear Wordle</button>
+        <button onclick="window.location.href='wordleEditor.html?mode=create&userId=${userId}'">Crear Wordle</button>
       </section>
       <section class="menu-options">
-        <div class="option" onclick="window.location.href='list.html?type=group&teacherId=${userId}'">Mis Grupos</div>
-        <div class="option" onclick="window.location.href='list.html?type=wordle&teacherId=${userId}'">Mis Wordles</div>
-     <div class="option" onclick="window.location.href='clasificaciones.html?type=teacher&teacherId=${userId}'">
+        <div class="option" onclick="window.location.href='list.html?type=group&userId=${userId}'">Mis Grupos</div>
+        <div class="option" onclick="window.location.href='list.html?type=wordle&userId=${userId}'">Mis Wordles</div>
+     <div class="option" onclick="window.location.href='clasificaciones.html?type=user&teacherId=${userId}'">
     Clasificaciones
     </div>
       </section>
@@ -52,8 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pageTitle = "Dashboard Alumno";
     mainElement.innerHTML = `
       <section class="menu-options">
-        <div class="option" onclick="window.location.href='list.html?type=group&studentId=${userId}'">Mis Grupos</div>
-        <div class="option" onclick="window.location.href='list.html?type=wordle&studentId=${userId}'">Mis Wordles</div>
+        <div class="option" onclick="window.location.href='list.html?type=group&userId=${userId}'">Mis Grupos</div>
+        <div class="option" onclick="window.location.href='list.html?type=wordle&userId=${userId}'">Mis Wordles</div>
       </section>
     `;
   } else {
