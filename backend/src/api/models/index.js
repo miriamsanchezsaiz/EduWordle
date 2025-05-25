@@ -18,12 +18,12 @@ User.hasMany(Wordle, { foreignKey: 'userId', as: 'createdWordles', onDelete: 'CA
 User.hasMany(GameResult, { foreignKey: 'userId', as: 'gameResults', onDelete: 'CASCADE', onUpdate: 'CASCADE' }); // A user (student) has many game results
 
 // Many-to-Many User (Student) and Group
-User.belongsToMany(Group, { 
-  through: StudentGroup, 
-  foreignKey: 'userId', 
-  otherKey: 'groupId',  
-  as: 'studentGroups',
-  onDelete: 'CASCADE', 
+User.belongsToMany(Group, {
+  through: StudentGroup,
+  foreignKey: 'userId',
+  otherKey: 'groupId',
+  as: 'groups',
+  onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
 
@@ -33,24 +33,25 @@ Group.belongsTo(User, { foreignKey: 'userId', as: 'creator', onDelete: 'CASCADE'
 
 
 // Many-to-Many Group and User (Student)
-Group.belongsToMany(User, { 
+Group.belongsToMany(User, {
   through: StudentGroup,
-  foreignKey: 'groupId',   
+  foreignKey: 'groupId',
   otherKey: 'userId',
   as: 'students',
-  onDelete: 'CASCADE', 
+  onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
 
 // Many-to-Many Group and Wordle
-Group.belongsToMany(Wordle, { 
-  through: WordleGroup, 
+Group.belongsToMany(Wordle, {
+  through: WordleGroup,
   foreignKey: 'groupId',
   otherKey: 'wordleId',
   as: 'accessibleWordles',
-  onDelete: 'CASCADE', 
+  onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
+
 
 // Wordle associations
 Wordle.belongsTo(User, { foreignKey: 'userId', as: 'creator', onDelete: 'CASCADE', onUpdate: 'CASCADE' }); // A wordle belongs to one user (teacher)
@@ -61,12 +62,12 @@ Wordle.hasMany(GameResult, { foreignKey: 'wordleId', as: 'gameResults', onDelete
 
 
 // Many-to-Many Wordle and Group
-Wordle.belongsToMany(Group, { 
+Wordle.belongsToMany(Group, {
   through: WordleGroup,
   foreignKey: 'wordleId',
   otherKey: 'groupId',
   as: 'groupsWithAccess',
-  onDelete: 'CASCADE', 
+  onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
 
@@ -77,8 +78,6 @@ Question.belongsTo(Wordle, { foreignKey: 'wordleId', onDelete: 'CASCADE', onUpda
 // Word association
 Word.belongsTo(Wordle, { foreignKey: 'wordleId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
-// StudentGroup associations (defined by the many-to-many setup)
-// No explicit belongsTo needed here as they are defined in User and Group
 
 // WordleGroup associations (defined by the many-to-many setup)
 // No explicit belongsTo needed here as they are defined in Wordle and Group
@@ -88,6 +87,8 @@ Word.belongsTo(Wordle, { foreignKey: 'wordleId', onDelete: 'CASCADE', onUpdate: 
 GameResult.belongsTo(User, { foreignKey: 'userId', as: 'player', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 GameResult.belongsTo(Wordle, { foreignKey: 'wordleId', as: 'wordle', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
+StudentGroup.belongsTo(User, { foreignKey: 'userId', as: 'student' });
+StudentGroup.belongsTo(Group, { foreignKey: 'groupId', as: 'group' });
 
 // Export all models and the sequelize instance
 module.exports = {

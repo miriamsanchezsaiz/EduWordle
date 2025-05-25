@@ -8,7 +8,7 @@ require('dotenv').config({
 
 const { Sequelize } = require('sequelize'); // Import Sequelize
 const sequelize = require('../config/database'); // Import the configured sequelize instance
-const { User, Group, StudentGroup, Wordle, Word, Question, WordleGroup } = require('../api/models'); // Import all models
+const { User, Group, StudentGroup, Wordle, Word, Question, WordleGroup, GameResult } = require('../api/models'); 
 const bcrypt = require('bcrypt'); // Import bcrypt for password hashing
 
 const SALT_ROUNDS = 10; // Define salt rounds for hashing
@@ -125,6 +125,26 @@ const seedDatabase = async () => {
       { wordleId: wordle1.id, groupId: grupoB.id }, // Wordle 1 also accessible to Grupo B
     ], { transaction, ignore: true }); // ignore: true to prevent duplicates if linking same wordle/group combo
     console.log('Wordles linked to groups.');
+
+    // 7. Create Game Results (for Manuela to view)
+        console.log('Creating game results...');
+        // Aseguramos que cada combinación (userId, wordleId) sea única
+        await GameResult.bulkCreate([
+            // Juan jugando Wordle 1 (Capital de España) - Grupo A
+            { userId: juan.id, wordleId: wordle1.id, score: 200, creationDate: '2025-05-20T10:00:00Z' },
+
+            // Juan jugando Wordle 2 (Animal Doméstico) - Grupo B
+            { userId: juan.id, wordleId: wordle2.id, score: 250, creationDate: '2025-05-21T11:00:00Z' },
+
+            // Otro Alumno (student in Grupo A) jugando Wordle 1 (Capital de España)
+            { userId: otroAlumno.id, wordleId: wordle1.id, score: 210, creationDate: '2025-05-22T09:30:00Z' },
+
+            // Otro Alumno jugando Wordle 3 (Color Primario) - del otro profesor (Manuela NO debería verla por grupo)
+            { userId: otroAlumno.id, wordleId: wordle3.id, score: 300, creationDate: '2025-05-23T14:00:00Z' },
+
+        ], { transaction }); // ¡Quita 'ignore: true' si lo habías puesto, ya que estás evitando duplicados manualmente!
+        console.log('Game results created.');
+
 
 
     await transaction.commit(); // Commit the transaction

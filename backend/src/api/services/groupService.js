@@ -435,84 +435,6 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
     }
 };
 
-const getGroupStudentRanking = async (groupId, teacherId) => {
-    try {
-        // 1. Verificar que el grupo existe y pertenece a este profesor
-        const group = await Group.findOne({
-            where: { id: groupId, userId: teacherId }, // userId aquí es el ID del profesor creador del grupo
-            include: [
-                {
-                    model: User,
-                    as: 'students', 
-                    attributes: ['id', 'name', 'email'],
-                    through: { attributes: [] }
-                },
-                {
-                    model: Wordle,
-                    as: 'accessibleWordles',
-                    attributes: ['id', 'name'], 
-                    through: { attributes: [] } 
-                }
-            ]
-        });
-
-        if (!group) {
-            throw new Error('Group not found or access denied');
-        }
-
-        // 2. Obtener los IDs de los estudiantes en el grupo
-        const studentIdsInGroup = group.students.map(student => student.id);
-        if (studentIdsInGroup.length === 0) {
-            return []; 
-        }
-
-        // 3. Obtener los IDs de los Wordles accesibles por este grupo
-        const wordleIdsForGroup = group.accessibleWordles.map(wordle => wordle.id);
-        if (wordleIdsForGroup.length === 0) {
-            return []; 
-        }
-
-        // 4. Calcular la puntuación total de cada estudiante del grupo para los Wordles accesibles
-        const ranking = await GameResult.findAll({
-            attributes: [
-                'userId',
-                [fn('SUM', col('score')), 'totalScore'] 
-            ],
-            where: {
-                userId: {
-                    [Op.in]: studentIdsInGroup 
-                },
-                wordleId: {
-                    [Op.in]: wordleIdsForGroup 
-                }
-            },
-            include: [
-                {
-                    model: User,
-                    as: 'player', // Usa el alias definido en las asociaciones para User (no estoy segura de si es player)
-                    attributes: ['name', 'email'] 
-                }
-            ],
-            group: ['userId', 'player.id'], // Agrupa por userId (y player.id para incluir atributos del usuario)
-            order: [[fn('SUM', col('score')), 'DESC']] // Ordena de forma descendente por la puntuación total
-        });
-
-        // Formatear el resultado para que sea más legible si es necesario
-        const formattedRanking = ranking.map(item => ({
-            userId: item.userId,
-            studentName: item.player.name,
-            studentEmail: item.player.email,
-            totalScore: item.dataValues.totalScore // Accede al alias 'totalScore'
-        }));
-
-        return formattedRanking;
-
-    } catch (error) {
-        console.error(`Error in getGroupStudentRanking for group ${groupId}:`, error);
-        throw error; 
-    }
-};
-
 
 module.exports = {
     getActiveGroupsForStudent, 
@@ -522,5 +444,4 @@ module.exports = {
     updateGroup, 
     deleteGroup, 
     isStudentInTeacherGroup,
-    getGroupStudentRanking,
 };

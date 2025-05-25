@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <section class="menu-options">
         <div class="option" onclick="window.location.href='list.html?type=group&userId=${userId}'">Mis Grupos</div>
         <div class="option" onclick="window.location.href='list.html?type=wordle&userId=${userId}'">Mis Wordles</div>
-     <div class="option" onclick="window.location.href='clasificaciones.html?type=user&teacherId=${userId}'">
+     <div class="option" onclick="window.location.href='classifications.html?type=user&teacherId=${userId}'">
     Clasificaciones
     </div>
       </section>

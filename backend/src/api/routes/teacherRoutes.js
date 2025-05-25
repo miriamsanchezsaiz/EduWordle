@@ -47,10 +47,6 @@ router.put('/groups/:groupId',
 // DELETE /api/teacher/groups/:groupId
 router.delete('/groups/:groupId', teacherController.deleteGroup);
 
-//Route to get gameResults of students in a specific group
-// GET /api/teacher/groups/:groupId/ranking
-router.get('/groups/:groupId/ranking', teacherController.getGroupStudentRanking);
-
 
 
 // --- Wordle Routes ---

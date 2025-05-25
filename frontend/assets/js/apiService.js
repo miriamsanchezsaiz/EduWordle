@@ -34,7 +34,7 @@ async function callApi(endpoint, options = {}) {
             if (window.location.pathname !== '/login.html') {
                 window.location.replace('login.html');
             }
-            throw new Error("No autorizado. Por favor, inicie sesión de nuevo.");
+            throw new Error("Acceso no autorizado. Por favor, inicie sesión de nuevo.");
         }
 
         if (!response.ok) {
@@ -59,7 +59,7 @@ export const apiService = {
         return callApi('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
-            
+
         });
     },
 
@@ -71,13 +71,16 @@ export const apiService = {
      * @returns {Promise<Array<object>>} Un array de objetos de grupo.
      */
     fetchGroups: async (role) => {
+        let endpoint = '';
         if (role === 'teacher') {
             return callApi('/teacher/groups', { method: 'GET' });
+
         } else if (role === 'student') {
             return callApi('/student/groups/active', { method: 'GET' });
         } else {
             throw new Error("Rol de usuario desconocido para obtener grupos.");
         }
+
     },
 
     /**
@@ -130,6 +133,11 @@ export const apiService = {
         });
     },
 
+    // Obtener ranking de un grupo (solo profesor)
+    getGameResultsByGroupId: async (groupId) => {
+        return callApi(`/teacher/game-results/group/${groupId}`, { method: 'GET' });
+    },
+
     // Crear un wordle (solo profesor)
     createWordle: async (wordleData) => {
         return callApi('/teacher/wordles', {
@@ -151,14 +159,9 @@ export const apiService = {
         });
     },
 
-    // Obtener ranking de un grupo (solo profesor)
-    getGroupStudentRanking: async (groupId) => {
-        return callApi(`/teacher/groups/${groupId}/ranking`, { method: 'GET' });
-    },
-
-    // Obtener datos de juego para un wordle (alumno)
-    getWordleGameData: async (wordleId) => {
-        return callApi(`/student/wordles/${wordleId}/game-data`, { method: 'GET' });
+    // Obtener ranking de un wordle (profesor)
+    getGameResultsByWordleId: async (wordleId) => {
+        return callApi(`/teacher/game-results/wordle/${wordleId}`, { method: 'GET' });
     },
 
     // Guardar resultado de juego (alumno)

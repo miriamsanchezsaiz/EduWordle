@@ -7,7 +7,9 @@ const {
   gameService
 } = require('../services');
 const { validationResult } = require('express-validator'); // To handle validation results
-
+const { User, Group, Wordle, GameResult } = require('../models')
+const { Op } = require('sequelize');
+const sequelize = require('../../config/database');
 // Controller function to create a new group
 const createGroup = async (req, res, next) => { // Added next for error handling
   // Check for validation errors from the validateCreateGroup middleware
