@@ -1,66 +1,104 @@
 // assets/js/settings.js
+import { apiService } from './apiService.js';
 
-const role      = sessionStorage.getItem('role');
-const teacherId = sessionStorage.getItem('teacherId');
-const studentId = sessionStorage.getItem('studentId');
-if (!role || (!teacherId && !studentId)) {
+const toastr = window.toastr;
+
+const currentUserString = sessionStorage.getItem('currentUser');
+let currentUser = null;
+if (currentUserString) {
+  try {
+    currentUser = JSON.parse(currentUserString);
+  } catch (e) {
+    console.error("Error parsing currentUser from sessionStorage:", e);
+  }
+}
+
+if (!currentUser || !currentUser.id || !currentUser.role) {
+  console.warn("No user found in sessionStorage or incomplete data. Redirecting to login.");
+  sessionStorage.clear(); // Limpia cualquier dato corrupto
   window.location.replace('login.html');
 }
 
-// Leer params de URL para saber si es alumno o profesor
-const params      = new URLSearchParams(window.location.search);
-
 // Botón y campos
-const btnSave     = document.getElementById("savePasswordBtn");
-const inpPass     = document.getElementById("password");
-const inpConfirm  = document.getElementById("confirm-password");
+const btnSave = document.getElementById("savePasswordBtn");
+const inpOldPass = document.getElementById("old-password");
+const inpNewPass = document.getElementById("password");
+const inpConfirmNewPass = document.getElementById("confirm-password");
 
-// Toastr ya está cargado en settings.html
+const passwordToggleIcons = document.querySelectorAll('.password-toggle-icon');
+
+passwordToggleIcons.forEach(icon => {
+    icon.addEventListener('click', () => {
+        // Encontrar el input de contraseña asociado
+        const passwordInput = icon.previousElementSibling; // Es el elemento hermano anterior
+
+        if (passwordInput && passwordInput.type) {
+            const tipo = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = tipo;
+            icon.textContent = tipo === 'password' ? '🐵' : '🙈'; // Cambia el emoji
+        }
+    });
+});
+
 
 btnSave.addEventListener("click", async () => {
-  const pass = inpPass.value.trim();
-  const confirm = inpConfirm.value.trim();
-  if (!pass || !confirm) {
-    toastr.error("Debes rellenar ambos campos");
+  const oldPass = inpOldPass.value.trim();
+  const newPass = inpNewPass.value.trim();
+  const confirmNewPass = inpConfirmNewPass.value.trim();
+
+  if (!oldPass || !newPass || !confirmNewPass) {
+    toastr.error("Debes rellenar todos los campos de contraseña.");
     return;
   }
-  if (pass !== confirm) {
-    toastr.error("Las contraseñas no coinciden");
+  if (newPass !== confirmNewPass) {
+    toastr.error("Las nuevas contraseñas no coinciden");
     return;
   }
 
-  if (pass.length < 8) {
+  if (newPass.length < 8) {
     toastr.error("La contraseña debe tener al menos 8 caracteres");
     return;
   }
 
-  // Decide ruta según rol
-  let url;
-  if (teacherId) {
-    url = `/profesores/${teacherId}/password`;
-  } else if (studentId) {
-    url = `/alumnos/${studentId}/password`;
-  } else {
-    toastr.error("No se ha identificado el usuario");
+  if (oldPass === newPass) {
+    toastr.error("La nueva contraseña no puede ser igual a la actual.");
     return;
   }
 
+
   try {
-    const res = await fetch(url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pass })
+
+    const userId = currentUser.id;
+    const userRole = currentUser.role;
+
+    await apiService.changePassword(userRole, {
+      oldPassword: oldPass,
+      newPassword: newPass
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Error al cambiar contraseña");
+
+    toastr.success("Contraseña actualizada con éxito. Redirigiendo...");
+    
+    let redirectUrl;
+    if (userRole === 'student') {
+      redirectUrl = `/dashboard.html?type=student&studentId=${userId}`;
+    } else if (userRole === 'teacher') {
+      redirectUrl = `/dashboard.html?type=teacher&teacherId=${userId}`;
+    } else {
+      redirectUrl = '/login.html';
     }
-    toastr.success("Contraseña actualizada");
-    // Opcional: limpiar campos
-    inpPass.value = "";
-    inpConfirm.value = "";
+
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 1500); // 1.5 segundos para que el mensaje sea visible
+
+    inpOldPass.value = "";
+    inpNewPass.value = "";
+    inpConfirmNewPass.value = "";
+
   } catch (e) {
     console.error("Error al guardar contraseña:", e);
-    toastr.error(e.message);
+    // Si el backend devuelve un error específico (ej. contraseña antigua incorrecta)
+    // el apiService ya lo habrá extraído del JSON y lo mostrará.
+    toastr.error(e.message || "Error al actualizar la contraseña.");
   }
 });

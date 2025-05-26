@@ -183,6 +183,7 @@ export const apiService = {
     
 
     // Cambiar contraseña (profesor o alumno)
+    //PUT /api/{role}/change-password
     changePassword: async (role, passwordData) => {
         return callApi(`/${role}/change-password`, {
             method: 'PUT',

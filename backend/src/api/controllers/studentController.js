@@ -162,7 +162,7 @@ const getStudentGameResultDetails = async (req, res, next) => {
 
 
 // Controller function to handle change password request for the logged-in student
-const changePassword = async (req, res) => {
+const changePassword = async (req, res, next) => {
   // You might need a validation middleware for this endpoint too (oldPassword, newPassword)
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

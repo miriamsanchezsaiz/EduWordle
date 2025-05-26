@@ -7,7 +7,6 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 10%;
     }
 
 /* Contenedor centrado con fondo blanco */
@@ -62,3 +61,25 @@ input {
     font-size: 24px;
     cursor: pointer;
   }
+
+.password-input-wrapper {
+    position: relative; /* Contenedor para posicionar el icono */
+    margin-bottom: 15px; /* Espacio entre los campos de contraseña */
+}
+
+.password-input-wrapper input {
+    padding-right: 40px; /* Deja espacio para el icono */
+    width: 100%; /* Ajusta el ancho al contenedor */
+    box-sizing: border-box; /* Asegura que padding no aumente el ancho total */
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 10px; /* Distancia desde la derecha */
+    top: 29%; /* Centra verticalmente */
+    transform: translateY(-50%); /* Ajuste fino de centrado */
+    cursor: pointer;
+    font-size: 1.2em; /* Tamaño del emoji */
+    user-select: none; /* Evita que el emoji se pueda seleccionar */
+}
+
