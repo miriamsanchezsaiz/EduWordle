@@ -12,11 +12,21 @@ const getActiveGroups = async (req, res) => {
   // req.user will contain { id, email, role } from the authenticateJWT middleware
   const studentId = req.user.id;
 
+
+    if (!studentId) {
+        // En un caso real, esto debería ser manejado por el middleware de autenticación
+        // o lanzar un error 401 Unauthorized.
+        return res.status(401).json({ message: 'Authentication required: User ID missing.' });
+    }
+
   try {
     // Call a service function to get active groups for the student
     // You will need to implement groupService.getActiveGroupsForStudent
     const activeGroups = await groupService.getActiveGroupsForStudent(studentId);
 
+    if (!activeGroups) {
+             return res.status(200).json([]); // Envía un array vacío si no hay grupos
+        }
     res.status(200).json(activeGroups);
 
   } catch (error) {
@@ -45,21 +55,13 @@ const getAccessibleWordles = async (req, res) => {
 
 // Controller function to get game data for a specific wordle
 const getWordleGameData = async (req, res) => {
-  const wordleId = req.params.wordleId; // Get wordleId from URL parameters
-  const studentId = req.user.id; // Get studentId from authenticated user
+  const wordleId = req.params.wordleId; 
+  const studentId = req.user.id; 
 
+  
   try {
-    // First, verify if the student has access to this wordle
-    // You will need to implement a service function like wordleService.checkStudentAccess
-    const hasAccess = await wordleService.checkStudentAccess(studentId, wordleId);
-
-    if (!hasAccess) {
-      return res.status(403).json({ message: 'Access denied to this wordle' });
-    }
-
     // Call a service function to get the wordle data (word and questions)
-    // You will need to implement wordleService.getWordleDataForGame
-    const wordleData = await wordleService.getWordleDataForGame(wordleId);
+    const wordleData = await wordleService.getWordleDataForGame(wordleId, studentId);
 
     if (!wordleData) {
       // Should not happen if checkStudentAccess passed, but good defensive check

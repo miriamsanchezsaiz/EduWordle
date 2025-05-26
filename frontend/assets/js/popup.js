@@ -13,7 +13,7 @@ fetch("/popups.html")
 // Función para abrir un popup por su tipo (students o wordles, etc.)
 function openPopup(popupType) {
   const popupBody = document.getElementById("popup-body");
-  const template  = document.getElementById(popupType);
+  const template = document.getElementById(popupType);
   if (!template) return;
   let content;
   if (template instanceof HTMLTemplateElement) {
@@ -42,22 +42,51 @@ function closePopup() {
 window.closePopup = closePopup;
 
 function openPopupPoints(points) {
+
+
   openPopup('game');
+  const closeButton = document.getElementsByClassName("close-button")[0];
+  closeButton.remove();
   const span = document.getElementById('points');
-  if (span) span.textContent = points;
-    const endBtn = document.getElementById("endButton");
-  if (endBtn) {
-    const params = new URLSearchParams(window.location.search);
-    const studentId = params.get("studentId");
-    const teacherId = params.get("teacherId");
-    let target;
-    if (studentId) {
-      target = `/dashboard.html?type=student&studentId=${studentId}`;
-    } else if (teacherId) {
-      target = `/dashboard.html?type=teacher&teacherId=${teacherId}`;
-    } else {
-      target = "/login.html";
+
+  if (span) {
+    if (!points) {
+      span.textContent = 0;
     }
+    else {
+      span.textContent = parseInt(points);
+    }
+  }
+
+  const endBtn = document.getElementById("endButton");
+  if (endBtn) {
+
+    const currentUserString = sessionStorage.getItem('currentUser');
+    let role = null;
+    let userId = null; // Este será el studentId o teacherId
+    let target = "/login.html";
+
+    if (currentUserString) {
+      try {
+        const currentUser = JSON.parse(currentUserString);
+        role = currentUser.role;
+        userId = currentUser.id;
+
+        if (role === 'student' && userId) {
+          target = `/dashboard.html?type=student&studentId=${userId}`;
+        } else if (role === 'teacher' && userId) {
+          target = `/dashboard.html?type=teacher&teacherId=${userId}`;
+        }
+
+
+      } catch (e) {
+        console.error('Error parsing currentUser from localStorage:', e);
+      }
+    }
+    else {
+      console.warn("No currentUser found in localStorage. Redirecting to login.");
+    }
+
     endBtn.onclick = () => window.location.href = target;
   }
 }
@@ -68,7 +97,7 @@ window.openPopupPoints = openPopupPoints;
 // Cargar lista de grupos creados por el profesor
 function loadListGroups() {
   // 1) Leer teacherId de la URL
-  const params    = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
   const teacherId = params.get("teacherId");
   if (!teacherId) {
     toastr.error("No se ha identificado al profesor");
@@ -87,7 +116,7 @@ function loadListGroups() {
       select.innerHTML = '<option value="" disabled selected>Selecciona un grupo</option>';
       groups.forEach(g => {
         const opt = document.createElement("option");
-        opt.value       = g.id;      // tu API devuelve { id, nombre, ... }
+        opt.value = g.id;      // tu API devuelve { id, nombre, ... }
         opt.textContent = g.nombre;
         select.appendChild(opt);
       });
@@ -102,7 +131,7 @@ window.loadListGroups = loadListGroups;
 
 // Cargar lista de wordles disponibles para el profesor
 function loadListWordles() {
-  const params    = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
   const teacherId = params.get("teacherId");
   if (!teacherId) {
     toastr.error("No se ha identificado al profesor");
@@ -132,7 +161,7 @@ function loadListWordles() {
 // Añadir una opción extra (para preguntas)
 function addOption() {
   const cont = document.getElementById("options-container");
-  const div  = document.createElement("div");
+  const div = document.createElement("div");
   div.classList.add("option-input");
   div.innerHTML = `
     <input type="text" placeholder="Escribe aquí">
@@ -166,7 +195,7 @@ async function saveStudent() {
     window.displayItem(student, "students");
     toastr.success("Alumno añadido");
     closePopup();
-  } catch(e) {
+  } catch (e) {
     console.error("Error en saveStudent:", e);
     toastr.error(e.message);
   }
@@ -176,7 +205,7 @@ window.saveStudent = saveStudent;
 // Función para guardar nuevo wordle en el grupo
 function saveWordle() {
   const sel = document.getElementById("wordle-select");
-  const id  = sel.value;
+  const id = sel.value;
   const txt = sel.options[sel.selectedIndex]?.textContent;
   if (!id) {
     toastr.error("Debes seleccionar un wordle");
@@ -191,39 +220,39 @@ function saveWordle() {
 window.saveWordle = saveWordle;
 
 async function saveWordleToGroup() {
-    const select = document.getElementById("wordle-select");
-    if (!select) {
-        toastr.error("No se encontró el selector de Wordles");
-        return;
-    }
-    const wordleId   = select.value;
-    if (!wordleId) {
-        toastr.error("Debes seleccionar un Wordle");
-        return;
-    }
-    const wordleName = select.options[select.selectedIndex].textContent;
+  const select = document.getElementById("wordle-select");
+  if (!select) {
+    toastr.error("No se encontró el selector de Wordles");
+    return;
+  }
+  const wordleId = select.value;
+  if (!wordleId) {
+    toastr.error("Debes seleccionar un Wordle");
+    return;
+  }
+  const wordleName = select.options[select.selectedIndex].textContent;
 
-    // añade al array local
-    const wordleObj = { id: wordleId, nombre: wordleName };
-    window.sessionGroup.wordles.push(wordleObj);
-    displayItem(wordleObj, "wordles");
-    toastr.success("Wordle añadido");
+  // añade al array local
+  const wordleObj = { id: wordleId, nombre: wordleName };
+  window.sessionGroup.wordles.push(wordleObj);
+  displayItem(wordleObj, "wordles");
+  toastr.success("Wordle añadido");
 
-    // si el grupo ya tiene ID, guarda la relación
-    if (window.sessionGroup.id) {
-        try {
-            await fetch("/wordle_groups", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ wordleId, groupId: window.sessionGroup.id })
-            });
-        } catch (err) {
-            console.error(err);
-            toastr.error("Error al guardar la relación en la base de datos");
-        }
+  // si el grupo ya tiene ID, guarda la relación
+  if (window.sessionGroup.id) {
+    try {
+      await fetch("/wordle_groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wordleId, groupId: window.sessionGroup.id })
+      });
+    } catch (err) {
+      console.error(err);
+      toastr.error("Error al guardar la relación en la base de datos");
     }
+  }
 
-    closePopup();
+  closePopup();
 }
 window.saveWordleToGroup = saveWordleToGroup;
 
@@ -353,7 +382,7 @@ async function saveGroupToWordle() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wordleId: window.sessionWordle.id,
-          groupId:  groupId
+          groupId: groupId
         })
       });
     } catch (err) {
@@ -369,11 +398,11 @@ window.saveGroupToWordle = saveGroupToWordle;
 
 
 function backFromEdit() {
-    const mode = new URLSearchParams(window.location.search).get("mode");
-    if (mode !== "visual") {
-      const placeholder = document.getElementById("popup-placeholder");
-      placeholder.className = 'popup-overlay';   // aplica overlay
-      placeholder.innerHTML = `
+  const mode = new URLSearchParams(window.location.search).get("mode");
+  if (mode !== "visual") {
+    const placeholder = document.getElementById("popup-placeholder");
+    placeholder.className = 'popup-overlay';   // aplica overlay
+    placeholder.innerHTML = `
         <div class="popup-panel">
           <button class="close-button" onclick="closePopup()">×</button>
           <div class="popup-body">
@@ -385,13 +414,13 @@ function backFromEdit() {
           </div>
         </div>
       `;
-      placeholder.classList.remove("hidden");
-    } else {
-      window.history.back();
-    }
+    placeholder.classList.remove("hidden");
+  } else {
+    window.history.back();
   }
-  window.backFromEdit = backFromEdit;
-  
+}
+window.backFromEdit = backFromEdit;
+
 // ======================= popup.js =======================
 
 // --- Alumnos: CSV nombre;email ----------------------------------
@@ -402,7 +431,7 @@ function backFromEdit() {
 async function uploadStudentsCSV(evt) {
   const file = evt.target.files[0];
   if (!file) return;
-  const text  = await file.text();
+  const text = await file.text();
   const lines = text
     .split(/\r?\n/)
     .map(l => l.trim())
@@ -432,9 +461,9 @@ window.uploadStudentsCSV = uploadStudentsCSV;
 async function saveStudentCSV(email, nombre) {
   // 1) Crear o recuperar alumno
   let resp = await fetch("/alumnos", {
-    method:  "POST",
+    method: "POST",
     headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ email, nombre })
+    body: JSON.stringify({ email, nombre })
   });
   if (!resp.ok) {
     const err = await resp.json();
@@ -451,11 +480,11 @@ async function saveStudentCSV(email, nombre) {
   // 3) Asociar en BD si el grupo ya existe
   if (window.sessionGroup.id) {
     resp = await fetch("/student_groups", {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({
+      body: JSON.stringify({
         studentId: alumno.id,
-        groupId:   window.sessionGroup.id
+        groupId: window.sessionGroup.id
       })
     });
     if (!resp.ok) {
@@ -475,7 +504,7 @@ window.saveStudentCSV = saveStudentCSV;
 async function uploadWordsCSV(evt) {
   const file = evt.target.files[0];
   if (!file) return;
-  const text  = await file.text();
+  const text = await file.text();
   const lines = text
     .split(/\r?\n/)
     .map(l => l.trim())
@@ -485,9 +514,9 @@ async function uploadWordsCSV(evt) {
     const [word, hint] = row.split(';').map(c => c.trim());
     try {
       const resp = await fetch(`/wordles/${window.sessionWordle.id}/words`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ word, hint })
+        body: JSON.stringify({ word, hint })
       });
       if (!resp.ok) throw new Error("Error creando palabra");
       const newW = await resp.json();
@@ -513,7 +542,7 @@ window.uploadWordsCSV = uploadWordsCSV;
 async function uploadQuestionsCSV(evt) {
   const file = evt.target.files[0];
   if (!file) return;
-  const text  = await file.text();
+  const text = await file.text();
   const lines = text
     .split(/\r?\n/)
     .map(l => l.trim())
@@ -521,13 +550,13 @@ async function uploadQuestionsCSV(evt) {
 
   for (const row of lines) {
     const [statement, optsRaw, corrRaw, type] = row.split(';').map(c => c.trim());
-    const options       = optsRaw.split(',').map(o => o.trim());
+    const options = optsRaw.split(',').map(o => o.trim());
     const correctAnswer = corrRaw.split(',').map(o => o.trim());
     try {
       const resp = await fetch(`/wordles/${window.sessionWordle.id}/questions`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
+        body: JSON.stringify({
           statement,
           options,
           correctAnswer,

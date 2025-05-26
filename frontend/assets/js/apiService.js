@@ -29,7 +29,7 @@ async function callApi(endpoint, options = {}) {
         const response = await fetch(url, config);
 
         if (response.status === 401) {
-            console.warn("API Service: Acceso no autorizado (401). Limpiando sesión.");
+            console.warn("API Service Error: 401 Unauthorized. Redirecting to login.");
             sessionStorage.clear();
             if (window.location.pathname !== '/login.html') {
                 window.location.replace('login.html');
@@ -164,13 +164,23 @@ export const apiService = {
         return callApi(`/teacher/game-results/wordle/${wordleId}`, { method: 'GET' });
     },
 
+    /************************************************ */
+    /***************** Alumno *********************** */
+
+    // GET /api/student/wordles/:wordleId/game-data
+    getWordleGameData: async (wordleId) => {
+        return callApi(`/student/wordles/${wordleId}/game-data`);
+    },
+
     // Guardar resultado de juego (alumno)
+    // POST /api/student/games/:wordleId/save-result
     saveGameResult: async (wordleId, resultData) => {
         return callApi(`/student/games/${wordleId}/save-result`, {
             method: 'POST',
             body: JSON.stringify(resultData),
         });
     },
+    
 
     // Cambiar contraseña (profesor o alumno)
     changePassword: async (role, passwordData) => {

@@ -78,10 +78,8 @@ Question.belongsTo(Wordle, { foreignKey: 'wordleId', onDelete: 'CASCADE', onUpda
 // Word association
 Word.belongsTo(Wordle, { foreignKey: 'wordleId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
-
-// WordleGroup associations (defined by the many-to-many setup)
-// No explicit belongsTo needed here as they are defined in Wordle and Group
-
+WordleGroup.belongsTo(Wordle, { foreignKey: 'wordleId', as: 'wordle' });
+WordleGroup.belongsTo(Group, { foreignKey: 'groupId', as: 'group' }); // <-- ESTA ES LA CLAVE PARA TU ERROR
 
 // GameResult associations
 GameResult.belongsTo(User, { foreignKey: 'userId', as: 'player', onDelete: 'CASCADE', onUpdate: 'CASCADE' });

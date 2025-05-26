@@ -15,10 +15,10 @@ class NotFoundError extends Error {
 }
 
 class ForbiddenError extends Error {
-     constructor(message) {
+    constructor(message) {
         super(message);
         this.name = 'ForbiddenError';
-        this.statusCode = 403; 
+        this.statusCode = 403;
     }
 }
 
@@ -31,7 +31,7 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
     try {
         // Find the student user
         const studentUser = await User.findByPk(studentId, {
-            attributes: ['id', 'role'], 
+            attributes: ['id', 'role'],
         });
 
         if (!studentUser || studentUser.role !== 'student') { // Ensure it's a student
@@ -77,7 +77,7 @@ const isWordleCreatedByTeacher = async (wordleId, teacherId) => {
 };
 
 const isGroupCreatedByTeacher = async (groupId, teacherId) => {
-     try {
+    try {
         // Find the group and check if its creator matches the teacherId
         const group = await Group.findOne({
             where: {
@@ -104,9 +104,9 @@ const getAccessibleWordlesForStudent = async (userId) => {
     try {
         const studentUser = await User.findByPk(userId, {
             attributes: ['id', 'role'],
-            include: {
+            include: [{
                 model: Group,
-                as: 'studentGroups',
+                as: 'groups',
                 through: { attributes: [] },
                 where: {
                     initDate: { [Op.lte]: new Date() },
@@ -115,26 +115,26 @@ const getAccessibleWordlesForStudent = async (userId) => {
                         { endDate: { [Op.gte]: new Date() } }
                     ]
                 },
-                attributes: ['id'],
-                include: {
+                attributes: ['id', 'name'],
+                include: [{
                     model: Wordle,
                     as: 'accessibleWordles',
                     through: { attributes: [] },
-                    attributes: ['id', 'name'],
-                    include: {
+                    attributes: ['id', 'name', 'difficulty'],
+                    include: [{
                         model: Word,
                         as: 'words',
                         attributes: ['word', 'hint']
-                    }
-                }
-            }
+                    }]
+                }]
+            }]
         });
 
-        if (!studentUser|| studentUser.role !== 'student') {
+        if (!studentUser || studentUser.role !== 'student') {
             return [];
         }
 
-        const accessibleWordles = studentUser.studentGroups.reduce((wordles, group) => {
+        const accessibleWordles = studentUser.groups.reduce((wordles, group) => {
             group.accessibleWordles.forEach(wordle => {
                 if (!wordles.some(w => w.id === wordle.id)) {
                     wordles.push(wordle.toJSON());
@@ -156,12 +156,12 @@ const getWordleDataForGame = async (wordleId, studentId) => {
     try {
 
         const hasAccess = await checkStudentAccess(studentId, wordleId);
-        if(!hasAccess) {
+        if (!hasAccess) {
             throw new ForbiddenError('Student does not have access to this wordle');
         }
-        
+
         const wordle = await Wordle.findByPk(wordleId, {
-            attributes: ['id', 'name'],
+            attributes: ['id', 'name', 'difficulty'],
             include: [
                 {
                     model: Word,
@@ -176,19 +176,43 @@ const getWordleDataForGame = async (wordleId, studentId) => {
             ]
         });
 
-        if(!wordle) {
+        if (!wordle) {
             throw new NotFoundError('Wordle not found');
         }
 
-        constwordleJson = wordle.toJSON();
-        if(wordleJson.questions){
-            wordleJson.questions = wordleJson.questions.map(q => ({
-                ...q,
-                options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
-                correctAnswer: typeof q.correctAnswer === 'string' ? JSON.parse(q.correctAnswer) : q.correctAnswer,
-           }));
-        }
-        // Convert options and correctAnswer to JSON objects if they are strings
+        const wordleJson = wordle.toJSON();
+        if (wordleJson.questions) {
+            wordleJson.questions = wordleJson.questions.map(q => {
+                let parsedOptions = q.options;
+                let parsedCorrectAnswer = q.correctAnswer;
+
+                // Solo parseamos si es una cadena JSON
+                try {
+                    if (typeof q.options === 'string' && q.options.startsWith('[') || q.options.startsWith('{') || q.options.startsWith('"')) {
+                        parsedOptions = JSON.parse(q.options);
+                    }
+                } catch (e) {
+                    console.warn(`[getWordleDataForGame] Error parsing options for question ${q.id}:`, q.options, e);
+                    // Opcional: manejar el error, devolver un valor por defecto, etc.
+                }
+
+                try {
+                    if (typeof q.correctAnswer === 'string' && q.correctAnswer.startsWith('[') || q.correctAnswer.startsWith('{') || q.correctAnswer.startsWith('"')) {
+                        parsedCorrectAnswer = JSON.parse(q.correctAnswer);
+                    }
+                } catch (e) {
+                    console.warn(`[getWordleDataForGame] Error parsing correctAnswer for question ${q.id}:`, q.correctAnswer, e);
+                }
+
+
+                return {
+                    ...q,
+                    options: parsedOptions,
+                    correctAnswer: parsedCorrectAnswer,
+                };
+            });
+        } 
+        //Convert options and correctAnswer to JSON objects if they are strings
         return wordleJson;
 
     } catch (error) {
@@ -200,30 +224,43 @@ const getWordleDataForGame = async (wordleId, studentId) => {
 // Function to check if a specific student user has access to a specific wordle (already implemented)
 const checkStudentAccess = async (userId, wordleId) => {
     try {
-        const accessEntry = await WordleGroup.findOne({
-            where: { wordleId: wordleId },
-            include: {
+        const currentDate = new Date();
+
+
+        const student = await User.findByPk(userId, {
+            attributes: ['id'], // Solo necesitamos el ID del estudiante
+            include: [{
                 model: Group,
-                as: 'group', // Alias defined in models/index.js for WordleGroup -> Group
-                where: { // Filter groups by active date range
+                as: 'groups', // Alias para la relación User -> Group (Many-to-Many)
+                through: { attributes: [] }, // No necesitamos los datos de la tabla intermedia StudentGroup
+                where: {
                     initDate: { [Op.lte]: new Date() },
                     [Op.or]: [
                         { endDate: null },
                         { endDate: { [Op.gte]: new Date() } }
                     ]
                 },
-                include: {
-                    model: StudentGroup,
-                    as: 'studentGroup', // Alias defined in models/index.js for Group -> StudentGroup
-                    where: { userId: userId } // Check if this student is in the group
-                }
-            }
+                attributes: ['id'], // Solo necesitamos el ID del grupo
+                required: true, // Asegura que solo traiga estudiantes con grupos activos
+                include: [{
+                    model: Wordle,
+                    as: 'accessibleWordles', // Alias para la relación Group -> Wordle (Many-to-Many)
+                    through: { attributes: [] }, // No necesitamos los datos de la tabla intermedia WordleGroup
+                    where: {
+                        id: wordleId // Filtra directamente por la wordle que nos interesa
+                    },
+                    attributes: ['id'], // Solo necesitamos el ID de la wordle
+                    required: true // Asegura que solo traiga grupos que contengan esta wordle
+                }]
+            }]
         });
 
-        return accessEntry && accessEntry.group && accessEntry.group.studentGroup !== null;
+        const hasAccess = student && student.groups && student.groups.length > 0;
+
+        return hasAccess;
 
     } catch (error) {
-        console.debug('Error in checkStudentAccess:', error);
+        console.error('Error in checkStudentAccess:', error);
         throw error;
     }
 };
@@ -241,7 +278,7 @@ const createWordle = async (teacherId, wordleData) => {
         console.log('DEBUG wordleService.createWordle: Start.');
         console.log('DEBUG wordleService.createWordle: Received teacherId parameter:', teacherId);
         console.log('DEBUG wordleService.createWordle: Type of teacherId parameter:', typeof teacherId);
-        console.log('DEBUG wordleService.createWordle: Received wordleData:', JSON.stringify(wordleData)); 
+        console.log('DEBUG wordleService.createWordle: Received wordleData:', JSON.stringify(wordleData));
         // --- END DEBUGGING LOGS ---
 
 
@@ -259,9 +296,9 @@ const createWordle = async (teacherId, wordleData) => {
 
         // 2. Create the Wordle
         const newWordle = await Wordle.create({
-            name: wordleData.name, 
+            name: wordleData.name,
             userId: teacherId,
-            difficulty: wordleData.difficulty 
+            difficulty: wordleData.difficulty
         }, { transaction });
 
         // --- DEBUGGING LOG ---
@@ -275,8 +312,8 @@ const createWordle = async (teacherId, wordleData) => {
             throw new Error('Word details (title) are required');
         }
         await Word.create({
-            word: wordleData.word.title, 
-            hint: wordleData.word.hint || null, 
+            word: wordleData.word.title,
+            hint: wordleData.word.hint || null,
             wordleId: newWordle.id // Link the word to the wordle 
         }, { transaction });
 
@@ -319,8 +356,8 @@ const createWordle = async (teacherId, wordleData) => {
 
 
             const wordleGroupEntries = ownedGroupIds.map(groupId => ({
-                wordleId: newWordle.id, 
-                groupId: groupId 
+                wordleId: newWordle.id,
+                groupId: groupId
             }));
             await WordleGroup.bulkCreate(wordleGroupEntries, { transaction, ignore: true });
         }
@@ -330,13 +367,13 @@ const createWordle = async (teacherId, wordleData) => {
         // Return the created wordle details (fetch again to include relations if needed)
         const createdWordleDetails = await Wordle.findByPk(newWordle.id, {
             include: [
-               { model: User, as: 'creator', attributes: ['id', 'name', 'email'] },
-               { model: Word, as: 'words', attributes: ['word', 'hint'] },
-               { model: Question, as: 'questions', attributes: ['id', 'question', 'options', 'correctAnswer', 'type'] },
-               { model: Group, as: 'groupsWithAccess', attributes: ['id', 'name'], through: { attributes: [] } }
+                { model: User, as: 'creator', attributes: ['id', 'name', 'email'] },
+                { model: Word, as: 'words', attributes: ['word', 'hint'] },
+                { model: Question, as: 'questions', attributes: ['id', 'question', 'options', 'correctAnswer', 'type'] },
+                { model: Group, as: 'groupsWithAccess', attributes: ['id', 'name'], through: { attributes: [] } }
             ],
             // No transaction needed for this final fetch after commit
-       });
+        });
 
         return createdWordleDetails.toJSON();
 
@@ -388,7 +425,7 @@ const getWordleDetails = async (wordleId, teacherId) => {
             include: [
                 {
                     model: Word,
-                    as: 'words', 
+                    as: 'words',
                     attributes: ['id', 'word', 'hint'] // Include word details
                 },
                 {

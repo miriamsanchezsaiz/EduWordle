@@ -1,5 +1,7 @@
 
 import { apiService } from './apiService.js';
+const toastr = window.toastr;
+
 const authToken = sessionStorage.getItem('authToken');
 const currentUserString = sessionStorage.getItem('currentUser');
 
@@ -72,7 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
 async function fetchGroups(userRole) {
     try {
         const data = await apiService.fetchGroups(userRole);
-        // Si el usuario es estudiante, `displayItems` necesita saberlo para redirigir a wordles del grupo.
+        console.log("[list.js] Datos de grupos recibidos del API:", data); 
+
+
         if (userRole === 'student') {
             displayItemsForStudentGroups(data);
         } else {

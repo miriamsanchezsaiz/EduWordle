@@ -5,7 +5,7 @@
   "main": "/assets/js/login.js",
   "scripts": {
 
-    "start:backend": "npm --prefix backend run prestart && npm --prefix backend start",
+"start:backend": "npm --prefix backend run seed && npm --prefix backend run prestart && npm --prefix backend start",
     "test": "echo \"Error: no test specified\" && exit 1"
 
   },

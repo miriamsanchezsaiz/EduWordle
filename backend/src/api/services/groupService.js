@@ -4,7 +4,7 @@ const { Op } = require('sequelize'); // Import Op for Sequelize operators
 const userService = require('./userService'); // Import userService to create/find users
 const sequelize = require('../../config/database');
 const emailService = require('./emailService'); // Import the new email service
-const { generateInitialPassword } = require('../../utils/passwordUtils'); 
+const { generateInitialPassword } = require('../../utils/passwordUtils');
 
 
 // Function to get active groups for a specific student user (already implemented)
@@ -13,7 +13,7 @@ const getActiveGroupsForStudent = async (userId) => {
         const studentUser = await User.findByPk(userId, {
             include: {
                 model: Group,
-                as: 'studentGroups',
+                as: 'groups',
                 through: { attributes: [] },
                 where: {
                     initDate: { [Op.lte]: new Date() },
@@ -21,16 +21,18 @@ const getActiveGroupsForStudent = async (userId) => {
                         { endDate: null },
                         { endDate: { [Op.gte]: new Date() } }
                     ]
-                }
+                },
+                attributes: ['id', 'name', 'initDate', 'endDate'],
+                required: true
             }
         });
 
         if (!studentUser) {
-            return [];
+            throw new NotFoundError('Student not found.');
+            return []; 
         }
 
-        return studentUser.studentGroups.map(group => group.toJSON());
-
+        return studentUser.groups || [];
     } catch (error) {
         console.debug('Error getting active groups for student:', error);
         throw error;
@@ -58,7 +60,7 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
         // console.log('FINAL-DEBUG groupService.getGroupsByTeacher: now:', now);
 
         if (filters.status === 'active') {
-            
+
             whereClause.initDate = { [Op.lte]: now };
             whereClause[Op.or] = [
                 { endDate: null },
@@ -109,7 +111,7 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
             // console.log('FINAL-DEBUG : init:', initDateObj.toISOString(), 'end:', endDateObj?.toISOString(), 'today:', today.toISOString());
             // console.log('FINAL-DEBUG : isActive:', isActive);
 
-                return {
+            return {
                 ...group.toJSON(),
                 isActive
             };
@@ -131,20 +133,20 @@ const getGroupDetails = async (groupId, teacherId) => {
         const group = await Group.findOne({
             where: {
                 id: groupId,
-                userId: teacherId 
+                userId: teacherId
             },
             include: [
                 {
                     model: User,
-                    as: 'students', 
+                    as: 'students',
                     through: { attributes: [] },
                     attributes: ['id', 'name', 'email', 'role']
                 },
                 {
                     model: Wordle,
-                    as: 'accessibleWordles', 
+                    as: 'accessibleWordles',
                     through: { attributes: [] },
-                    attributes: ['id', 'name'] 
+                    attributes: ['id', 'name']
                 }
             ]
         });
@@ -162,13 +164,13 @@ const getGroupDetails = async (groupId, teacherId) => {
 
 const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 
-    
+
     const createdStudents = [];
     const linkedStudents = [];
     const studentUserIdsToLink = [];
 
     if (studentEmails && studentEmails.length > 0) {
-        
+
         for (const email of studentEmails) {
             try {
                 const existingUser = await userService.findUserByEmail(email);
@@ -176,7 +178,7 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
                 if (existingUser) {
                     if (existingUser.role !== 'student') {
                         console.warn(`User with email ${email} exists but is not a student (role: ${existingUser.role}). Skipping linking to group.`);
-                        throw new Error(`User with email ${email} exists but is not a student.`);                        continue;
+                        throw new Error(`User with email ${email} exists but is not a student.`); continue;
                     }
                     const isAlreadyInGroup = await group.hasStudent(existingUser, { transaction });
                     if (isAlreadyInGroup) {
@@ -195,18 +197,18 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
                     studentUserIdsToLink.push(newUser.id);
 
 
-                    
+
                     emailService.sendWelcomeEmail(newUser.email, newUser.name, initialPassword)
                         .catch(err => console.debug(`Failed to send email to ${newUser.email}:`, err));
                 }
             } catch (error) {
                 console.error(`Error processing student with email ${email}:`, error);
-                throw error; 
+                throw error;
             }
         }
 
         // 4. Link students to the group using bulkCreate (only for those que no estaban previamente)
-       try{
+        try {
             if (studentUserIdsToLink.length > 0) {
                 const studentGroupEntries = studentUserIdsToLink.map(userId => ({
                     userId: userId,
@@ -214,10 +216,10 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
                 }));
                 await StudentGroup.bulkCreate(studentGroupEntries, { transaction, ignore: true });
             }
-       } catch (error) {
+        } catch (error) {
             console.error(`Error linking students to group ${group.id}:`, error);
-            throw error; 
-        } 
+            throw error;
+        }
 
     }
 
@@ -247,17 +249,17 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
         const newGroup = await Group.create({
             name: groupData.name,
             initDate: new Date(groupData.startDate),
-            endDate: new Date (groupData.endDate),
+            endDate: new Date(groupData.endDate),
             userId: teacherId
         }, { transaction });
 
         console.log('DEBUG groupService.createGroup: Group created with ID:', newGroup.id);
 
-        const { createdStudents, linkedStudents} = await addStudentsToGroup(newGroup, studentEmails, transaction);
+        const { createdStudents, linkedStudents } = await addStudentsToGroup(newGroup, studentEmails, transaction);
 
         await transaction.commit();
 
-        
+
 
         const groupWithStudents = await Group.findByPk(newGroup.id, {
             include: {
@@ -272,7 +274,7 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
             ...groupWithStudents.toJSON(),
             createdStudents: createdStudents,
             linkedStudents: linkedStudents,
-            
+
         };
 
     } catch (error) {
@@ -343,7 +345,7 @@ const updateGroup = async (groupId, teacherId, updateData) => {
             ...updatedGroupWithStudents.toJSON(),
             createdStudents: createdStudents, // Students created during this update
             linkedStudents: linkedStudents,   // Students linked during this update
-            
+
         };
 
     } catch (error) {
@@ -421,12 +423,12 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
         }
 
         const groups = await student.getStudentGroups({
-            where: { userId: teacherId }, 
-            through: { attributes: [] },      
-            attributes: ['id']                
+            where: { userId: teacherId },
+            through: { attributes: [] },
+            attributes: ['id']
         });
 
-        return groups.length > 0 && groups.some(group => group.userId === teacherId);; 
+        return groups.length > 0 && groups.some(group => group.userId === teacherId);;
 
 
     } catch (error) {
@@ -437,11 +439,11 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
 
 
 module.exports = {
-    getActiveGroupsForStudent, 
-    createGroup, 
-    getGroupsByTeacher, 
-    getGroupDetails, 
-    updateGroup, 
-    deleteGroup, 
+    getActiveGroupsForStudent,
+    createGroup,
+    getGroupsByTeacher,
+    getGroupDetails,
+    updateGroup,
+    deleteGroup,
     isStudentInTeacherGroup,
 };
