@@ -43,6 +43,23 @@ function openPopup(popupType) {
 }
 window.openPopup = openPopup;
 
+
+function sessionExpiredPopup() {
+  console.log(`[JWT ERROR] : Abriendo popup de mensaje `);
+
+  openPopup('sessionExpired');
+  const closeButton = document.getElementsByClassName("close-button")[0];
+  closeButton.remove();
+
+  const reloginButton = document.getElementById("reloginButton");
+  if (reloginButton) {
+    reloginButton.onclick = () => window.location.href = "/login.html";
+  }
+
+}
+window.sessionExpiredPopup = sessionExpiredPopup;
+
+
 // Cerrar popup
 function closePopup() {
   document.getElementById("popup-placeholder").classList.add("hidden");
@@ -144,40 +161,40 @@ window.loadListGroups = loadListGroups;
 
 // Cargar lista de wordles disponibles para el profesor
 async function loadListWordles() {
-   const currentUserString = sessionStorage.getItem('currentUser');
-    let teacherId = null;
-    if (currentUserString) {
-        try {
-            const currentUser = JSON.parse(currentUserString);
-            if (currentUser.role === 'teacher') {
-                teacherId = currentUser.id;
-            }
-        } catch (e) {
-            console.error("Error parsing currentUser for teacherId:", e);
-        }
+  const currentUserString = sessionStorage.getItem('currentUser');
+  let teacherId = null;
+  if (currentUserString) {
+    try {
+      const currentUser = JSON.parse(currentUserString);
+      if (currentUser.role === 'teacher') {
+        teacherId = currentUser.id;
+      }
+    } catch (e) {
+      console.error("Error parsing currentUser for teacherId:", e);
     }
+  }
 
-    if (!teacherId) {
-        toastr.error("No se ha identificado al profesor. Por favor, inicie sesión como profesor.");
-        return;
-    }
+  if (!teacherId) {
+    toastr.error("No se ha identificado al profesor. Por favor, inicie sesión como profesor.");
+    return;
+  }
 
 
-   try {
-        // Usamos apiService.fetchWordles() que ya adaptamos para el profesor
-        const wordles = await apiService.fetchWordles(); // Asumo que este endpoint ya filtra por el teacherId del JWT
-        const select = document.getElementById("wordle-select");
-        select.innerHTML = '<option value="" disabled selected>Selecciona un wordle</option>';
-        wordles.forEach(w => {
-            const opt = document.createElement("option");
-            opt.value = w.id;
-            opt.textContent = w.name; // Asumo que el nombre de la wordle es 'name'
-            select.appendChild(opt);
-        });
-    } catch (err) {
-        console.error("Error al cargar wordles:", err);
-        toastr.error(err.message || "Error al cargar wordles.");
-    }
+  try {
+    // Usamos apiService.fetchWordles() que ya adaptamos para el profesor
+    const wordles = await apiService.fetchWordles(); // Asumo que este endpoint ya filtra por el teacherId del JWT
+    const select = document.getElementById("wordle-select");
+    select.innerHTML = '<option value="" disabled selected>Selecciona un wordle</option>';
+    wordles.forEach(w => {
+      const opt = document.createElement("option");
+      opt.value = w.id;
+      opt.textContent = w.name; // Asumo que el nombre de la wordle es 'name'
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Error al cargar wordles:", err);
+    toastr.error(err.message || "Error al cargar wordles.");
+  }
 }
 window.loadListWordles = loadListWordles;
 
@@ -204,10 +221,10 @@ async function saveStudent() {
     toastr.error("Debes introducir un email");
     return;
   }
-  if (!name && document.getElementById("name")) { 
-        toastr.error("Debes introducir un nombre para el alumno.");
-        return;
-    }
+  if (!name && document.getElementById("name")) {
+    toastr.error("Debes introducir un nombre para el alumno.");
+    return;
+  }
 
   try {
     const resp = await fetch("/alumnos", {
@@ -431,7 +448,7 @@ function backFromEdit() {
   const mode = new URLSearchParams(window.location.search).get("mode");
   if (mode !== "visual") {
     const placeholder = document.getElementById("popup-placeholder");
-    placeholder.className = 'popup-overlay';   
+    placeholder.className = 'popup-overlay';
     placeholder.innerHTML = `
         <div class="popup-panel">
           <button class="close-button" onclick="closePopup()">×</button>

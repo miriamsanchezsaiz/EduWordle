@@ -28,13 +28,10 @@ async function callApi(endpoint, options = {}) {
     try {
         const response = await fetch(url, config);
 
-        if (response.status === 401) {
-            console.warn("API Service Error: 401 Unauthorized. Redirecting to login.");
-            sessionStorage.clear();
-            if (window.location.pathname !== '/login.html') {
-                window.location.replace('login.html');
-            }
-            throw new Error("Acceso no autorizado. Por favor, inicie sesión de nuevo.");
+        if (response.status === 401 || response.status === 403) {
+            console.warn("API Service Error: 401 Unauthorized. Token might be expired or invalid.");
+            handleUnauthorizedResponse();
+            throw new Error('Unauthorized or Session Expired');
         }
 
         if (!response.ok) {
@@ -49,10 +46,24 @@ async function callApi(endpoint, options = {}) {
         return await response.json();
 
     } catch (error) {
-        console.error("API Service Error en la petición:", error);
+        console.error('Network or API call failed:', error);
+        
+        if (error.message === 'Unauthorized or Session Expired') {
+            throw error; 
+        }
         throw error;
     }
+};
+
+
+function handleUnauthorizedResponse() {
+
+    sessionStorage.clear();
+    console.log("[JWT ERROR] opening popup");
+
+    sessionExpiredPopup();
 }
+
 
 export const apiService = {
     login: async (email, password) => {

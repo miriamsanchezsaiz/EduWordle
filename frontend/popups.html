@@ -19,19 +19,10 @@
     <!-- add word popup -->
     <template id="words">
         <div class="words-container">
-            <input
-            type="file"
-            id="csvWordsUpload"
-            accept=".csv"
-            style="display: none"
-            onchange="uploadWordsCSV(event)"
-            />
-            <button
-            type="button"
-            class="upload-icon"
-            onclick="document.getElementById('csvWordsUpload').click()"
-            >
-            SUBIR CSV <i class="fa-solid fa-upload"></i>
+            <input type="file" id="csvWordsUpload" accept=".csv" style="display: none"
+                onchange="uploadWordsCSV(event)" />
+            <button type="button" class="upload-icon" onclick="document.getElementById('csvWordsUpload').click()">
+                SUBIR CSV <i class="fa-solid fa-upload"></i>
             </button>
 
 
@@ -41,29 +32,19 @@
             <label for="hint-input">PISTA</label>
             <textarea id="hint-input" class="text-area" placeholder="Introduce una pista"></textarea>
 
-            <button id= "save-word" class="save-button" onclick="saveWord()">Guardar</button>
+            <button id="save-word" class="save-button" onclick="saveWord()">Guardar</button>
         </div>
     </template>
 
     <!-- add question popup -->
-
     <template id="questions">
         <div class="words-container">
             <!-- Hidden file input -->
-            <input
-            type="file"
-            id="csvQuestionsUpload"
-            accept=".csv"
-            style="display: none"
-            onchange="uploadQuestionsCSV(event)"
-            />
+            <input type="file" id="csvQuestionsUpload" accept=".csv" style="display: none"
+                onchange="uploadQuestionsCSV(event)" />
             <!-- Botón con estilo original -->
-            <button
-            type="button"
-            class="upload-icon"
-            onclick="document.getElementById('csvQuestionsUpload').click()"
-            >
-            SUBIR CSV <i class="fa-solid fa-upload"></i>
+            <button type="button" class="upload-icon" onclick="document.getElementById('csvQuestionsUpload').click()">
+                SUBIR CSV <i class="fa-solid fa-upload"></i>
             </button>
 
 
@@ -76,7 +57,7 @@
                 <div class="option-input">
                     <input type="text" placeholder="Escribe aquí" required>
                     <div class="correct-answer">
-                        <input type="checkbox" class="checkbox-answer" >
+                        <input type="checkbox" class="checkbox-answer">
                     </div>
                 </div>
                 <div class="option-input">
@@ -87,16 +68,15 @@
                 </div>
             </div>
 
-            <button class = "add-option-button" onclick="addOption()">+</button>
+            <button class="add-option-button" onclick="addOption()">+</button>
 
 
 
-            <button id= "save-question" class="save-button" onclick="saveQuestion()">Guardar</button>
+            <button id="save-question" class="save-button" onclick="saveQuestion()">Guardar</button>
         </div>
     </template>
 
     <!-- add group popup -->
-
     <template id="groups">
         <div class="words-container">
 
@@ -105,39 +85,28 @@
                 <option value="" disabled selected>Selecciona un grupo</option>
             </select>
 
-            <button id= "save-group" class="save-button" onclick="saveGroupToWordle()">Guardar</button>
+            <button id="save-group" class="save-button" onclick="saveGroupToWordle()">Guardar</button>
         </div>
     </template>
 
     <!-- add student popup -->
-
     <template id="students">
         <div class="words-container">
-            <input
-            type="file"
-            id="csvStudentUpload"
-            accept=".csv"
-            style="display: none"
-            onchange="uploadStudentsCSV(event)"
-            />
+            <input type="file" id="csvStudentUpload" accept=".csv" style="display: none"
+                onchange="uploadStudentsCSV(event)" />
 
-            <button
-            type="button"
-            class="upload-icon"
-            onclick="document.getElementById('csvStudentUpload').click()"
-            >
-            SUBIR CSV <i class="fa-solid fa-upload"></i>
+            <button type="button" class="upload-icon" onclick="document.getElementById('csvStudentUpload').click()">
+                SUBIR CSV <i class="fa-solid fa-upload"></i>
             </button>
 
             <label for="email">E-MAIL</label>
             <input type="email" id="email" class="text-input" name="email" required>
 
-            <button id= "save-student" class="save-button" onclick="saveStudent()">Guardar</button>
+            <button id="save-student" class="save-button" onclick="saveStudent()">Guardar</button>
         </div>
     </template>
 
     <!-- add wordle popup -->
-
     <template id="wordles">
         <div class="words-container">
 
@@ -152,37 +121,44 @@
     <!-- Game popup -->
     <template id="game">
         <div class="endGame-container">
-            <h1 >FIN DEL JUEGO</h1>
-            Has obtenido <span id="points"> 0 </span> puntos !    
-        <button id="endButton" class="save-button">Volver al inicio</button>
+            <h1>FIN DEL JUEGO</h1>
+            Has obtenido <span id="points"> 0 </span> puntos !
+            <button id="endButton" class="save-button">Volver al inicio</button>
         </div>
     </template>
 
     <!-- Delete Element popup -->
-
     <template id="delete">
         <div class="delete-container">
             <h2>¿Estás seguro de que quieres eliminar este elemento?</h2>
             <p>Esta acción no se puede deshacer.</p>
             <div class="buttonSection">
-                <button class = "exit-button" onclick="deleteElement()">Eliminar</button>
+                <button class="exit-button" onclick="deleteElement()">Eliminar</button>
             </div>
 
         </div>
     </template>
 
     <!-- Back from Wordle popup -->
-
     <template id="wordle-back">
         <div class="delete-container">
             <h2>¿Estás seguro de que quieres salir?</h2>
             <p>La partida no se guardará y los puntos se perderán</p>
             <div class="buttonSection">
-                <button class = "exit-button" onclick="window.history.back()">Salir</button>
+                <button class="exit-button" onclick="window.history.back()">Salir</button>
             </div>
 
         </div>
     </template>
 
+    <!-- Session Expired popup -->
+    <template id="sessionExpired">
+        <div class="endGame-container">
+            <h2>Sesión Expirada</h2>
+            <p>Tu sesión ha caducado por inactividad o por seguridad.</p>
+            <button id="reloginButton" class="save-button">Iniciar Sesión</button>
+        </div>
+
+    </template>
 
 </body>
