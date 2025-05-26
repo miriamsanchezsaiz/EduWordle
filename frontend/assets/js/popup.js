@@ -1,20 +1,28 @@
-//TODO: no funciona el load Groups
+// assets/js/popup.js
+import { apiService } from './apiService.js';
 
-// popup.js
-// Lógica de popups para Group Editor y Wordle Editor
-
+// Asegúrate de que toastr esté disponible globalmente
+const toastr = window.toastr;
+if (typeof toastr === 'undefined') {
+  console.error('Toastr.js no está cargado o no es accesible globalmente.');
+  // Considera un fallback o un mensaje de error más visible si es crítico
+}
 // Cargar dinámicamente los templates de popups
 fetch("/popups.html")
   .then(res => res.text())
   .then(html => {
     document.getElementById("popup-placeholder").innerHTML = html;
-  });
+  }).catch(err => console.error("Error al cargar popups.html:", err));
 
 // Función para abrir un popup por su tipo (students o wordles, etc.)
 function openPopup(popupType) {
   const popupBody = document.getElementById("popup-body");
   const template = document.getElementById(popupType);
-  if (!template) return;
+  if (!template) {
+    console.warn(`Template with ID '${popupType}' not found.`);
+    return;
+  }
+
   let content;
   if (template instanceof HTMLTemplateElement) {
     content = document.importNode(template.content, true);
@@ -93,70 +101,85 @@ function openPopupPoints(points) {
 
 window.openPopupPoints = openPopupPoints;
 
-// Cargar lista de grupos (solo frontend de ejemplo)
 // Cargar lista de grupos creados por el profesor
-function loadListGroups() {
-  // 1) Leer teacherId de la URL
-  const params = new URLSearchParams(window.location.search);
-  const teacherId = params.get("teacherId");
+async function loadListGroups() {
+  // 1) Leer teacherId de localStorage
+  const currentUserString = sessionStorage.getItem('currentUser');
+  let teacherId = null;
+  if (currentUserString) {
+    try {
+      const currentUser = JSON.parse(currentUserString);
+      if (currentUser.role === 'teacher') {
+        teacherId = currentUser.id;
+      }
+    } catch (e) {
+      console.error("Error parsing currentUser for teacherId:", e);
+    }
+  }
+
   if (!teacherId) {
-    toastr.error("No se ha identificado al profesor");
+    toastr.error("No se ha identificado al profesor. Por favor, inicie sesión como profesor.");
     return;
   }
 
   // 2) Hacer fetch real al backend
-  fetch(`/grupos?teacherId=${teacherId}`)
-    .then(res => {
-      if (!res.ok) throw new Error("Error al cargar grupos");
-      return res.json();
-    })
-    .then(groups => {
-      // 3) Rellenar el <select> del popup
-      const select = document.getElementById("group-select");
-      select.innerHTML = '<option value="" disabled selected>Selecciona un grupo</option>';
-      groups.forEach(g => {
-        const opt = document.createElement("option");
-        opt.value = g.id;      // tu API devuelve { id, nombre, ... }
-        opt.textContent = g.nombre;
-        select.appendChild(opt);
-      });
-    })
-    .catch(err => {
-      console.error("Error cargando grupos:", err);
-      toastr.error(err.message);
+  try {
+    // Usamos apiService.fetchGroups() que ya adaptamos para el profesor
+    const groups = await apiService.fetchGroups(); // Asumo que este endpoint ya filtra por el teacherId del JWT
+    const select = document.getElementById("group-select");
+    select.innerHTML = '<option value="" disabled selected>Selecciona un grupo</option>';
+    groups.forEach(g => {
+      const opt = document.createElement("option");
+      opt.value = g.id;
+      opt.textContent = g.name; // Asumo que el nombre del grupo es 'name'
+      select.appendChild(opt);
     });
+  } catch (err) {
+    console.error("Error cargando grupos:", err);
+    toastr.error(err.message || "Error al cargar grupos.");
+  }
 }
 window.loadListGroups = loadListGroups;
 
 
 // Cargar lista de wordles disponibles para el profesor
-function loadListWordles() {
-  const params = new URLSearchParams(window.location.search);
-  const teacherId = params.get("teacherId");
-  if (!teacherId) {
-    toastr.error("No se ha identificado al profesor");
-    return;
-  }
-  fetch(`/wordles?teacherId=${teacherId}`)
-    .then(res => {
-      if (!res.ok) throw new Error("Error al cargar wordles");
-      return res.json();
-    })
-    .then(list => {
-      const select = document.getElementById("wordle-select");
-      select.innerHTML = '<option value="" disabled selected>Selecciona un wordle</option>';
-      list.forEach(w => {
-        const opt = document.createElement("option");
-        opt.value = w.id;
-        opt.textContent = w.nombre;
-        select.appendChild(opt);
-      });
-    })
-    .catch(err => {
-      console.error("Error al cargar wordles:", err);
-      toastr.error(err.message);
-    });
+async function loadListWordles() {
+   const currentUserString = sessionStorage.getItem('currentUser');
+    let teacherId = null;
+    if (currentUserString) {
+        try {
+            const currentUser = JSON.parse(currentUserString);
+            if (currentUser.role === 'teacher') {
+                teacherId = currentUser.id;
+            }
+        } catch (e) {
+            console.error("Error parsing currentUser for teacherId:", e);
+        }
+    }
+
+    if (!teacherId) {
+        toastr.error("No se ha identificado al profesor. Por favor, inicie sesión como profesor.");
+        return;
+    }
+
+
+   try {
+        // Usamos apiService.fetchWordles() que ya adaptamos para el profesor
+        const wordles = await apiService.fetchWordles(); // Asumo que este endpoint ya filtra por el teacherId del JWT
+        const select = document.getElementById("wordle-select");
+        select.innerHTML = '<option value="" disabled selected>Selecciona un wordle</option>';
+        wordles.forEach(w => {
+            const opt = document.createElement("option");
+            opt.value = w.id;
+            opt.textContent = w.name; // Asumo que el nombre de la wordle es 'name'
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Error al cargar wordles:", err);
+        toastr.error(err.message || "Error al cargar wordles.");
+    }
 }
+window.loadListWordles = loadListWordles;
 
 // Añadir una opción extra (para preguntas)
 function addOption() {
@@ -173,12 +196,19 @@ function addOption() {
 window.addOption = addOption;
 
 // Función para guardar nuevo alumno vía popup
+//TODO: Adaptar para añadir el nombre y para adaptarlo al nuevo código de groupEditor
 async function saveStudent() {
   const email = document.getElementById("email").value.trim();
+  const name = document.getElementById("name") ? document.getElementById("name").value.trim() : '';
   if (!email) {
     toastr.error("Debes introducir un email");
     return;
   }
+  if (!name && document.getElementById("name")) { 
+        toastr.error("Debes introducir un nombre para el alumno.");
+        return;
+    }
+
   try {
     const resp = await fetch("/alumnos", {
       method: "POST",
@@ -401,7 +431,7 @@ function backFromEdit() {
   const mode = new URLSearchParams(window.location.search).get("mode");
   if (mode !== "visual") {
     const placeholder = document.getElementById("popup-placeholder");
-    placeholder.className = 'popup-overlay';   // aplica overlay
+    placeholder.className = 'popup-overlay';   
     placeholder.innerHTML = `
         <div class="popup-panel">
           <button class="close-button" onclick="closePopup()">×</button>
