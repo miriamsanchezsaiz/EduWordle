@@ -706,7 +706,7 @@ async function endGame() {
 
 
   //Se muestra popup de fin de wordle
-  openPopupPoints( points);
+  openPopupPoints(points);
 
 
   //Se suman los puntos en la BD
