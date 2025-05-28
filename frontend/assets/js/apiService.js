@@ -1,6 +1,8 @@
 // frontend/assets/js/apiService.js
 
-import { API_BASE_URL } from './apiConfig.js';
+// import { API_BASE_URL } from './apiConfig.js';
+// cambio para docker
+const API_BASE_URL = '/api';
 
 async function callApi(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -28,7 +30,7 @@ async function callApi(endpoint, options = {}) {
     try {
         const response = await fetch(url, config);
 
-        if (response.status === 401 || response.status === 403) {
+        if ((response.status === 401 || response.status === 403) && url != "/api/auth/login") {
             console.warn("API Service Error: 401 Unauthorized. Token might be expired or invalid.");
             handleUnauthorizedResponse();
             throw new Error('Unauthorized or Session Expired');

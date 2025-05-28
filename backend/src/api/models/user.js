@@ -39,7 +39,6 @@ const User = sequelize.define('User', { // 'User' is the model name (English)
   }
 }, {
   tableName: 'user', // Specifies the actual table name in the database (English)
-  timestamps: false // Assuming no createdAt/updatedAt in the new table
 });
 
 // Note on passwords:

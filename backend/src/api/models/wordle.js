@@ -32,7 +32,6 @@ const Wordle = sequelize.define('Wordle', {
   }
 }, {
   tableName: 'wordle',
-  timestamps: false
 });
 
 module.exports = Wordle;

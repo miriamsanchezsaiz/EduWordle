@@ -1,5 +1,5 @@
 // src/utils/passwordUtils.js
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const PASSWORD_SALT_ROUNDS = 10; // Número de rondas de sal para bcrypt
 

@@ -1,5 +1,5 @@
 // src/api/services/userService.js (Simplified)
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { User, Group, StudentGroup } = require('../models'); // Import the User and Group models
 const sequelize = require('../../config/database'); // Import sequelize for transactions if needed
 

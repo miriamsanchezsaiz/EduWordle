@@ -36,7 +36,6 @@ const Group = sequelize.define('Group', {
   }
 }, {
   tableName: 'group',
-  timestamps: false
 });
 
 module.exports = Group;

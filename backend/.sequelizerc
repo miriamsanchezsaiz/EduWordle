@@ -1,0 +1,12 @@
+// backend/.sequelizerc
+const path = require('path');
+
+// Cargar variables de entorno desde .env en la raíz de backend
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
+module.exports = {
+  'config': path.resolve(__dirname, 'config', 'config.js'),
+  'models-path': path.resolve(__dirname, 'src', 'api', 'models'), 
+  'migrations-path': path.resolve(__dirname, 'migrations'),
+  'seeders-path': path.resolve(__dirname, 'seeders')
+};

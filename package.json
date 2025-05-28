@@ -4,10 +4,8 @@
   "description": "",
   "main": "/assets/js/login.js",
   "scripts": {
-
-"start:backend": "npm --prefix backend run seed && npm --prefix backend run prestart && npm --prefix backend start",
+    "start:backend": "npm --prefix backend run prestart && npm --prefix backend start",
     "test": "echo \"Error: no test specified\" && exit 1"
-
   },
   "repository": {
     "type": "git",
@@ -21,6 +19,6 @@
   },
   "homepage": "https://github.com/miriamsanchezsaiz/EduWordle#readme",
   "dependencies": {
-   
+    "dotenv": "^16.5.0"
   }
 }

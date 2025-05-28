@@ -26,7 +26,6 @@ const WordleGroup = sequelize.define('WordleGroup', {
   }
 }, {
   tableName: 'wordle_group',
-  timestamps: false,
   // If using the composite primary key from the SQL script:
   primaryKey: ['wordleId', 'groupId'] // Define the composite primary key
 });

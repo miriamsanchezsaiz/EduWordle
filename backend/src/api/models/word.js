@@ -30,7 +30,6 @@ const Word = sequelize.define('Word', {
   }
 }, {
   tableName: 'word',
-  timestamps: false
 });
 
 module.exports = Word;

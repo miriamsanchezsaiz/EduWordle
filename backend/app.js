@@ -54,18 +54,16 @@ app.use((req, res, next) => {
 
 // --- Database Synchronization ---
 
-// Note: sequelize.sync() is great for development, but in production
-// you would typically use database migration tools instead.
-sequelize.sync()
-  .then(() => {
-    console.log('Database models synchronized successfully.\n\n' +
-      '========================= END OF SYNC =========================\n');
+// sequelize.sync()
+//   .then(() => {
+//     console.log('Database models synchronized successfully.\n\n' +
+//       '========================= END OF SYNC =========================\n');
       
-  })
-  .catch((err) => {
-    console.error('Error synchronizing database models:', err);
-    process.exit(1);
-  });
+//   })
+//   .catch((err) => {
+//     console.error('Error synchronizing database models:', err);
+//     process.exit(1);
+//   });
 
 
 // --- Routes ---

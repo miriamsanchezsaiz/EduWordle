@@ -64,7 +64,6 @@ const Question = sequelize.define('Question', {
   }
 }, {
   tableName: 'question',
-  timestamps: false
 });
 
 module.exports = Question;

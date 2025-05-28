@@ -39,8 +39,6 @@ const GameResult = sequelize.define('GameResult', {
 }, {
   tableName: 'game', 
   timestamps: true, // Let Sequelize manage createdAt and updatedAt
-  createdAt: 'creationDate', // Map Sequelize's createdAt to your DB column 'creationDate'
-  updatedAt: false, // Disable updatedAt as per your simplified structure request
   indexes: [
     {
       unique: true,

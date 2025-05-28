@@ -28,7 +28,6 @@ const StudentGroup = sequelize.define('StudentGroup', {
   }
 }, {
   tableName: 'student_group',
-  timestamps: false,
   primaryKey: ['userId', 'groupId']
 });
 

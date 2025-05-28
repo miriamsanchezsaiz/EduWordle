@@ -1,6 +1,6 @@
 // src/api/services/authService.js
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const userService = require('./userService'); // Import the user service
 const { isStrongPassword } = require('../../utils/passwordUtils'); 
 
