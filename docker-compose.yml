@@ -49,7 +49,6 @@ services:
     volumes:
       - ./backend:/app/backend 
       - ./frontend:/app/frontend
-      - ./docs:/app/docs
       - /app/backend/node_modules
       
 volumes:
