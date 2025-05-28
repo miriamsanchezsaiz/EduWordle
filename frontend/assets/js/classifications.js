@@ -50,7 +50,7 @@ async function loadPorGrupo() {
                         <thead><tr><th>Alumno</th><th>Total Puntos</th></tr></thead>
                         <tbody>
                             ${resultadosGrupo.map(s =>
-            `<tr><td>${s.player.name}</td><td>${s.score}</td></tr>` // Ajusta los nombres de las propiedades según la respuesta real del backend
+            `<tr><td>${s.userName}</td><td>${s.score}</td></tr>` 
           ).join('')}
                         </tbody>`;
           cont.appendChild(tbl);

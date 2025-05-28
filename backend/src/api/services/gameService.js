@@ -261,15 +261,10 @@ const getGameResultsForGroup = async (groupId, teacherId = null) => { // Added o
           model: User,
           as: 'player',
           attributes: ['id', 'name', 'email']
-        },
-        {
-          model: Wordle,
-          as: 'wordle',
-          attributes: ['id', 'name']
         }
       ],
       group: ['userId', 'player.id', 'player.name', 'player.email'],
-      order: [['score', 'DESC']]
+      order: [['totalScore', 'DESC']]
     });
 
     return gameResults.map(result => ({
