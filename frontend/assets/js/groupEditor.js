@@ -1,7 +1,28 @@
-const role      = sessionStorage.getItem('role');
-const teacherId = sessionStorage.getItem('teacherId');
-const studentId = sessionStorage.getItem('studentId');
-if (!role || (!teacherId && !studentId)) {
+import { apiService } from './apiService.js';
+const toastr = window.toastr;
+
+const authToken = sessionStorage.getItem('authToken');
+const currentUserString = sessionStorage.getItem('currentUser');
+
+
+let role = null;
+let userId = null;
+
+if (authToken && currentUserString) {
+  try {
+    const currentUser = JSON.parse(currentUserString); 
+    role = currentUser.role; 
+    userId = currentUser.id; 
+    console.log("List: User autenticated. Rol:", role, "ID:", userId);
+  } catch (e) {
+    console.error("List: Error parsing currentUser from sessionStorage:", e);
+    sessionStorage.clear();
+    window.location.replace('login.html');
+  }
+}
+
+if (!authToken || !userId || !role) {
+  console.warn("List: No authenticated user found. Redirecting to login.");
   window.location.replace('login.html');
 }
 // ==================== groupEditor.js ====================
@@ -35,16 +56,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                       : mode === "visual" ? "Ver Grupo"
                       : "Crear Grupo";
   document.getElementById("pageTitle").textContent = pageTitle;
-  /*if (mode === "create") {
-  document
-    .getElementById("container-students")
-    .closest("section")
-    .style.display = "none";
-  document
-    .getElementById("container-wordles")
-    .closest("section")
-    .style.display = "none";
-}*/
 
   // Exponer en window para popups
   window.removeItemById  = removeItemById;
@@ -54,6 +65,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if ((mode === "edit" || mode === "visual") && groupId) {
     try {
       sessionGroup = await loadGroupData(groupId);
+      const pending = JSON.parse(localStorage.getItem('pendingStudents') || '[]');
+      sessionGroup.students = [ ...sessionGroup.students, ...pending ];
+      console.log(sessionGroup);
       window.sessionGroup = sessionGroup;
       displayData(sessionGroup);
     } catch (err) {
@@ -77,12 +91,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // loadGroupData: obtiene JSON del servidor y normaliza
 async function loadGroupData(groupId) {
-  const res = await fetch(`/grupos/${groupId}`);
-  if (!res.ok) throw new Error("Error al cargar datos del grupo");
-  const g = await res.json();
+  const g = await apiService.getGroupDetails(groupId);
   return {
     id:       g.id,
-    nombre:   g.nombre,
+    nombre:   g.name,
     initDate: g.initDate,
     endDate:  g.endDate,
     students: Array.isArray(g.students)
@@ -103,7 +115,7 @@ function displayData(group) {
     // Ocultar botón 'Guardar'
     if (saveBtn) saveBtn.remove();
     // Botones editar y borrar
-    if (teacherId) {
+    if (role ==='teacher') {
       const cont = document.querySelector(".container");
       const opts = document.createElement("div");
       opts.classList.add("buttonSection");
@@ -196,50 +208,56 @@ function toggleDateDisplay(group) {
 }
 
 window.saveGroup = async function() {
-  const nombre   = document.getElementById("groupName").value.trim();
-  const initDate = document.getElementById("initDate").value;
-  const endDate  = document.getElementById("endDate").value || null;
-
-  if (!nombre || !initDate) {
-    toastr.error("Nombre y fecha de inicio son obligatorios.");
+  // 1) Leer y validar campos
+  const name      = document.getElementById('groupName').value.trim();
+  const startDate = document.getElementById('initDate').value;
+  const endDate   = document.getElementById('endDate').value || null;
+  if (!name || !startDate) {
+    toastr.error('El nombre y la fecha de inicio son obligatorios');
     return;
   }
 
-  if (!sessionGroup.id) {
-    try {
-      const res = await fetch('/grupos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, initDate, endDate, teacherId })
-      });
-      if (!res.ok) throw new Error('Error creando grupo');
-      const data = await res.json();
-      sessionGroup.id = data.id;             // guardo el nuevo ID
-      window.location.href =               // recargo en modo edit
-        `groupEditor.html?mode=edit&id=${data.id}&teacherId=${teacherId}`;
-      toastr.success("Grupo creado correctamente");
-    } catch (e) {
-      console.error(e);
-      toastr.error(e.message);
-    }
-    return;
-  }
+  // 2) Recoger sólo los emails de los alumnos (bufferizados en session y localStorage)
+  const studentEmails = (sessionGroup.students || [])
+    .map(s => s.email)
+    .filter(Boolean);
+
+  // 3) Montar el payload tal como exige la API
+  const payload = {
+    name,
+    startDate,
+    endDate,
+    studentEmails
+  };
+
   try {
-    const alumnos = sessionGroup.students.map(s => s.id);
-    const wordles = sessionGroup.wordles.map(w => w.id);
-    const res = await fetch(`/grupos/${sessionGroup.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, initDate, endDate, alumnos, wordles })
-    });
-    if (!res.ok) throw new Error('Error actualizando grupo');
-    toastr.success("Grupo actualizado correctamente");
+    let res;
+    if (!sessionGroup.id) {
+      // a) Crear grupo
+      res = await apiService.createGroup(payload);
+      sessionGroup.id = res.id;
+      toastr.success('Grupo creado correctamente');
+      // Pasamos a modo edición con el nuevo ID
+      window.history.replaceState(null, null,
+        `groupEditor.html?mode=edit&id=${res.id}&teacherId=${teacherId}`
+      );
+    } else {
+      // b) Actualizar grupo existente
+      await apiService.updateGroup(sessionGroup.id, payload);
+      toastr.success('Grupo actualizado correctamente');
+    }
+
+    // 4) Limpiar los alumnos pendientes de localStorage
+    localStorage.removeItem('pendingStudents');
+
+    // 5) Volver automáticamente al listado de grupos recargado
     setTimeout(() => {
       window.location.href = `list.html?type=group&teacherId=${teacherId}`;
-    }, 500);
-  } catch (e) {
-    console.error(e);
-    toastr.error(e.message);
+    }, 300);
+
+  } catch (err) {
+    console.error('Error en la API:', err);
+    toastr.error(err.message || 'Error guardando el grupo');
   }
 };
 

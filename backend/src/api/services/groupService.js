@@ -226,6 +226,51 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
     return { createdStudents, linkedStudents };
 };
 
+const updateWordleGroup = async (groupId, updatedWordleIds) => {
+  const current = await WordleGroup.findAll({ where: { groupId } });
+  const currentIds = current.map(wg => wg.wordleId);
+  // Wordles a eliminar: estaban, pero ya no vienen
+  const toRemove = currentIds.filter(id => !updatedWordleIds.includes(id));
+  if (toRemove.length) {
+    await WordleGroup.destroy({
+      where: { groupId, wordleId: toRemove }
+    });
+  }
+  // Wordles a añadir: vienen, pero no estaban
+  const toAdd = updatedWordleIds.filter(id => !currentIds.includes(id));
+  for (const wordleId of toAdd) {
+    await WordleGroup.create({ groupId, wordleId });
+  }
+};
+
+const prepareForUpdate = async (teacherId, groupData, studentEmails = [], updatedWordleIds = []) => {
+  const currentLinks = await StudentGroup.findAll({ where: { groupId: groupData.id } });
+  const currentStudentIds = currentLinks.map(link => link.studentId);
+
+  const currentStudents = await Student.findAll({ where: { id: currentStudentIds } });
+  const currentEmails   = currentStudents.map(s => s.email);
+
+  const removeStudentIds = currentStudents
+    .filter(s => !studentEmails.includes(s.email))
+    .map(s => s.id);
+
+  const addStudentEmails = studentEmails.filter(email => !currentEmails.includes(email));
+
+  await updateWordleGroup(groupData.id, updatedWordleIds);
+
+  return await updateGroup(
+    groupData.id,
+    teacherId,
+    {
+      name:             groupData.name,
+      initDate:         groupData.startDate,
+      endDate:          groupData.endDate,
+      addStudentEmails,
+      removeStudentIds
+    }
+  );
+};
+
 // Function to create a new group (Teacher functionality)
 const createGroup = async (teacherId, groupData, studentEmails = []) => {
     const transaction = await sequelize.transaction();
@@ -446,4 +491,5 @@ module.exports = {
     updateGroup,
     deleteGroup,
     isStudentInTeacherGroup,
+    prepareForUpdate,
 };

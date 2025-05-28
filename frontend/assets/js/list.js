@@ -27,7 +27,7 @@ if (!authToken || !userId || !role) {
   window.location.replace('login.html');
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded",  async () => {
     const params = new URLSearchParams(window.location.search);
     const type = params.get("type"); // "group" o "wordle"
     const groupIdFromURL = params.get("groupId");
@@ -50,23 +50,22 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         pageTitle = "Lista";
     }
+    if (fetchFunction) await fetchFunction();
 
     // Mostrar botón de creación solo para profesores
     if (role === 'teacher') {
-        const createButton = document.createElement("button");
-        createButton.textContent = "Crear nuevo";
-        createButton.classList.add("create-button");
-        createButton.onclick = () => {
-            window.location.href = `${type}Editor.html?mode=create&userId=${userId}`;
-        };
-        const buttonContainer = document.getElementById("createButtonContainer");
-        buttonContainer.appendChild(createButton);
-        buttonContainer.classList.remove("hidden");
+        const container = document.getElementById("itemsContainer");
+        const wrapper   = document.createElement("div");
+        wrapper.classList.add("item","create-container");
+        const btn = document.createElement("button");
+        btn.textContent = "Crear nuevo";
+        btn.classList.add("create-button");
+        btn.onclick = () => window.location.href = `${type}Editor.html?mode=create&userId=${userId}`;
+        wrapper.appendChild(btn);
+        container.prepend(wrapper);
     }
 
     document.getElementById("pageTitle").textContent = pageTitle;
-
-    if (fetchFunction) fetchFunction();
 });
 
 
