@@ -10,9 +10,9 @@ let userId = null;
 
 if (authToken && currentUserString) {
   try {
-    const currentUser = JSON.parse(currentUserString); 
-    role = currentUser.role; 
-    userId = currentUser.id; 
+    const currentUser = JSON.parse(currentUserString);
+    role = currentUser.role;
+    userId = currentUser.id;
     console.log("List: User autenticated. Rol:", role, "ID:", userId);
   } catch (e) {
     console.error("List: Error parsing currentUser from sessionStorage:", e);
@@ -29,19 +29,19 @@ if (!authToken || !userId || !role) {
 // Frontend logic para crear, editar o visualizar un grupo en EduWordle
 
 // Obtener parámetros de URL
-const params    = new URLSearchParams(window.location.search);
-const mode      = params.get("mode");       // "create", "edit", "visual"
-const groupId   = params.get("id");
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode");       // "create", "edit", "visual"
+const groupId = params.get("id");
 let sessionGroup = null;
 
 // DOMContentLoaded: inicialización general
 document.addEventListener("DOMContentLoaded", async () => {
   // 1) Configuración de fechas
-  const today    = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
   const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
-                   .toISOString().split("T")[0];
+    .toISOString().split("T")[0];
   document.getElementById("initDate").value = today;
-  document.getElementById("endDate").value  = nextYear;
+  document.getElementById("endDate").value = nextYear;
 
   // Radios para habilitar/deshabilitar endDate
   document.getElementById("noEndDate").addEventListener("change", () => {
@@ -52,16 +52,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Ajustar título de la página
-  const pageTitle = mode === "edit"   ? "Editar Grupo"
-                      : mode === "visual" ? "Ver Grupo"
-                      : "Crear Grupo";
+  const pageTitle = mode === "edit" ? "Editar Grupo"
+    : mode === "visual" ? "Ver Grupo"
+      : "Crear Grupo";
   document.getElementById("pageTitle").textContent = pageTitle;
 
   // Exponer en window para popups
-  window.removeItemById  = removeItemById;
-  window.displayItem     = displayItem;
+  window.removeItemById = removeItemById;
+  window.displayItem = displayItem;
 
-    if (mode === 'visual') {
+  if (mode === 'visual') {
     document.body.classList.add('visual-mode');
   }
 
@@ -70,10 +70,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       sessionGroup = await loadGroupData(groupId);
       const pending = JSON.parse(localStorage.getItem('pendingStudents') || '[]');
-      sessionGroup.students = [ ...sessionGroup.students, ...pending ];
+      sessionGroup.students = [...sessionGroup.students, ...pending];
       console.log(sessionGroup);
       window.sessionGroup = sessionGroup;
       displayData(sessionGroup);
+
     } catch (err) {
       console.error("Error cargando el grupo:", err);
       toastr.error("No se pudo cargar los datos del grupo.");
@@ -81,12 +82,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     // Crear nuevo grupo
     sessionGroup = {
-      id:       null,
-      nombre:   "",
+      id: null,
+      nombre: "",
       initDate: today,
-      endDate:  null,
+      endDate: null,
       students: [],
-      wordles:  []
+      wordles: []
     };
     window.sessionGroup = sessionGroup;
     displayData(sessionGroup);
@@ -95,15 +96,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // loadGroupData: obtiene JSON del servidor y normaliza
 async function loadGroupData(groupId) {
-  const g = await apiService.getGroupDetails(groupId);
+  const g = await apiService.getGroupDetails(groupId, role);
   return {
-    id:       g.id,
-    nombre:   g.name,
+    id: g.id,
+    nombre: g.name,
     initDate: g.initDate,
-    endDate:  g.endDate,
+    endDate: g.endDate,
     students: Array.isArray(g.students)
-              ? g.students.map(s => ({ email: s.email, id: s.id }))
-              : [],
+      ? g.students.map(s => ({ email: s.email, id: s.id }))
+      : [],
     wordles: Array.isArray(g.accessibleWordles)
       ? g.accessibleWordles.map(w => ({ nombre: w.name, id: w.id }))
       : []
@@ -119,21 +120,21 @@ function displayData(group) {
     // Ocultar botón 'Guardar'
     if (saveBtn) saveBtn.remove();
     // Botones editar y borrar
-    if (role ==='teacher') {
+    if (role === 'teacher') {
       const cont = document.querySelector(".container");
       const opts = document.createElement("div");
       opts.classList.add("buttonSection");
       const btnEdit = document.createElement("button");
       btnEdit.textContent = "Editar";
-      btnEdit.classList.add("action-button","edit-button");
+      btnEdit.classList.add("action-button", "edit-button");
       btnEdit.onclick = () => {
         const url = new URL(window.location.href);
-        url.searchParams.set("mode","edit");
+        url.searchParams.set("mode", "edit");
         window.location.href = url;
       };
       const btnDel = document.createElement("button");
       btnDel.textContent = "Eliminar";
-      btnDel.classList.add("action-button","delete-button");
+      btnDel.classList.add("action-button", "delete-button");
       btnDel.onclick = () => openPopup('delete');
       opts.append(btnEdit, btnDel);
       cont.appendChild(opts);
@@ -147,14 +148,13 @@ function displayData(group) {
   }
   // Listados (añade '+' en edit/create)
   displayItems(group.students, "students");
-  displayItems(group.wordles,  "wordles");
+  displayItems(group.wordles, "wordles");
 }
 
 // displayItems: pinta alumnos o wordles en su contenedor
-  function displayItems(items, type) {
+function displayItems(items, type) {
   const cont = document.getElementById(`container-${type}`);
   cont.innerHTML = "";
-  items.forEach(item => displayItem(item,type));
   if (mode !== "visual" && !cont.querySelector('.add-button')) {
     const btn = document.createElement('div');
     btn.classList.add('add-button');
@@ -162,12 +162,14 @@ function displayData(group) {
     btn.onclick = () => openPopup(type);
     cont.appendChild(btn);
   }
+  items.forEach(item => displayItem(item, type));
+
 }
 
 // displayItem: crea un elemento para un alumno o wordle
 function displayItem(item, type) {
   const cont = document.getElementById(`container-${type}`);
-  const div  = document.createElement('div');
+  const div = document.createElement('div');
   div.classList.add('list-item');
   div.id = `item-${item.id}`;
   const a = document.createElement('a');
@@ -183,7 +185,7 @@ function displayItem(item, type) {
 }
 
 // removeItemById: elimina del DOM y de sessionGroup
-function removeItemById(id,type) {
+function removeItemById(id, type) {
   const el = document.getElementById(`item-${id}`);
   if (el) el.remove();
   if (window.sessionGroup) {
@@ -197,13 +199,13 @@ function displayConfig(initDate, endDate) {
   document.getElementById("initDate").value = initDate;
   const end = document.getElementById("endDate");
   if (endDate) { end.value = endDate; end.disabled = false; document.getElementById("setEndDate").checked = true; }
-  else      { end.value = ''     ; end.disabled = true ; document.getElementById("noEndDate").checked = true; }
+  else { end.value = ''; end.disabled = true; document.getElementById("noEndDate").checked = true; }
 }
 
 // toggleDateDisplay: muestra fechas como div en modo visual
 function toggleDateDisplay(group) {
   const inp1 = document.getElementById("initDate"), inp2 = document.getElementById("endDate");
-  const no   = document.getElementById("noEndDate"), si   = document.getElementById("setEndDate");
+  const no = document.getElementById("noEndDate"), si = document.getElementById("setEndDate");
   const d1 = document.createElement('div'), d2 = document.createElement('div');
   d1.classList.add('date-box'); d1.textContent = group.initDate;
   d2.classList.add('date-box'); d2.textContent = group.endDate || 'Fecha no definida';
@@ -211,11 +213,11 @@ function toggleDateDisplay(group) {
   no.parentElement.style.display = 'none'; si.parentElement.style.display = 'none';
 }
 
-window.saveGroup = async function() {
+window.saveGroup = async function () {
   // 1) Leer y validar campos
-  const name      = document.getElementById('groupName').value.trim();
+  const name = document.getElementById('groupName').value.trim();
   const startDate = document.getElementById('initDate').value;
-  const endDate   = document.getElementById('endDate').value || null;
+  const endDate = document.getElementById('endDate').value || null;
 
   if (!name || !startDate) {
     toastr.error('El nombre y la fecha de inicio son obligatorios');

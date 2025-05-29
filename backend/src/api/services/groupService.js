@@ -163,7 +163,7 @@ const getGroupDetails = async (groupId, currentUserId, currentUserRole) => {
                         model: User,
                         as: 'students', 
                         through: {
-                            model: UserGroup, 
+                            model: StudentGroup, 
                             where: { userId: currentUserId }, 
                             attributes: []
                         },

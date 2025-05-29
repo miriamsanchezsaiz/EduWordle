@@ -49,9 +49,9 @@ async function callApi(endpoint, options = {}) {
 
     } catch (error) {
         console.error('Network or API call failed:', error);
-        
+
         if (error.message === 'Unauthorized or Session Expired') {
-            throw error; 
+            throw error;
         }
         throw error;
     }
@@ -134,8 +134,9 @@ export const apiService = {
     },
 
     // Obtener detalles de un grupo (solo profesor)
-    getGroupDetails: async (groupId) => {
-        return callApi(`/teacher/groups/${groupId}`, { method: 'GET' });
+    getGroupDetails: async (groupId, role) => {
+        const urlBase = role === 'teacher' ? 'teacher' : 'student';
+        return callApi(`/${urlBase}/groups/${groupId}`, { method: 'GET' });
     },
 
     // Actualizar un grupo (solo profesor)
@@ -193,7 +194,7 @@ export const apiService = {
             body: JSON.stringify(resultData),
         });
     },
-    
+
 
     // Cambiar contraseña (profesor o alumno)
     //PUT /api/{role}/change-password
