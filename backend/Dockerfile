@@ -12,6 +12,7 @@ RUN apt-get update && \
 COPY backend/package.json ./
 COPY backend/package-lock.json ./
 
+
 RUN npm cache clean --force && npm install
 RUN npm install -g sequelize-cli
     
