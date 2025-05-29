@@ -54,11 +54,14 @@
                 <label for="wordleTitle">Nombre del Wordle:</label>
                 <input type="text" id="wordleTitle" placeholder="Introduce el nombre del Wordle">
                 
-                <label for="difficulty">Dificultad:</label>
-                <select id="difficulty">
-                <option value="low">Aprendizaje bajo</option>
-                <option value="high">Aprendizaje alto</option>
-                </select>
+            <div class="difficulty-selector">
+            <label>Dificultad</label>
+            <div class="difficulty-options">
+                <button type="button" data-value="low" class="diff-btn">Bajo</button>
+                <button type="button" data-value="high" class="diff-btn">Alto</button>
+            </div>
+            </div>
+
             </section>
             
             <section class="wordle-section">

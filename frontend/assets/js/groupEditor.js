@@ -61,6 +61,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.removeItemById  = removeItemById;
   window.displayItem     = displayItem;
 
+    if (mode === 'visual') {
+    document.body.classList.add('visual-mode');
+  }
+
   // 2) Cargar datos si edit o visual, o inicializar vacío
   if ((mode === "edit" || mode === "visual") && groupId) {
     try {
@@ -100,9 +104,9 @@ async function loadGroupData(groupId) {
     students: Array.isArray(g.students)
               ? g.students.map(s => ({ email: s.email, id: s.id }))
               : [],
-    wordles: Array.isArray(g.wordles)
-              ? g.wordles.map(w => ({ nombre: w.nombre, id: w.id }))
-              : []
+    wordles: Array.isArray(g.accessibleWordles)
+      ? g.accessibleWordles.map(w => ({ nombre: w.name, id: w.id }))
+      : []
   };
 }
 
@@ -212,47 +216,53 @@ window.saveGroup = async function() {
   const name      = document.getElementById('groupName').value.trim();
   const startDate = document.getElementById('initDate').value;
   const endDate   = document.getElementById('endDate').value || null;
+
   if (!name || !startDate) {
     toastr.error('El nombre y la fecha de inicio son obligatorios');
     return;
   }
 
-  // 2) Recoger sólo los emails de los alumnos (bufferizados en session y localStorage)
+  // 2) Recoger solo los emails de los alumnos
   const studentEmails = (sessionGroup.students || [])
     .map(s => s.email)
     .filter(Boolean);
 
-  // 3) Montar el payload tal como exige la API
+  // 3) Recoger solo los IDs de los wordles
+  const wordleIds = (sessionGroup.wordles || [])
+    .map(w => w.id)
+    .filter(Boolean);
+
+  // 4) Construir payload
   const payload = {
     name,
     startDate,
     endDate,
-    studentEmails
+    studentEmails,
+    wordleIds
   };
 
   try {
     let res;
+
     if (!sessionGroup.id) {
-      // a) Crear grupo
+      // Crear grupo nuevo
       res = await apiService.createGroup(payload);
       sessionGroup.id = res.id;
       toastr.success('Grupo creado correctamente');
-      // Pasamos a modo edición con el nuevo ID
       window.history.replaceState(null, null,
-        `groupEditor.html?mode=edit&id=${res.id}&teacherId=${teacherId}`
+        `groupEditor.html?mode=edit&id=${res.id}&teacherId=${userId}`
       );
     } else {
-      // b) Actualizar grupo existente
+      // Actualizar grupo existente
       await apiService.updateGroup(sessionGroup.id, payload);
       toastr.success('Grupo actualizado correctamente');
     }
 
-    // 4) Limpiar los alumnos pendientes de localStorage
+    // Limpiar pendientes de localStorage
     localStorage.removeItem('pendingStudents');
 
-    // 5) Volver automáticamente al listado de grupos recargado
     setTimeout(() => {
-      window.location.href = `list.html?type=group&teacherId=${teacherId}`;
+      window.location.href = `groupEditor.html?mode=visual&id=${sessionGroup.id}&userId=${userId}`;
     }, 300);
 
   } catch (err) {
@@ -260,6 +270,7 @@ window.saveGroup = async function() {
     toastr.error(err.message || 'Error guardando el grupo');
   }
 };
+
 
 
 // ===============================================================

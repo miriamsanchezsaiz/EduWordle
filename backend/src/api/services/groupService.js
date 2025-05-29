@@ -143,11 +143,13 @@ const getGroupDetails = async (groupId, teacherId) => {
                     attributes: ['id', 'name', 'email', 'role']
                 },
                 {
-                    model: Wordle,
-                    as: 'accessibleWordles',
-                    through: { attributes: [] },
-                    attributes: ['id', 'name']
+                model: Wordle,
+                as: 'accessibleWordles',
+                through: { attributes: [] },
+                attributes: ['id', 'name']
                 }
+
+
             ]
         });
 
@@ -183,7 +185,7 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
                     const isAlreadyInGroup = await group.hasStudent(existingUser, { transaction });
                     if (isAlreadyInGroup) {
                         console.warn(`Student with email ${email} is already in group ${group.id}. Skipping linking.`);
-                        throw new Error(`Student with email ${email} is already in group ${group.id}.`);
+                        continue;
                     }
                     linkedStudents.push(email);
                     studentUserIdsToLink.push(existingUser.id);
@@ -191,7 +193,7 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 
                 } else {
 
-                    const initialPassword = generateInitialPassword();
+                    const initialPassword = generateInitialPassword(email);
                     const newUser = await userService.createUser(email, email.split('@')[0], initialPassword, 'student', transaction);
                     createdStudents.push(email);
                     studentUserIdsToLink.push(newUser.id);
@@ -243,33 +245,27 @@ const updateWordleGroup = async (groupId, updatedWordleIds) => {
   }
 };
 
-const prepareForUpdate = async (teacherId, groupData, studentEmails = [], updatedWordleIds = []) => {
-  const currentLinks = await StudentGroup.findAll({ where: { groupId: groupData.id } });
-  const currentStudentIds = currentLinks.map(link => link.studentId);
+    async function prepareForUpdate(req) {
+    const body = req.body;
+    const updateData = {};
 
-  const currentStudents = await Student.findAll({ where: { id: currentStudentIds } });
-  const currentEmails   = currentStudents.map(s => s.email);
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.startDate !== undefined) updateData.startDate = body.startDate;
+    if (body.endDate !== undefined) updateData.endDate = body.endDate;
+    if (Array.isArray(body.studentEmails)) updateData.addStudentEmails = body.studentEmails;
+    if (Array.isArray(body.removeStudentIds)) updateData.removeStudentIds = body.removeStudentIds;
 
-  const removeStudentIds = currentStudents
-    .filter(s => !studentEmails.includes(s.email))
-    .map(s => s.id);
-
-  const addStudentEmails = studentEmails.filter(email => !currentEmails.includes(email));
-
-  await updateWordleGroup(groupData.id, updatedWordleIds);
-
-  return await updateGroup(
-    groupData.id,
-    teacherId,
-    {
-      name:             groupData.name,
-      initDate:         groupData.startDate,
-      endDate:          groupData.endDate,
-      addStudentEmails,
-      removeStudentIds
+    if (Array.isArray(body.wordleIds)) {
+        try {
+        await updateWordleGroup(req.params.groupId, body.wordleIds);
+        } catch (err) {
+        console.error("Error actualizando Wordles del grupo:", err);
+        }
     }
-  );
-};
+
+    return updateData;
+    }
+
 
 // Function to create a new group (Teacher functionality)
 const createGroup = async (teacherId, groupData, studentEmails = []) => {

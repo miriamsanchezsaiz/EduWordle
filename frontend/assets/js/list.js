@@ -157,7 +157,7 @@ function displayItemsForStudentGroups(groups) {
         item.textContent = g.name;
         item.onclick = () => {
             // Redirige a la lista de wordles de ese grupo para el alumno
-            window.location.href = `list.html?type=wordle&userId=${userId}&groupId=${g.id}`;
+            window.location.href = `groupEditor.html?id=${g.id}&userId=${userId}&mode=visual`;
         };
         container.appendChild(item);
     });

@@ -207,4 +207,32 @@ header {
     font-family: sans-serif;
   }
   
+    .visual-mode .list-item {
+        cursor: default !important;
+    }
 
+    .difficulty-options {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    }
+
+    .diff-btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    border: 2px solid #ccc;
+    background-color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .diff-btn.selected {
+    background-color: #79b851;
+    color: white;
+    border-color: #5f9843;
+    }
+
+    .difficulty-selector {
+    margin-top: 1.5rem; /* o 24px, ajustable */
+    }

@@ -43,6 +43,10 @@ document.getElementById("pageTitle").textContent =
   window.removeItemById = removeItemById;
   window.displayItem    = displayItem;
 
+    if (mode === 'visual') {
+    document.body.classList.add('visual-mode');
+  }
+
   // Cargar o iniciar vacío
   if ((mode === "edit" || mode === "visual") && wordleId) {
     try {
@@ -66,6 +70,24 @@ document.getElementById("pageTitle").textContent =
   sessionWordle.words     = [...sessionWordle.words,     ...pendingW];
   sessionWordle.questions = [...sessionWordle.questions, ...pendingQ];
   window.sessionWordle = sessionWordle;
+  document.querySelectorAll(".diff-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    sessionWordle.difficulty = btn.dataset.value;
+  };
+
+  // Marcar como seleccionada si ya está guardada en sesión
+  if (sessionWordle.difficulty === btn.dataset.value) {
+    btn.classList.add("selected");
+  }
+
+  // Si estás en modo visual, desactivar los botones
+  if (mode === "visual") {
+    btn.disabled = true;
+    btn.classList.add("disabled");
+  }
+  });
 });
 
 // displayData: render UI
@@ -109,7 +131,7 @@ function displayItem(item,type){
   const a=document.createElement('a');
   let txt='';
   if(type==='words')     txt=item.title||item.word||'';
-  else if(type==='questions') txt=item.statement||item.prompt||'';
+  else if(type==='questions') txt=item.question || item.statement || item.prompt || '';
   else if(type==='groups')    txt=item.name||'';
   a.textContent=txt; div.appendChild(a);
   if(mode!=='visual'){
@@ -135,7 +157,8 @@ async function removeItemById(id,type){
 // saveWordleEditor: create/update
 async function saveWordleEditor() {
   const nameVal = document.getElementById("wordleTitle").value.trim();
-  const diffVal = document.getElementById("difficulty").value;
+  const diffVal = sessionWordle.difficulty;
+
   if (!nameVal) return toastr.error("El nombre es obligatorio");
 
   // 1) Reconstruyo arrays completos

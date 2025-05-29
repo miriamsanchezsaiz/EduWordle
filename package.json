@@ -20,5 +20,8 @@
   "homepage": "https://github.com/miriamsanchezsaiz/EduWordle#readme",
   "dependencies": {
     "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.3"
   }
 }

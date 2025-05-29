@@ -203,4 +203,11 @@ export const apiService = {
             body: JSON.stringify(passwordData),
         });
     },
+
+    // Eliminar un grupo (solo profesor)
+    deleteGroup: async (groupId) => {
+        return callApi(`/teacher/groups/${groupId}`, {
+            method: 'DELETE'
+        });
+    },
 };

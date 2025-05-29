@@ -88,7 +88,7 @@ const updateGroup = async (req, res, next) => { // Added next
   const teacherId = req.user.id; // Get teacher ID from authenticated user
   const groupId = req.params.groupId; // Get group ID from URL parameters
   // Get update data (name, dates, student emails/ids) from the validated request body
-  const updateData = req.body;
+  const updateData = await groupService.prepareForUpdate(req);
 
   try {
     // Call the group service function to update the group and manage student links

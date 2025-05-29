@@ -34,6 +34,26 @@ function openPopup(popupType) {
   else popupBody.innerHTML = content;
   document.getElementById("popup-placeholder").classList.remove("hidden");
 
+  if (popupType === 'delete') {
+    setTimeout(() => {
+      const btn = document.querySelector('#popup-body .exit-button');
+      if (btn) {
+        btn.onclick = async function () {
+          try {
+            await apiService.deleteGroup(window.sessionGroup.id);
+            toastr.success("Grupo eliminado correctamente");
+            closePopup();
+            const userId = sessionStorage.getItem('userId');
+            window.location.href = `list.html?type=group&teacherId=${userId}`;
+          } catch (error) {
+            console.error("Error eliminando grupo:", error);
+            toastr.error(error.message || "Error al eliminar el grupo");
+          }
+        };
+      }
+    }, 50);
+  }
+
   // Cargar datos específicos para popups de selección
   if (popupType === "groups") {
     loadListGroups();
@@ -162,33 +182,30 @@ window.loadListGroups = loadListGroups;
 // Cargar lista de wordles disponibles para el profesor
 async function loadListWordles() {
   const currentUserString = sessionStorage.getItem('currentUser');
-  let teacherId = null;
+  let role = null;
+  
   if (currentUserString) {
     try {
       const currentUser = JSON.parse(currentUserString);
-      if (currentUser.role === 'teacher') {
-        teacherId = currentUser.id;
-      }
+      role = currentUser.role;
     } catch (e) {
-      console.error("Error parsing currentUser for teacherId:", e);
+      console.error("Error parsing currentUser for role:", e);
     }
   }
 
-  if (!teacherId) {
-    toastr.error("No se ha identificado al profesor. Por favor, inicie sesión como profesor.");
+  if (!role) {
+    toastr.error("No se ha identificado al usuario. Por favor, inicie sesión.");
     return;
   }
 
-
   try {
-    // Usamos apiService.fetchWordles() que ya adaptamos para el profesor
-    const wordles = await apiService.fetchWordles(); // Asumo que este endpoint ya filtra por el teacherId del JWT
+    const wordles = await apiService.fetchWordles(role); 
     const select = document.getElementById("wordle-select");
     select.innerHTML = '<option value="" disabled selected>Selecciona un wordle</option>';
     wordles.forEach(w => {
       const opt = document.createElement("option");
       opt.value = w.id;
-      opt.textContent = w.name; // Asumo que el nombre de la wordle es 'name'
+      opt.textContent = w.name;
       select.appendChild(opt);
     });
   } catch (err) {
@@ -252,25 +269,25 @@ function saveWordle() {
 }
 window.saveWordle = saveWordle;
 
-async function saveWordleToGroup() {
+function saveWordleToGroup() {
   const sel = document.getElementById('wordle-select');
-  const id  = sel.value;
-  if (!id) return toastr.error('Selecciona un wordle');
-  const cur = sel.options[sel.selectedIndex].textContent;
-  const obj = { id, name:cur };
-  window.sessionGroup.wordles.push(obj);
-  window.displayItem(obj,'wordles');
-  if (window.sessionGroup.id) {
-    try {
-      await apiService.assignWordleToGroup(window.sessionGroup.id, id);
-    } catch(e) {
-      console.error(e);
-      toastr.error('Error asociando wordle');
-    }
+  const id = sel.value;
+  const name = sel.options[sel.selectedIndex]?.textContent;
+
+  if (!id) {
+    toastr.error('Selecciona un wordle');
+    return;
   }
+
+  const wordle = { id };
+  window.sessionGroup.wordles.push(wordle);
+  const visualItem = { id, nombre: name };
+  window.displayItem(visualItem, 'wordles');
+
   toastr.success('Wordle añadido');
   closePopup();
 }
+
 window.saveWordleToGroup = saveWordleToGroup;
 
 // saveWord: crea una palabra nueva en la BD y actualiza el UI

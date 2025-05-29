@@ -241,3 +241,7 @@ header {
     content: "✕";
     font-family: sans-serif;
   }
+
+  .visual-mode .list-item {
+    cursor: default !important;
+}

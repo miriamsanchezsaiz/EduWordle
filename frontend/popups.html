@@ -133,7 +133,7 @@
             <h2>¿Estás seguro de que quieres eliminar este elemento?</h2>
             <p>Esta acción no se puede deshacer.</p>
             <div class="buttonSection">
-                <button class="exit-button" onclick="deleteElement()">Eliminar</button>
+                <button class="exit-button" onclick="openPopup('delete')">Eliminar</button>
             </div>
 
         </div>
@@ -153,12 +153,12 @@
 
     <!-- Session Expired popup -->
     <template id="sessionExpired">
-        <div class="endGame-container">
-            <h2>Sesión Expirada</h2>
-            <p>Tu sesión ha caducado por inactividad o por seguridad.</p>
-            <button id="reloginButton" class="save-button">Iniciar Sesión</button>
-        </div>
-
+    <div class="endGame-container">
+        <button class="close-button" onclick="closePopup()">X</button>
+        <h2>Sesión Expirada</h2>
+        <p>Tu sesión ha caducado por inactividad o por seguridad.</p>
+        <button id="reloginButton" class="save-button">Iniciar Sesión</button>
+    </div>
     </template>
 
 </body>
