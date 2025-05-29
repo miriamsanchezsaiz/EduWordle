@@ -11,7 +11,7 @@ const { User, Group, Wordle, GameResult } = require('../models')
 const { Op } = require('sequelize');
 const sequelize = require('../../config/database');
 // Controller function to create a new group
-const createGroup = async (req, res, next) => { // Added next for error handling
+const createGroup = async (req, res, next) => { 
   // Check for validation errors from the validateCreateGroup middleware
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -37,7 +37,7 @@ const createGroup = async (req, res, next) => { // Added next for error handling
 };
 
 // Controller function to get groups created by the logged-in teacher
-const getTeacherGroups = async (req, res, next) => { // Added next
+const getTeacherGroups = async (req, res, next) => { 
   const teacherId = req.user.id; // Get teacher ID from authenticated user
   // Get filter parameters from query string
   const filters = req.query;
@@ -55,17 +55,15 @@ const getTeacherGroups = async (req, res, next) => { // Added next
 };
 
 // Controller function to get details of a specific group
-const getGroupDetails = async (req, res, next) => { // Added next
+const getGroupDetails = async (req, res, next) => { 
   const teacherId = req.user.id; // Get teacher ID from authenticated user
   const groupId = req.params.groupId; // Get group ID from URL parameters
 
   try {
-    // Call the group service function to get group details, including students and wordles
     // The service function handles verification that the group belongs to the teacher
-    const groupDetails = await groupService.getGroupDetails(groupId, teacherId);
+    const groupDetails = await groupService.getGroupDetails(groupId, teacherId, 'teacher');
 
     if (!groupDetails) {
-      // If service returns null, it means group not found or access denied
       return res.status(404).json({ message: 'Group not found or access denied' });
     }
 

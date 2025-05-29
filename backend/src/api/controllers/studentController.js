@@ -186,6 +186,25 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const getGroupDetails = async (req, res, next) => {
+  const studentId = req.user.id; 
+  const groupId = req.params.groupId;
+
+  try {
+    const groupDetails = await groupService.getGroupDetails(groupId, studentId, 'student');
+
+    if (!groupDetails) {
+      return res.status(404).json({ message: 'Group not found or access denied for this student' });
+    }
+
+    res.status(200).json(groupDetails);
+
+  } catch (error) {
+    console.error('Error in student getGroupDetails controller:', error);
+    next(error);
+  }
+};
+
 
 module.exports = {
   getActiveGroups,
@@ -194,5 +213,6 @@ module.exports = {
   saveGameResult,
   getStudentGameResults,
   getStudentGameResultDetails,
-  changePassword
+  changePassword,
+  getGroupDetails
 };

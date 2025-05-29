@@ -29,7 +29,7 @@ const getActiveGroupsForStudent = async (userId) => {
 
         if (!studentUser) {
             throw new NotFoundError('Student not found.');
-            return []; 
+            return [];
         }
 
         return studentUser.groups || [];
@@ -127,37 +127,67 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
 
 
 // Function to get details of a specific group (Teacher functionality)
-const getGroupDetails = async (groupId, teacherId) => {
+const getGroupDetails = async (groupId, currentUserId, currentUserRole) => {
     try {
-        // Find the group and verify it belongs to the teacher
-        const group = await Group.findOne({
-            where: {
-                id: groupId,
-                userId: teacherId
-            },
-            include: [
-                {
-                    model: User,
-                    as: 'students',
-                    through: { attributes: [] },
-                    attributes: ['id', 'name', 'email', 'role']
-                },
-                {
-                model: Wordle,
-                as: 'accessibleWordles',
-                through: { attributes: [] },
-                attributes: ['id', 'name']
-                }
+
+        let group;
+        let whereCondition = { id: groupId };
+
+        if (currentUserRole === 'teacher') {
+            whereCondition.userId = currentUserId;
+            group = await Group.findOne({
+                where: whereCondition,
+                include: [
+                    {
+                        model: User,
+                        as: 'students',
+                        through: { attributes: [] },
+                        attributes: ['id', 'name', 'email', 'role']
+                    },
+                    {
+                        model: Wordle,
+                        as: 'accessibleWordles',
+                        through: { attributes: [] },
+                        attributes: ['id', 'name']
+                    }
 
 
-            ]
-        });
+                ]
+            });
+        }
+        else if (currentUserRole === 'student') {
+            group = await Group.findOne({
+                where: whereCondition,
+                include: [
+                    {
+                        model: User,
+                        as: 'students', 
+                        through: {
+                            model: UserGroup, 
+                            where: { userId: currentUserId }, 
+                            attributes: []
+                        },
+                        attributes: ['id', 'name', 'email', 'role'],
+                        required: true 
+                    },
+                    {
+                        model: Wordle,
+                        as: 'accessibleWordles',
+                        through: { attributes: [] },
+                        attributes: ['id', 'name']
+                    }
+                ]
+            });
+        } else {
+            // Rol no soportado o desconocido
+            throw new Error('Unsupported user role for group details access');
+        }
 
         // Return group details or null if not found or access denied
         return group ? group.toJSON() : null;
 
     } catch (error) {
-        console.debug('Error getting group details:', error);
+        console.debug('Error getting group details in service:', error);
         throw error;
     }
 };
@@ -229,23 +259,23 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 };
 
 const updateWordleGroup = async (groupId, updatedWordleIds) => {
-  const current = await WordleGroup.findAll({ where: { groupId } });
-  const currentIds = current.map(wg => wg.wordleId);
-  // Wordles a eliminar: estaban, pero ya no vienen
-  const toRemove = currentIds.filter(id => !updatedWordleIds.includes(id));
-  if (toRemove.length) {
-    await WordleGroup.destroy({
-      where: { groupId, wordleId: toRemove }
-    });
-  }
-  // Wordles a añadir: vienen, pero no estaban
-  const toAdd = updatedWordleIds.filter(id => !currentIds.includes(id));
-  for (const wordleId of toAdd) {
-    await WordleGroup.create({ groupId, wordleId });
-  }
+    const current = await WordleGroup.findAll({ where: { groupId } });
+    const currentIds = current.map(wg => wg.wordleId);
+    // Wordles a eliminar: estaban, pero ya no vienen
+    const toRemove = currentIds.filter(id => !updatedWordleIds.includes(id));
+    if (toRemove.length) {
+        await WordleGroup.destroy({
+            where: { groupId, wordleId: toRemove }
+        });
+    }
+    // Wordles a añadir: vienen, pero no estaban
+    const toAdd = updatedWordleIds.filter(id => !currentIds.includes(id));
+    for (const wordleId of toAdd) {
+        await WordleGroup.create({ groupId, wordleId });
+    }
 };
 
-    async function prepareForUpdate(req) {
+async function prepareForUpdate(req) {
     const body = req.body;
     const updateData = {};
 
@@ -257,14 +287,14 @@ const updateWordleGroup = async (groupId, updatedWordleIds) => {
 
     if (Array.isArray(body.wordleIds)) {
         try {
-        await updateWordleGroup(req.params.groupId, body.wordleIds);
+            await updateWordleGroup(req.params.groupId, body.wordleIds);
         } catch (err) {
-        console.error("Error actualizando Wordles del grupo:", err);
+            console.error("Error actualizando Wordles del grupo:", err);
         }
     }
 
     return updateData;
-    }
+}
 
 
 // Function to create a new group (Teacher functionality)
@@ -324,8 +354,6 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
         throw error;
     }
 };
-
-
 
 
 // Function to update a specific group (Teacher functionality)
@@ -395,7 +423,6 @@ const updateGroup = async (groupId, teacherId, updateData) => {
         throw error;
     }
 };
-
 
 
 // Function to delete a specific group (Teacher functionality)

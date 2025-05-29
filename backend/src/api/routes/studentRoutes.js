@@ -42,5 +42,10 @@ router.put('/change-password',
     studentController.changePassword
 );
 
+// Route to get details of a specific group
+// GET /api/student/groups/:groupId
+router.get('/groups/:groupId', studentController.getGroupDetails);
+
+
 
 module.exports = router;
