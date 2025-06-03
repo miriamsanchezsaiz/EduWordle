@@ -490,7 +490,7 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
             return false; // Student not found or not a student
         }
 
-        const groups = await student.getStudentGroups({
+        const groups = await student.getGroups({
             where: { userId: teacherId },
             through: { attributes: [] },
             attributes: ['id']

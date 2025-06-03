@@ -162,7 +162,7 @@ async function loadListGroups() {
   // 2) Hacer fetch real al backend
   try {
     // Usamos apiService.fetchGroups() que ya adaptamos para el profesor
-    const groups = await apiService.fetchGroups(); // Asumo que este endpoint ya filtra por el teacherId del JWT
+    const groups = await apiService.fetchGroups("teacher"); // Asumo que este endpoint ya filtra por el teacherId del JWT
     const select = document.getElementById("group-select");
     select.innerHTML = '<option value="" disabled selected>Selecciona un grupo</option>';
     groups.forEach(g => {
@@ -279,50 +279,93 @@ function saveWordleToGroup() {
     return;
   }
 
+  const alreadyExists = sessionGroup.wordles.some(w => w.id == id);
+  if (alreadyExists) {
+    toastr.warning("Este wordle ya está asignado al grupo.");
+    return;
+  }
+
   const wordle = { id };
-  window.sessionGroup.wordles.push(wordle);
+  sessionGroup.wordles.push(wordle);
+
   const visualItem = { id, nombre: name };
-  window.displayItem(visualItem, 'wordles');
+  displayItem(visualItem, 'wordles');
 
   toastr.success('Wordle añadido');
   closePopup();
 }
 
+
 window.saveWordleToGroup = saveWordleToGroup;
 
 // saveWord: crea una palabra nueva en la BD y actualiza el UI
 function saveWord() {
-  window.sessionWordle = window.sessionWordle || { words:[] };
-  const t = document.getElementById('word-input').value.trim();
-  const h = document.getElementById('hint-input').value.trim();
-  if (!t) return toastr.error('La palabra es obligatoria');
-  const w = { title:t, hint:h };
-  window.sessionWordle.words.push(w);
-  localStorage.setItem('pendingWords', JSON.stringify(window.sessionWordle.words));
-  window.displayItem(w,'words');
-  toastr.success('Palabra guardada localmente');
+  const wordInput = document.getElementById("word-input");
+  const hintInput = document.getElementById("hint-input");
+  const word = wordInput.value.trim().toUpperCase();
+  const hint = hintInput.value.trim();
+
+  if (!word) {
+    toastr.error("La palabra no puede estar vacía.");
+    return;
+  }
+
+  sessionWordle.words.push({
+    id: null,
+    word,
+    hint
+  });
+
+  localStorage.setItem("pendingWords", JSON.stringify(sessionWordle.words));
   closePopup();
+  displayItem({ word, hint }, "words");
 }
 window.saveWord = saveWord;
 
 // saveQuestion: crea una pregunta nueva en la BD y actualiza el UI
 function saveQuestion() {
-  window.sessionWordle = window.sessionWordle || { questions:[] };
-  const stmt = document.getElementById('hint-input').value.trim();
-  const opts = [...document.querySelectorAll('.option-input')].map(div=>div.querySelector('input').value.trim());
-  const corr = [...document.querySelectorAll('.option-input')]
-    .filter(div=>div.querySelector('input[type=checkbox]').checked)
-    .map(div=>div.querySelector('input[type=text]').value.trim());
-  if (!stmt) return toastr.error('Enunciado obligatorio');
-  if (opts.length<2) return toastr.error('Mínimo 2 opciones');
-  if (!corr.length) return toastr.error('Mínimo 1 respuesta correcta');
-  const q = { statement:stmt, options:opts, correctAnswer:corr, type:corr.length>1?'multiple':'single' };
-  window.sessionWordle.questions.push(q);
-  localStorage.setItem('pendingQuestions', JSON.stringify(window.sessionWordle.questions));
-  window.displayItem(q,'questions');
-  toastr.success('Pregunta guardada localmente');
+  const questionInput = document.getElementById("hint-input");
+  const question = questionInput?.value.trim();
+
+  const optionDivs = document.querySelectorAll("#options-container .option-input");
+  const options = [];
+  const correctAnswer = [];
+
+  optionDivs.forEach(div => {
+    const input = div.querySelector("input[type='text']");
+    const checkbox = div.querySelector("input[type='checkbox']");
+
+    if (input && input.value.trim()) {
+      const value = input.value.trim();
+      options.push(value);
+      if (checkbox?.checked) {
+        correctAnswer.push(value);
+      }
+    }
+  });
+
+  if (!question || options.length === 0 || correctAnswer.length === 0) {
+    toastr.error("Completa todos los campos y marca al menos una respuesta correcta.");
+    return;
+  }
+
+  const type = correctAnswer.length > 1 ? "multiple" : "single";
+
+  const newQuestion = {
+    id: null,
+    statement: question,
+    options,
+    answer: correctAnswer,
+    type
+  };
+
+  sessionWordle.questions.push(newQuestion);
+  localStorage.setItem("pendingQuestions", JSON.stringify(sessionWordle.questions));
+  displayItem(newQuestion, "questions");
   closePopup();
 }
+
+
 window.saveQuestion = saveQuestion;
 
 // Guarda la relación Wordle ↔ Grupo en memoria y en la BD
@@ -340,29 +383,12 @@ async function saveGroupToWordle() {
   const groupName = select.options[select.selectedIndex].textContent;
 
   // 1) Añadir al array en memoria
-  const groupObj = { id: groupId, nombre: groupName };
+  const groupObj = { id: groupId, name: groupName };
   window.sessionWordle.groups.push(groupObj);
 
   // 2) Reflejar en la UI
   displayItem(groupObj, "groups");
   toastr.success("Grupo añadido");
-
-  // 3) Persistir en BD si el Wordle ya existe
-  if (window.sessionWordle.id) {
-    try {
-      await fetch("/wordle_groups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wordleId: window.sessionWordle.id,
-          groupId: groupId
-        })
-      });
-    } catch (err) {
-      console.error("Error asociando grupo a wordle:", err);
-      toastr.error("Error al guardar la relación en la base de datos");
-    }
-  }
 
   // 4) Cerrar popup
   closePopup();

@@ -22,75 +22,121 @@ if (!authToken || !userId || !role) {
   window.location.replace('login.html');
 }
 
-// ==================== wordleEditor.js ====================
-// Frontend logic para crear, editar o visualizar un Wordle en EduWordle
+async function loadTeacherGroups() {
+  try {
+    return await apiService.fetchGroups("teacher");
+  } catch (error) {
+    console.error("Error al obtener grupos del profesor:", error);
+    return [];
+  }
+}
 
-const params    = new URLSearchParams(window.location.search);
-const mode      = params.get("mode"); // "create", "edit", "visual"
-const wordleId  = params.get("id");
+const params = new URLSearchParams(window.location.search);
+const mode = params.get("mode");
+const wordleId = params.get("id");
 let sessionWordle = null;
+let originalWordIds = [];
+let originalQuestionIds = [];
 
-
-// Inicializar al cargar DOM
 document.addEventListener("DOMContentLoaded", async () => {
-  // Título
-document.getElementById("pageTitle").textContent =
-    mode === "edit"   ? "Editar Wordle"
-  : mode === "visual" ? "Ver Wordle"
-  :                      "Crear Wordle";
+  document.getElementById("pageTitle").textContent =
+    mode === "edit" ? "Editar Wordle"
+    : mode === "visual" ? "Ver Wordle"
+    : "Crear Wordle";
 
-  // Exponer utilidad
   window.removeItemById = removeItemById;
-  window.displayItem    = displayItem;
+  window.displayItem = displayItem;
 
-    if (mode === 'visual') {
+  if (mode === 'visual') {
     document.body.classList.add('visual-mode');
   }
 
-  // Cargar o iniciar vacío
   if ((mode === "edit" || mode === "visual") && wordleId) {
     try {
       sessionWordle = await apiService.getWordleDetails(wordleId);
-      // Normalizar arrays
-      sessionWordle.words     = Array.isArray(sessionWordle.words)     ? sessionWordle.words     : [];
+      sessionWordle.groups = sessionWordle.groupsWithAccess || [];
+      if (sessionWordle.groups.length > 0 && typeof sessionWordle.groups[0] === "number") {
+        const allGroups = await loadTeacherGroups();
+        sessionWordle.groups = sessionWordle.groups
+          .map(id => allGroups.find(g => g.id === id))
+          .filter(g => g);
+      }
+
+      sessionWordle.words = Array.isArray(sessionWordle.words) ? sessionWordle.words : [];
       sessionWordle.questions = Array.isArray(sessionWordle.questions) ? sessionWordle.questions : [];
-      sessionWordle.groups    = Array.isArray(sessionWordle.groups)    ? sessionWordle.groups    : [];
+      sessionWordle.groups = Array.isArray(sessionWordle.groups) ? sessionWordle.groups : [];
+
+      originalWordIds = sessionWordle.words.map(w => w.id);
+      originalQuestionIds = sessionWordle.questions.map(q => q.id);
+
+      sessionWordle.questions = sessionWordle.questions.map(q => {
+        let optionsParsed = q.options;
+        let correctParsed = q.correctAnswer;
+
+        try {
+          if (typeof optionsParsed === 'string' && (optionsParsed.startsWith('[') || optionsParsed.startsWith('{') || optionsParsed.startsWith('"'))) {
+            optionsParsed = JSON.parse(optionsParsed);
+          }
+        } catch (e) {
+          console.warn(`No se pudo parsear options para la pregunta "${q.question}":`, e);
+        }
+
+        try {
+          if (typeof correctParsed === 'string' && (correctParsed.startsWith('[') || correctParsed.startsWith('{') || correctParsed.startsWith('"'))) {
+            correctParsed = JSON.parse(correctParsed);
+          }
+        } catch (e) {
+          console.warn(`No se pudo parsear correctAnswer para la pregunta "${q.question}":`, e);
+        }
+
+        return {
+          ...q,
+          options: optionsParsed,
+          correctAnswer: correctParsed
+        };
+      });
+
       displayData(sessionWordle);
     } catch (err) {
       console.error("Error cargando wordle:", err);
       toastr.error("No se pudo cargar los datos del wordle.");
     }
   } else {
-    // Nuevo en memoria
-    sessionWordle = { id:null, name:'', difficulty:'low', words:[], questions:[], groups:[] };
+    sessionWordle = { id: null, name: '', difficulty: 'low', words: [], questions: [], groups: [] };
     displayData(sessionWordle);
   }
-  const pendingW = JSON.parse(localStorage.getItem("pendingWords")    || "[]");
-  const pendingQ = JSON.parse(localStorage.getItem("pendingQuestions")|| "[]");
-  sessionWordle.words     = [...sessionWordle.words,     ...pendingW];
-  sessionWordle.questions = [...sessionWordle.questions, ...pendingQ];
+
+  const pendingW = JSON.parse(localStorage.getItem("pendingWords") || "[]");
+  const pendingQ = JSON.parse(localStorage.getItem("pendingQuestions") || "[]");
+
+  const uniqueById = (arr) => Object.values(
+    arr.reduce((acc, curr) => {
+      const id = curr.id || JSON.stringify(curr);
+      acc[id] = curr;
+      return acc;
+    }, {})
+  );
+
+  if (pendingW.length > 0) sessionWordle.words = uniqueById([...sessionWordle.words, ...pendingW]);
+  if (pendingQ.length > 0) sessionWordle.questions = uniqueById([...sessionWordle.questions, ...pendingQ]);
+
   window.sessionWordle = sessionWordle;
+
   document.querySelectorAll(".diff-btn").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    sessionWordle.difficulty = btn.dataset.value;
-  };
+    btn.onclick = () => {
+      document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      sessionWordle.difficulty = btn.dataset.value;
+    };
 
-  // Marcar como seleccionada si ya está guardada en sesión
-  if (sessionWordle.difficulty === btn.dataset.value) {
-    btn.classList.add("selected");
-  }
-
-  // Si estás en modo visual, desactivar los botones
-  if (mode === "visual") {
-    btn.disabled = true;
-    btn.classList.add("disabled");
-  }
+    if (sessionWordle.difficulty === btn.dataset.value) btn.classList.add("selected");
+    if (mode === "visual") {
+      btn.disabled = true;
+      btn.classList.add("disabled");
+    }
   });
 });
 
-// displayData: render UI
 function displayData(w) {
   const saveBtn = document.querySelector(".save-button");
   if (mode === "visual") {
@@ -106,15 +152,14 @@ function displayData(w) {
       opts.append(btnE,btnD); cont.appendChild(opts);
     }
   } else {
-    document.getElementById("wordleTitle").value       = w.name;
+    document.getElementById("wordleTitle").value = w.name;
     const diffEl = document.getElementById("difficulty"); if(diffEl) diffEl.value = w.difficulty;
   }
-  displayItems(w.words,     "words");
+  displayItems(w.words, "words");
   displayItems(w.questions, "questions");
-  displayItems(w.groups,    "groups");
+  displayItems(w.groups, "groups");
 }
 
-// displayItems: shows list
 function displayItems(items, type) {
   const cont = document.getElementById(`container-${type}`); cont.innerHTML = '';
   (Array.isArray(items)?items:[]).forEach(item=>displayItem(item,type));
@@ -124,7 +169,6 @@ function displayItems(items, type) {
   }
 }
 
-// displayItem: single item
 function displayItem(item,type){
   const cont=document.getElementById(`container-${type}`);
   const div=document.createElement('div'); div.classList.add('list-item'); div.id=`item-${item.id}`;
@@ -141,72 +185,105 @@ function displayItem(item,type){
   cont.appendChild(div);
 }
 
-// removeItemById: deletes via API and UI
-async function removeItemById(id,type){
+function removeItemById(id,type){
   try{
-    const url = type==='words' ? `/teacher/wordles/${sessionWordle.id}/words/${id}`
-               : type==='questions' ? `/teacher/wordles/${sessionWordle.id}/questions/${id}`
-               : ''; // adjust if needed
-    if(url==='')throw new Error('Tipo no soportado');
-    await apiService.callApi(url,{method:'DELETE'});
+    if (type === 'groups') {
+      sessionWordle.groups = sessionWordle.groups.filter(g => parseInt(g.id) !== parseInt(id));
+    } else {
+      sessionWordle[type] = sessionWordle[type].filter(item => parseInt(item.id) !== parseInt(id));
+    }
     document.getElementById(`item-${id}`)?.remove();
-    toastr.success(type==='words'?'Palabra eliminada':'Pregunta eliminada');
-  }catch(e){ console.error(e); toastr.error('Error eliminando'); }
+    toastr.success(`${type === 'groups' ? 'Grupo' : type === 'words' ? 'Palabra' : 'Pregunta'} eliminad${type === 'groups' ? 'o' : 'a'}`);
+  } catch (e) {
+    console.error(e);
+    toastr.error('Error eliminando');
+  }
 }
 
-// saveWordleEditor: create/update
 async function saveWordleEditor() {
-  const nameVal = document.getElementById("wordleTitle").value.trim();
-  const diffVal = sessionWordle.difficulty;
+  const name = document.getElementById("wordleTitle")?.value.trim();
+  const diffBtn = document.querySelector(".diff-btn.selected");
+  const difficulty = diffBtn?.dataset.value || "low";
 
-  if (!nameVal) return toastr.error("El nombre es obligatorio");
+  if (!name) return toastr.error("El nombre del Wordle es obligatorio.");
 
-  // 1) Reconstruyo arrays completos
-  const words     = sessionWordle.words;     // ya contiene lo local + API
-  const questions = sessionWordle.questions; // idem
+  const normalizedWords = (sessionWordle.words || [])
+    .map(w => ({
+      word: w.word || w.title || '',
+      hint: w.hint || ''
+    }))
+    .filter(w => w.word);
 
-  // 2) IDs de grupos
-  const groupAccessIds = sessionWordle.groups.map(g => parseInt(g.id,10));
+  if (normalizedWords.length === 0) {
+    return toastr.error("Debes añadir al menos una palabra.");
+  }
 
-  // 3) Payload completo
+  const normalizedQuestions = (sessionWordle.questions || [])
+    .map(q => {
+      try {
+        const text = q.question || q.statement || '';
+        const rawAnswer = q.correctAnswer ?? q.answer ?? [];
+        const answer = Array.isArray(rawAnswer) ? rawAnswer : [rawAnswer];
+        const options = Array.isArray(q.options)
+          ? q.options
+          : (typeof q.options === 'string'
+            ? JSON.parse(q.options)
+            : []);
+
+        const validOptions = Array.isArray(options) && options.length >= 2;
+        const validAnswer = Array.isArray(answer) && answer.length > 0 && answer.every(a => options.includes(a));
+
+        if (!text || !validOptions || !validAnswer) {
+          console.warn("Pregunta inválida descartada:", q);
+          return null;
+        }
+
+        return {
+          id: q.id || null,
+          statement: text,
+          answer: JSON.stringify(answer),   // ✅ Serializado como string
+          options: JSON.stringify(options), // ✅ Serializado como string
+          type: q.type || (answer.length > 1 ? 'multiple' : 'single')
+        };
+      } catch (e) {
+        console.warn("Error procesando pregunta:", q, e);
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  if (normalizedQuestions.length === 0) {
+    return toastr.error("Debes añadir al menos una pregunta válida.");
+  }
+
+  const groupAccessIds = (sessionWordle.groups || []).map(g => parseInt(g.id));
   const payload = {
-    name:            nameVal,
-    words,           // si tu API acepta un array >1; si solo 1, ajusta a words[0]
-    questions,
-    groupAccessIds,
-    difficulty:      diffVal
+    name,
+    difficulty,
+    words: normalizedWords,
+    questions: normalizedQuestions,
+    groupAccessIds
   };
 
   try {
-    let res;
-    if (!sessionWordle.id) {
-      // CREATE
-      res = await apiService.createWordle(payload);
-      sessionWordle.id = res.id;
-      toastr.success("Wordle creado");
-      // pasamos al modo edit para poder guardar relaciones posteriores
-      window.history.replaceState(null,null,`?mode=edit&id=${res.id}`);
-    } else {
-      // UPDATE
+    if (sessionWordle.id) {
       await apiService.updateWordle(sessionWordle.id, payload);
-      toastr.success("Wordle actualizado");
+      toastr.success("Wordle actualizado correctamente.");
+    } else {
+      await apiService.createWordle(payload);
+      toastr.success("Wordle creado correctamente.");
     }
 
-    // 4) ¡Limpio los buffers locales!
     localStorage.removeItem("pendingWords");
     localStorage.removeItem("pendingQuestions");
 
-    // 5) Redirijo a la lista tras un pequeño retardo opcional
     setTimeout(() => {
-      window.location.href = `list.html?type=wordle&teacherId=${userId}`;
-    }, 200);
-
-  } catch (err) {
-    console.error("Error en create/update Wordle:", err);
-    toastr.error(err.message || "Error comunicándose con la API");
+      window.location.href = "/dashboard.html?type=teacher";
+    }, 2000);
+  } catch (error) {
+    console.error("Error en create/update Wordle:", error);
+    toastr.error(error.message || "No se pudo guardar el Wordle.");
   }
 }
-window.saveWordleEditor = saveWordleEditor;
 
-  
-  
+window.saveWordleEditor = saveWordleEditor;

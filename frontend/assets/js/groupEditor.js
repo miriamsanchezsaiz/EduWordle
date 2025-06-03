@@ -33,6 +33,7 @@ const params = new URLSearchParams(window.location.search);
 const mode = params.get("mode");       // "create", "edit", "visual"
 const groupId = params.get("id");
 let sessionGroup = null;
+let originalStudentIds = [];
 
 // DOMContentLoaded: inicialización general
 document.addEventListener("DOMContentLoaded", async () => {
@@ -73,6 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       sessionGroup.students = [...sessionGroup.students, ...pending];
       console.log(sessionGroup);
       window.sessionGroup = sessionGroup;
+      originalStudentIds = sessionGroup.students.map(s => s.id); 
       displayData(sessionGroup);
 
     } catch (err) {
@@ -229,6 +231,13 @@ window.saveGroup = async function () {
     .map(s => s.email)
     .filter(Boolean);
 
+  const currentStudentIds = (sessionGroup.students || [])
+    .map(s => s.id)
+    .filter(id => id !== null && id !== undefined); // ← Filtrar nulls
+
+  const removeStudentIds = originalStudentIds
+    .filter(id => !currentStudentIds.includes(id));
+
   // 3) Recoger solo los IDs de los wordles
   const wordleIds = (sessionGroup.wordles || [])
     .map(w => w.id)
@@ -240,7 +249,8 @@ window.saveGroup = async function () {
     startDate,
     endDate,
     studentEmails,
-    wordleIds
+    wordleIds,
+    removeStudentIds
   };
 
   try {

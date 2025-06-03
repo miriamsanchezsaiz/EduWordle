@@ -39,7 +39,7 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
         }
 
         // Find groups created by the teacher that this student is in
-        const groups = await studentUser.getStudentGroups({
+        const groups = await studentUser.getGroups({
             where: {
                 userId: teacherId // Filter groups by the teacher's ID (creator)
             },
@@ -307,15 +307,17 @@ const createWordle = async (teacherId, wordleData) => {
 
 
         // 3. Create the main Word for the Wordle
-        if (!wordleData.word || !wordleData.word.title) {
+        if (!wordleData.words || wordleData.words.length === 0) {
             await transaction.rollback();
-            throw new Error('Word details (title) are required');
+            throw new Error('At least one word is required');
         }
-        await Word.create({
-            word: wordleData.word.title,
-            hint: wordleData.word.hint || null,
-            wordleId: newWordle.id // Link the word to the wordle 
-        }, { transaction });
+
+        const wordEntries = wordleData.words.map(w => ({
+            word: w.word || w.title,
+            hint: w.hint || null,
+            wordleId: newWordle.id
+        }));
+        await Word.bulkCreate(wordEntries, { transaction });
 
         // 4. Create Questions for the Wordle
         if (!wordleData.questions || wordleData.questions.length === 0) {
@@ -475,21 +477,21 @@ const updateWordle = async (wordleId, teacherId, updateData) => {
         await wordle.save({ transaction });
 
         // 3. Update or create the main Word
-        if (updateData.word !== undefined) {
-            // Assuming a word always exists for a wordle, find and update it
-            const word = await Word.findOne({ where: { wordleId: wordleId }, transaction });
-            if (word) {
-                if (updateData.word.title !== undefined) word.word = updateData.word.title;
-                if (updateData.word.hint !== undefined) word.hint = updateData.word.hint;
-                await word.save({ transaction });
+        if (updateData.words !== undefined) {
+            // Eliminar palabras actuales
+            await Word.destroy({ where: { wordleId }, transaction });
+
+            // Insertar nuevas palabras si hay
+            if (Array.isArray(updateData.words) && updateData.words.length > 0) {
+                const wordEntries = updateData.words.map(w => ({
+                    word: w.word || w.title,
+                    hint: w.hint || null,
+                    wordleId
+                }));
+                await Word.bulkCreate(wordEntries, { transaction });
             } else {
-                // Should not happen if wordle creation works correctly, but handle defensively
-                console.warn(`Word not found for wordle ${wordleId}. Creating a new one.`);
-                await Word.create({
-                    word: updateData.word.title || 'default', // Provide a default if title is missing
-                    hint: updateData.word.hint || null,
-                    wordleId: wordleId
-                }, { transaction });
+                await transaction.rollback();
+                throw new Error('At least one word is required');
             }
         }
 
