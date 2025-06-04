@@ -25,12 +25,12 @@ const Group = sequelize.define('Group', {
     field: 'endDate'
   },
   // Foreign key column - now 'userId' in the DB
-  userId: { // Model attribute name (English)
+  userId: { 
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'userId', // Mapea a la columna 'userId' en la BD
+    field: 'userId', 
     references: {
-        model: 'user', // Referencia la tabla 'user'
+        model: 'user', 
         key: 'id'
     }
   }

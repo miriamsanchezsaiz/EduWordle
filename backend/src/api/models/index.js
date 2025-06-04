@@ -1,13 +1,13 @@
 // src/api/models/index.js
-const sequelize = require('../../config/database'); // Import sequelize instance
+const sequelize = require('../../config/database'); 
 const User = require('./user');
 const Group = require('./group');
 const Wordle = require('./wordle');
 const Question = require('./question');
 const Word = require('./word');
-const StudentGroup = require('./studentGroup'); // Join table for Users (students) and Groups
-const WordleGroup = require('./wordleGroup'); // Join table for Wordles and Groups
-const GameResult = require('./gameResult'); // Model for the simplified 'partidas' table
+const StudentGroup = require('./studentGroup'); 
+const WordleGroup = require('./wordleGroup'); 
+const GameResult = require('./gameResult'); 
 
 
 // --- Define Associations Here ---
@@ -88,7 +88,6 @@ GameResult.belongsTo(Wordle, { foreignKey: 'wordleId', as: 'wordle', onDelete: '
 StudentGroup.belongsTo(User, { foreignKey: 'userId', as: 'student' });
 StudentGroup.belongsTo(Group, { foreignKey: 'groupId', as: 'group' });
 
-// Export all models and the sequelize instance
 module.exports = {
   sequelize,
   User,

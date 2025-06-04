@@ -1,7 +1,8 @@
 // src/api/services/userService.js (Simplified)
 const bcrypt = require('bcryptjs');
-const { User, Group, StudentGroup } = require('../models'); // Import the User and Group models
-const sequelize = require('../../config/database'); // Import sequelize for transactions if needed
+const { User } = require('../models');
+const ApiError = require('../../utils/ApiError');
+const sequelize = require('../../config/database');
 
 const SALT_ROUNDS = 10;
 
@@ -9,119 +10,115 @@ const SALT_ROUNDS = 10;
 const findUserByEmail = async (email) => {
   try {
     const user = await User.findOne({ where: { email: email } });
-    // If user is found, the returned object already contains the 'role' field
-    return user; 
+    if (!user) {
+      throw ApiError.notFound(`User with email ${email} not found.`);
+    }
+    return user;
   } catch (error) {
-    console.debug('Error finding user by email:', error);
-    throw error;
+     console.debug('Error finding user by email in userService:', error); 
+    if (error instanceof ApiError) {
+      throw error;
   }
-};
+}};
 
 // Function to create a new user with a specific role
-// Used by teacher to create students, or for self-registration if implemented
-const createUser = async (email, name, password, role) => {
-  try {
-    // Check if a user with this email already exists
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
-      throw new Error('Email already in use');
-    }
+const createUser = async (email, name, password, role, transaction = null) => {
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Create the new user in the database
-    const newUser = await User.create({
-      email: email,
-      name: name,
-      password: hashedPassword,
-      role: role // Save the role
-    });
+  const newUser = await User.create({
+    email: email,
+    name: name,
+    password: hashedPassword,
+    role: role
+  }, { transaction });
 
-    // Return the new user object (excluding the hashed password)
-    return newUser;
+  return newUser;
 
-  } catch (error) {
-    console.debug('Error creating user:', error);
-    throw error;
-  }
 };
 
 // Function to change a user's password
 const changePassword = async (userId, oldPassword, newPassword) => {
   const transaction = await sequelize.transaction();
   try {
-      const user = await User.findByPk(userId, { transaction });
+    const user = await User.findByPk(userId, { transaction });
 
-      if (!user) {
-          throw new Error('User not found');
-      }
-
-
-
-      // Compare old password
-      const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-      if (!isPasswordValid) {
-          throw new Error('Incorrect old password');
-      }
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
 
 
-      // Hash the new password
-      const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isPasswordValid) {
+      throw ApiError.unauthorized('Incorrect old password');
+    }
 
-      // Update the user's password
-      user.password = hashedNewPassword;
-      await user.save({ transaction });
 
-      await transaction.commit();
-      return true; // Indicate success
+    const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    user.password = hashedNewPassword;
+    await user.save({ transaction });
+
+    await transaction.commit();
+    return true; 
 
   } catch (error) {
-      await transaction.rollback();
-      console.debug('Error changing password:', error);
+    await transaction.rollback();
+    console.debug('Error changing password:', error);
+    if (error instanceof ApiError) {
       throw error;
+    } else {
+      throw ApiError.internal('An unexpected error occurred while changing the password.');
+    }
   }
 };
 
 // Function to get a user by ID
 const getUserById = async (userId) => {
   try {
-      const user = await User.findByPk(userId);
-      // Return the Sequelize model instance, or null if not found
-      return user;
+    const user = await User.findByPk(userId);
+    return user;
   } catch (error) {
-      console.debug('Error getting user by ID:', error);
-      throw error;
+    console.error('Error getting user by ID in userService:', error); 
+    throw ApiError.internal('An unexpected error occurred while fetching user by ID.');
   }
 };
 
 // Function to delete a student user if they don't belong to any group
 const deleteStudentIfNoGroups = async (userId, transaction = null) => {
-    try {
-        const user = await User.findByPk(userId, { transaction });
+  try {
+    const user = await User.findByPk(userId, { transaction });
 
-        if (!user || user.role !== 'student') { // Only process if user exists and is a student
-            console.log(`User ${userId} not found or not a student. Skipping deletion check.`);
-            return false;
-        }
-
-        // Check for group memberships using the many-to-many association
-        // Assumes the relationship 'studentGroups' is defined in models/index.js
-        const groups = await user.getGroups({ transaction }); // Sequelize method generated by belongsToMany
-
-        if (groups.length === 0) {
-            await user.destroy({ transaction }); // Delete the user from the 'user' table
-            console.log(`Student user ${userId} deleted due to no group memberships.`);
-            return true; // Deleted
-        }
-
-        console.log(`Student user ${userId} still belongs to groups. Not deleting.`);
-        return false; // Not deleted
-
-    } catch (error) {
-        console.debug('Error deleting student user if no groups:', error);
-        throw error;
+    if (!user) {
+      return false;
     }
+    if (user.role !== 'student') {
+      throw ApiError.badRequest(`User ${userId} is not a student and cannot be processed by deleteStudentIfNoGroups.`);
+    }
+
+    const groups = await user.getStudentGroups({
+            where: { userId: userId },
+            through: { attributes: [] },
+            attributes: ['id']
+        },{ transaction });
+
+    if (groups.length === 0) {
+      await user.destroy({ transaction });
+      console.log(`Student user ${userId} deleted due to no group memberships.`);
+      return true; 
+    }
+
+    console.log(`Student user ${userId} still belongs to groups. Not deleting.`);
+    return false; 
+
+  } catch (error) {
+    console.debug('Error deleting student user if no groups:', error);
+    if (error instanceof ApiError) {
+      throw error; 
+    } else {
+      throw ApiError.internal(`An unexpected error occurred while checking/deleting student user ${userId}.`);
+    }
+  }
 };
 
 

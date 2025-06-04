@@ -1,17 +1,12 @@
 // src/api/services/gameService.js
-const { GameResult, User, Wordle, Group, StudentGroup, WordleGroup } = require('../models'); // Import the GameResult model
-const { Op } = require('sequelize'); // Import Op for Sequelize operators
-const userService = require('./userService');
+const { GameResult, User, Wordle, Group, StudentGroup } = require('../models'); 
+const { Op } = require('sequelize'); 
 const sequelize = require('../../config/database');
+const ApiError = require('../../utils/ApiError');
 
-// Function to save a basic game result entry
-// NOTE: Based on the current simplified 'partidas' table structure,
-// this only saves the user, wordle, and creation date.
-// It DOES NOT save attempts, score, or whether the word was guessed.
-// If you need to store those details, you MUST add columns to the 'partidas' table
-// and modify this function to accept and save that data.
+
 const saveGameResult = async (userId, wordleId, score) => {
-  const transaction = await sequelize.transaction(); // Start a transaction
+  const transaction = await sequelize.transaction(); 
 
   try {
     // 1. Find if a game result already exists for this user and wordle
@@ -20,7 +15,7 @@ const saveGameResult = async (userId, wordleId, score) => {
         userId: userId,
         wordleId: wordleId
       },
-      transaction // Include transaction
+      transaction 
     });
 
     let message = '';
@@ -30,8 +25,8 @@ const saveGameResult = async (userId, wordleId, score) => {
       if (score > gameResult.score) {
         // If the new score is higher, update the existing result
         gameResult.score = score;
-        // Optionally update creationDate if you want the timestamp of the best score
-        // gameResult.creationDate = new Date();
+        gameResult.creationDate = new Date();
+
         await gameResult.save({ transaction });
         message = 'Game result updated with a higher score';
       } else {
@@ -47,99 +42,100 @@ const saveGameResult = async (userId, wordleId, score) => {
         userId: userId,
         wordleId: wordleId,
         score: score,
-        // creationDate is automatically set by Sequelize timestamps
       }, { transaction });
       message = 'New game result created';
     }
 
-    await transaction.commit(); // Commit the transaction
+    await transaction.commit(); 
 
-    // Return the saved/updated game result
+    
     return { message, gameResult: gameResult.toJSON() };
 
   } catch (error) {
-    await transaction.rollback(); // Rollback transaction on error
+    await transaction.rollback(); 
     console.debug('Error saving game result:', error);
-    throw error;
+    if (error instanceof ApiError) {
+      throw error; 
+    } else {
+      throw ApiError.internal('An unexpected error occurred while saving the game result.'); 
+    }
   }
 };
 
 
 // --- Helper Functions for Teacher Authorization ---
 
-// Check if a student user is in any group created by a specific teacher
+// CHECKED: Check if a student user is in any group created by a specific teacher
 const isStudentInTeacherGroup = async (studentId, teacherId) => {
   try {
-    // Find an entry in the StudentGroup join table
     const studentGroupEntry = await StudentGroup.findOne({
-      where: { userId: studentId }, // Where the student ID matches
+      where: { userId: studentId },
       include: {
         model: Group,
-        as: 'group', // Alias defined in models/index.js for StudentGroup -> Group
-        where: { userId: teacherId } // And the group is created by the teacher
+        as: 'group',
+        where: { userId: teacherId }
       }
     });
-    // If an entry is found, the student is in a group created by the teacher
     return studentGroupEntry !== null;
   } catch (error) {
     console.debug('Error checking if student is in teacher group:', error);
-    throw error;
+    throw ApiError.internal('An unexpected error occurred during student-teacher group check.');
   }
 };
 
 // Check if a wordle was created by a specific teacher
 const isWordleCreatedByTeacher = async (wordleId, teacherId) => {
   try {
-    // Find the wordle and check its creator (userId)
     const wordle = await Wordle.findOne({
       where: {
         id: wordleId,
-        userId: teacherId // Where the wordle is created by the teacher
+        userId: teacherId
       },
-      attributes: ['id'] // Only need the ID to confirm existence
+      attributes: ['id']
     });
-    // If a wordle is found with this ID and teacherId, it was created by the teacher
     return wordle !== null;
   } catch (error) {
     console.debug('Error checking if wordle created by teacher:', error);
-    throw error;
+    throw ApiError.internal('An unexpected error occurred during wordle-teacher ownership check.');
   }
 };
 
 // Check if a group was created by a specific teacher
 const isGroupCreatedByTeacher = async (groupId, teacherId) => {
   try {
-    // Find the group and check its creator (userId)
     const group = await Group.findOne({
       where: {
         id: groupId,
-        userId: teacherId // Where the group is created by the teacher
+        userId: teacherId
       },
-      attributes: ['id'] // Only need the ID to confirm existence
+      attributes: ['id']
     });
-    // If a group is found with this ID and teacherId, it was created by the teacher
     return group !== null;
   } catch (error) {
     console.debug('Error checking if group created by teacher:', error);
-    throw error;
+    throw ApiError.internal('An unexpected error occurred during group-teacher ownership check.');
   }
 };
 
 // --- Game Result Functions with Teacher Authorization ---
 
-// Function to get all game results for a specific student user (Teacher can view if student is in their group)
-const getGameResultsForStudent = async (studentId, teacherId = null) => { // Added optional teacherId
+// CHECKED: Function to get all game results for a specific student user (Teacher can view if student is in their group)
+const getGameResultsForStudent = async (studentId, teacherId) => {
   try {
-    // If teacherId is provided, perform authorization check
-    if (teacherId) {
-      const isAuthorized = await isStudentInTeacherGroup(studentId, teacherId);
-      if (!isAuthorized) {
-        // Throw a specific error that the controller can catch
-        throw new Error('Teacher not authorized to view this student\'s results');
-      }
+
+    const student = await User.findByPk(studentId, {
+      attributes: ['id', 'role'],
+      where: { role: 'student' }
+    });
+
+    if (!student) {
+      throw ApiError.notFound('Student not found.');
+    }
+    const isAuthorized = await isStudentInTeacherGroup(studentId, teacherId);
+    if (!isAuthorized) {
+      throw ApiError.forbidden('Teacher not authorized to view this student\'s game results. Student is not in any of the teacher\'s groups.'); 
     }
 
-    // Find game results where the userId matches the provided studentId
     const gameResults = await GameResult.findAll({
       where: { userId: studentId },
       include: [
@@ -151,33 +147,41 @@ const getGameResultsForStudent = async (studentId, teacherId = null) => { // Add
         {
           model: Wordle,
           as: 'wordle',
-          attributes: ['id', 'name']
+          attributes: ['id', 'name', 'difficulty']
         }
       ],
-      order: [['creationDate', 'DESC']]
+      order: [['createdAt', 'DESC']]
     });
 
     return gameResults.map(result => result.toJSON());
 
   } catch (error) {
     console.debug('Error getting game results for student:', error);
-    throw error;
+    if (error instanceof ApiError) {
+      throw error; s
+    } else {
+      throw ApiError.internal('An unexpected error occurred while fetching game results for the student.'); 
+    }
   }
 };
 
-// Function to get all game results for a specific wordle (Teacher can view if they created the wordle)
-const getGameResultsForWordle = async (wordleId, teacherId = null) => { // Added optional teacherId
+// CHECKED: Function to get all game results for a specific wordle (Teacher can view if they created the wordle)
+const getGameResultsForWordle = async (wordleId, teacherId) => {
   try {
-    // If teacherId is provided, perform authorization check
-    if (teacherId) {
-      const isAuthorized = await isWordleCreatedByTeacher(wordleId, teacherId);
-      if (!isAuthorized) {
-        // Throw a specific error that the controller can catch
-        throw new Error('Teacher not authorized to view results for this wordle');
-      }
+    // 1. Verificar si el Wordle existe y pertenece a este profesor
+    const wordle = await Wordle.findByPk(wordleId, {
+      attributes: ['id', 'name', 'difficulty', 'userId']
+    });
+
+    if (!wordle) {
+      throw ApiError.notFound('Wordle not found.');
     }
 
-    // Find game results where the wordleId matches the provided wordleId
+    if (wordle.userId !== teacherId) {
+      throw ApiError.forbidden('Teacher not authorized to view results for this wordle. Wordle was not created by this teacher.');
+    }
+
+    // 2. Encontrar los resultados del juego para este Wordle
     const gameResults = await GameResult.findAll({
       where: { wordleId: wordleId },
       include: [
@@ -189,7 +193,7 @@ const getGameResultsForWordle = async (wordleId, teacherId = null) => { // Added
         {
           model: Wordle,
           as: 'wordle',
-          attributes: ['id', 'name']
+          attributes: ['id', 'name', 'difficulty']
         }
       ],
       order: [['score', 'DESC']]
@@ -199,24 +203,20 @@ const getGameResultsForWordle = async (wordleId, teacherId = null) => { // Added
 
   } catch (error) {
     console.debug('Error getting game results for wordle:', error);
-    throw error;
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw ApiError.internal('An unexpected error occurred while fetching game results for the wordle.'); 
+    }
   }
 };
 
-// Function to get all game results for a specific group (Teacher can view if they created the group)
-const getGameResultsForGroup = async (groupId, teacherId = null) => { // Added optional teacherId
+// CHECKED: Function to get all game results for a specific group (Teacher can view if they created the group)
+const getGameResultsForGroup = async (groupId, teacherId) => {
   try {
-    // If teacherId is provided, perform authorization check
-    if (teacherId) {
-      const isAuthorized = await isGroupCreatedByTeacher(groupId, teacherId);
-      if (!isAuthorized) {
-        // Throw a specific error that the controller can catch
-        throw new Error('Teacher not authorized to view results for this group');
-      }
-    }
-
     // 1. Find the group and get the IDs of students in it and wordles accessible to it
     const group = await Group.findByPk(groupId, {
+      attributes: ['id', 'userId'],
       include: [
         {
           model: User,
@@ -234,16 +234,17 @@ const getGameResultsForGroup = async (groupId, teacherId = null) => { // Added o
     });
 
     if (!group) {
-      // This case should ideally be caught by the isGroupCreatedByTeacher check,
-      // but this is a defensive check.
-      throw new Error('Group not found');
+      throw ApiError.notFound('Group not found.');
+    }
+    if (group.userId !== teacherId) {
+      throw ApiError.forbidden('Teacher not authorized to view results for this group. Group was not created by this teacher.');
     }
 
     const studentIdsInGroup = group.students.map(student => student.id);
     const accessibleWordleIds = group.accessibleWordles.map(wordle => wordle.id);
 
     if (studentIdsInGroup.length === 0 || accessibleWordleIds.length === 0) {
-      return []; // No students or no accessible wordles means no results possible
+      return [];
     }
 
     // 2. Find game results played by these students for these wordles
@@ -268,19 +269,23 @@ const getGameResultsForGroup = async (groupId, teacherId = null) => { // Added o
     });
 
     return gameResults.map(result => ({
-      userName: result.player.name, 
+      userName: result.player.name,
       score: result.dataValues.totalScore
     }));
 
   } catch (error) {
     console.debug('Error getting game results for group:', error);
-    throw error;
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw ApiError.internal('An unexpected error occurred while fetching game results for the group.');
+    }
   }
 };
 
 
-// Function to get details of a specific game result (Teacher can view if they have access)
-const getGameResultDetails = async (gameResultId, teacherId = null) => { // Added optional teacherId
+// CHECKED: Function to get details of a specific game result (Teacher can view if they have access)
+const getGameResultDetails = async (gameResultId, teacherId) => { 
   try {
     const gameResult = await GameResult.findByPk(gameResultId, {
       include: [
@@ -292,40 +297,33 @@ const getGameResultDetails = async (gameResultId, teacherId = null) => { // Adde
         {
           model: Wordle,
           as: 'wordle',
-          attributes: ['id', 'name', 'userId'] // Include wordle creator ID
+          attributes: ['id', 'name', 'difficulty', 'userId']
         }
       ]
     });
 
     if (!gameResult) {
-      throw new Error('Game result not found');
+      throw ApiError.notFound('Game result not found.');
     }
 
-    // If teacherId is provided, perform authorization check
-    if (teacherId) {
-      let isAuthorized = false;
+    let isAuthorized = false;
 
-      // Check if the teacher created the wordle associated with this game result
-      if (gameResult.wordle && gameResult.wordle.userId === teacherId) {
-        isAuthorized = true;
-      }
-
-      // If not authorized by wordle ownership, check if the student player
-      // is in any group created by this teacher
-      if (!isAuthorized && gameResult.player) {
-        isAuthorized = await isStudentInTeacherGroup(gameResult.player.id, teacherId);
-      }
-
-      if (!isAuthorized) {
-        // Throw a specific error that the controller can catch
-        throw new Error('Teacher not authorized to view this game result');
-      }
+    if (gameResult.wordle && gameResult.wordle.userId === teacherId) {
+      isAuthorized = true;
     }
 
-    // Exclude sensitive info like wordle creator ID from the final response if not the creator
+    if (!isAuthorized && gameResult.player) {
+      isAuthorized = await isStudentInTeacherGroup(gameResult.player.id, teacherId);
+    }
+
+    if (!isAuthorized) {
+      throw ApiError.forbidden('Teacher not authorized to view this game result. Neither created the Wordle nor manages the student.');
+    }
+
+
     const resultJson = gameResult.toJSON();
     if (teacherId && resultJson.wordle && resultJson.wordle.userId !== teacherId) {
-      delete resultJson.wordle.userId; // Remove creator ID if teacher is not the creator
+      delete resultJson.wordle.userId;
     }
 
 
@@ -333,7 +331,11 @@ const getGameResultDetails = async (gameResultId, teacherId = null) => { // Adde
 
   } catch (error) {
     console.debug('Error getting game result details:', error);
-    throw error;
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw ApiError.internal('An unexpected error occurred while fetching game result details.');
+    }
   }
 };
 

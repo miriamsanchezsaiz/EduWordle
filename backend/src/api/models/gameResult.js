@@ -14,7 +14,7 @@ const GameResult = sequelize.define('GameResult', {
   userId: { 
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'userId', // Mapea a la columna 'userId' en la BD
+    field: 'userId', 
     references: {
         model: 'user',
         key: 'id'
@@ -24,7 +24,7 @@ const GameResult = sequelize.define('GameResult', {
   wordleId: { 
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'wordleId', // Mapea a la columna 'wordleId' en la BD
+    field: 'wordleId', 
     references: {
         model: 'wordle',
         key: 'id'
@@ -38,19 +38,16 @@ const GameResult = sequelize.define('GameResult', {
   }
 }, {
   tableName: 'game', 
-  timestamps: true, // Let Sequelize manage createdAt and updatedAt
+  timestamps: true, 
   indexes: [
     {
       unique: true,
-      fields: ['userId', 'wordleId'] // Fields for the unique constraint
+      fields: ['userId', 'wordleId'] 
     }
   ]
 
 });
 
-// Note: With this simplified structure, the GameResult table will NOT store
-// attempts taken, whether the word was guessed, or the score. The API endpoint
-// to save game results will need to be adjusted, or this information will
-// need to be stored elsewhere or derived on the fly.
+
 
 module.exports = GameResult;

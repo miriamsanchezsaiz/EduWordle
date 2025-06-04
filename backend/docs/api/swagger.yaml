@@ -15,1340 +15,2139 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  # Definición de los schemas de los modelos de datos que se reutilizarán
+  #TODO: Revisar duplicados y eliminar los que no se usen
+  schemas:
+    Error:
+      type: object
+      properties:
+        status: 
+          type: string
+          description: Indicador de estado de la respuesta.
+          enum: [error] 
+          example: error
+        statusCode: 
+            type: number
+            description: Código de estado HTTP del error.
+            example: 400
+        message:
+          type: string
+          description: Mensaje descriptivo del error.
+          example: 'Validation failed'
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              msg:
+                type: string
+                description: Mensaje específico del detalle del error.
+                example: 'Invalid email format'
+              param:
+                type: string
+                description: Parámetro que causó el error (para errores de validación).
+                example: 'email'
+              location:
+                type: string
+                description: Ubicación del parámetro (ej. 'body').
+                example: 'body'
+      responses:
+        UnauthorizedError:
+          description: No autorizado. Token de autenticación inválido/expirado o ausente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: error
+                statusCode: 401
+                message: Unauthorized: Invalid token. Please log in again.
+        ForbiddenGroupAccessError:
+          description: Prohibido. El usuario autenticado no tiene los permisos necesarios o no es el propietario/miembro del recurso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: error
+                statusCode: 403
+                message: Forbidden: You are not authorized to access this group.
+        
+        BadRequestError:
+          description: Petición incorrecta. Errores de validación o datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: error
+                statusCode: 400
+                message: Validation failed
+                details:
+                  - msg: "Invalid date format for initDate"
+                    param: "initDate"
+                    location: "body"
+        InternalServerError:
+          description: Error interno del servidor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: error
+                statusCode: 500
+                message: An unexpected error occurred.
+        StudentNotFoundError:
+          description: Estudiante no encontrado o ID inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 404
+                message: Student not found.
+        ForbiddenStudentAccessError:
+          description: Profesor no autorizado para ver los resultados de este estudiante.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 403
+                message: Teacher not authorized to view this student's game results. Student is not in any of the teacher's groups.
+        WordleNotFoundError:
+          description: Wordle no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 404
+                message: Wordle not found.
+        ForbiddenWordleAccessError:
+          description: Profesor no autorizado para ver los resultados de este Wordle.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 403
+                message: Teacher not authorized to view results for this wordle. Wordle was not created by this teacher.
+        GroupNotFoundError: 
+          description: Grupo no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 404
+                message: Group not found.
+        GameResultNotFoundError: 
+          description: Resultado de juego no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 404
+                message: Game result not found.
+        ForbiddenGameResultAccessError: 
+          description: Profesor no autorizado para ver este resultado de juego.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 403
+                message: Teacher not authorized to view this game result. Neither created the Wordle nor manages the student.
+        ForbiddenUserRoleError: 
+          description: Usuario no autorizado para realizar esta acción debido a su rol.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 403
+                message: User not authorized to create wordles or user not found.
+        WordleBadRequestError: 
+          description: Petición inválida debido a datos incompletos o incorrectos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                status: 400
+                message: Word details (title) are required for the wordle.
+                errors:
+                  - msg: "Name is required"
+                    param: "name"
+                    location: "body"
+
+
+    CreateUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - role
+      properties:
+        name:
+          type: string
+          example: Juan Perez
+          description: Nombre completo del usuario.
+        email:
+          type: string
+          format: email
+          example: new.user@example.com
+          description: Correo electrónico del usuario.
+        password:
+          type: string
+          format: password
+          example: StrongPassword!1
+          description: Contraseña del usuario.
+        role:
+          type: string
+          enum: [teacher, student] 
+          example: student
+          description: Rol del usuario (profesor o estudiante).
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único del usuario.
+          readOnly: true
+        name:
+          type: string
+          description: Nombre del usuario.
+          example: 'Juan Pérez'
+        email:
+          type: string
+          format: email
+          description: Correo electrónico del usuario.
+          example: 'juan.perez@example.com'
+        role:
+          type: string
+          description: Rol del usuario.
+          enum: [teacher, student]
+          example: 'student'
+      example:
+        id: 101
+        name: 'Ana García'
+        email: 'ana.garcia@example.com'
+        role: 'teacher'
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: teacher.Swagger@example.com
+          description: Correo electrónico del usuario.
+        password:
+          type: string
+          format: password
+          example: Password_123!
+          description: Contraseña del usuario.
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Token de autenticación JWT.
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJ0ZWFjaGVyIiwiaWF0IjoxNzA0MDY3MjAwLCJleHAiOjE3MDQwNzQ0MDB9.some_jwt_signature'
+        user:
+          $ref: '#/components/schemas/User'
+        requiresPasswordChange: 
+          type: boolean
+          description: Indica si el usuario debe cambiar su contraseña inicial o débil.
+          example: true
+    
+
+    UserResponseWithoutPassword: 
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del usuario.
+          example: 123
+        name:
+          type: string
+          description: Nombre del usuario.
+          example: Juan Perez
+        email:
+          type: string
+          format: email
+          description: Correo electrónico del usuario.
+          example: new.user@example.com
+        role:
+          type: string
+          description: Rol del usuario.
+          enum: [teacher, student]
+          example: student
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del usuario.
+          example: "2023-01-01T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del usuario.
+          example: "2023-01-01T10:00:00.000Z"
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único del grupo.
+          readOnly: true
+          example: 1
+        name:
+          type: string
+          description: Nombre del grupo.
+          example: 'Clase de 5ºA'
+        initDate:
+          type: string
+          format: date # Tipo DATEONLY en Sequelize se mapea a 'date' en OpenAPI
+          description: Fecha de inicio del grupo.
+          example: '2023-09-01'
+        endDate:
+          type: string
+          format: date # Tipo DATEONLY en Sequelize se mapea a 'date' en OpenAPI
+          description: Fecha de fin del grupo (opcional).
+          nullable: true
+          example: '2024-06-30'
+        userId: # Cambiado de 'teacherId' a 'userId' para coincidir con el modelo
+          type: integer
+          format: int32
+          description: ID del usuario (profesor) que creó el grupo.
+          readOnly: true
+          example: 10
+        createdAt: # Añadido por timestamps: true
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del grupo.
+          readOnly: true
+        updatedAt: # Añadido por timestamps: true
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del grupo.
+          readOnly: true
+    GroupResponseWithStatus:
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del grupo.
+          example: 101
+        name:
+          type: string
+          description: Nombre del grupo.
+          example: Matemáticas Avanzadas
+        initDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio del grupo en formato ISO 8601.
+          example: "2024-09-01T00:00:00.000Z"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de fin del grupo en formato ISO 8601.
+          example: "2025-06-30T00:00:00.000Z"
+        userId:
+          type: number
+          description: ID del profesor que creó el grupo.
+          example: 1
+        isActive: # Nueva propiedad
+          type: boolean
+          description: Indica si el grupo está actualmente activo.
+          example: true
+    GroupWithStudents:
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del grupo.
+          example: 101
+        name:
+          type: string
+          description: Nombre del grupo.
+          example: Matemáticas Avanzadas
+        initDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio del grupo en formato ISO 8601.
+          example: "2024-09-01T00:00:00.000Z"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de fin del grupo en formato ISO 8601.
+          example: "2025-06-30T00:00:00.000Z"
+        userId:
+          type: number
+          description: ID del profesor que creó el grupo.
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del grupo.
+          example: "2024-07-01T12:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del grupo.
+          example: "2024-07-01T12:00:00.000Z"
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponseWithoutPassword' 
+          description: Lista de estudiantes actualmente asociados al grupo.
+        createdStudents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+                example: 3
+              email:
+                type: string
+                format: email
+                example: "new.student@example.com"
+          description: Lista de estudiantes que fueron creados como parte de esta operación (si no existían).
+        linkedStudents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+                example: 2
+              email:
+                type: string
+                format: email
+                example: "student1@example.com"
+          description: Lista de estudiantes que fueron vinculados al grupo (incluye los recién creados y los existentes).
+    GroupWithStudentsAndWordles: 
+      allOf:
+        - $ref: '#/components/schemas/GroupWithStudents' # Extiende el schema GroupWithStudents
+        - type: object
+          properties:
+            wordles:
+              type: array
+              description: Lista de Wordles asociados al grupo.
+              items:
+                $ref: '#/components/schemas/Wordle'
+          required:
+            - wordles
+      example:
+        id: 501
+        name: 'Grupo A'
+        initDate: '2024-01-15'
+        endDate: '2025-06-30'
+        userId: 10
+        createdAt: '2024-01-10T10:00:00Z'
+        updatedAt: '2024-01-10T10:00:00Z'
+        isActive: true
+        students:
+          - id: 101
+            name: 'Juan Alumno'
+            email: 'juan.alumno@example.com'
+            role: 'student'
+        wordles:
+          - id: 601
+            name: 'Frutas y Verduras'
+            targetWord: 'MANZANA'
+            maxAttempts: 7
+            language: 'es'
+            difficulty: 'easy'
+            userId: 10
+            createdAt: '2024-02-01T09:30:00Z'
+            updatedAt: '2024-02-01T09:30:00Z'
+          - id: 602
+            name: 'Capitales del Mundo'
+            targetWord: 'MADRID'
+            maxAttempts: 6
+            language: 'es'
+            difficulty: 'medium'
+            userId: 10
+            createdAt: '2024-02-10T10:00:00Z'
+            updatedAt: '2024-02-10T10:00:00Z'
+    GroupDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del grupo.
+          example: 501
+        name:
+          type: string
+          description: Nombre del grupo.
+          example: Matemáticas A
+        initDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio del grupo en formato ISO 8601.
+          example: '2024-01-15T00:00:00.000Z'
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de fin del grupo en formato ISO 8601.
+          example: '2025-06-30T00:00:00.000Z'
+        userId:
+          type: number
+          description: ID del profesor que creó el grupo.
+          example: 10
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del grupo.
+          example: '2024-01-10T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del grupo.
+          example: '2024-01-10T10:00:00.000Z'
+        isActive:
+          type: boolean
+          description: Indica si el grupo está actualmente activo.
+          example: true
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponseWithoutPassword' # Reutiliza el schema de usuario sin password
+          description: Lista de estudiantes asociados al grupo.
+        accessibleWordles: # Renombrado de 'wordles' a 'accessibleWordles'
+          type: array
+          items:
+            $ref: '#/components/schemas/WordleDetailsResponse' # Necesitarás un schema para los detalles de Wordle
+          description: Lista de Wordles asociados a este grupo.
+    UpdateGroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nuevo nombre del grupo.
+          example: 'Matemáticas C'
+        initDate:
+          type: string
+          format: date
+          description: Nueva fecha de inicio del grupo (YYYY-MM-DD).
+          example: '2024-09-15'
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: Nueva fecha de fin del grupo (YYYY-MM-DD). Puede ser nula.
+          example: '2025-07-31'
+        studentEmailsToAdd:
+          type: array
+          items:
+            type: string
+            format: email
+          description: Lista de direcciones de correo electrónico de estudiantes a **añadir** al grupo. Los estudiantes no existentes serán creados.
+          example: ['nuevo.alumno3@example.com']
+        studentIdsToRemove:
+          type: array
+          items:
+            type: number
+            format: int32
+          description: Lista de IDs de estudiantes a **eliminar** del grupo.
+          example: [101]
+        wordleIdsToAdd:
+          type: array
+          items:
+            type: number
+            format: int32
+          description: Lista de IDs de Wordles a **añadir** al grupo. Deben ser Wordles existentes y propiedad del profesor.
+          example: [603]
+        wordleIdsToRemove:
+          type: array
+          items:
+            type: number
+            format: int32
+          description: Lista de IDs de Wordles a **eliminar** del grupo.
+          example: [601]
+    GroupUpdateResponse:
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del grupo.
+          example: 501
+        name:
+          type: string
+          description: Nombre del grupo actualizado.
+          example: 'Matemáticas C'
+        initDate:
+          type: string
+          format: date-time
+          description: Fecha de inicio del grupo actualizada.
+          example: '2024-09-15T00:00:00.000Z'
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+          description: Fecha de fin del grupo actualizada.
+          example: '2025-07-31T00:00:00.000Z'
+        userId:
+          type: number
+          description: ID del profesor que creó el grupo.
+          example: 10
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del grupo.
+          example: '2024-01-10T10:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del grupo.
+          example: '2025-05-29T10:00:00.000Z'
+        isActive:
+          type: boolean
+          description: Indica si el grupo está actualmente activo.
+          example: true
+        students:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponseWithoutPassword'
+          description: Lista de estudiantes actualmente asociados al grupo después de la actualización.
+        accessibleWordles:
+          type: array
+          items:
+            $ref: '#/components/schemas/WordleDetailsResponse'
+          description: Lista de Wordles actualmente asociados al grupo después de la actualización.
+        createdStudents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+                example: 103
+              email:
+                type: string
+                format: email
+                example: "nuevo.alumno3@example.com"
+          description: Lista de estudiantes que fueron **creados** como parte de esta operación (si no existían).
+        linkedStudents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+                example: 103
+              email:
+                type: string
+                format: email
+                example: "nuevo.alumno3@example.com"
+          description: Lista de estudiantes (existentes o recién creados) que fueron **vinculados** al grupo en esta operación.
+
+    WordleDetailsResponse: 
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del Wordle.
+          example: 601
+        name:
+          type: string
+          description: Nombre del Wordle.
+          example: 'Frutas y Verduras'
+        userId: 
+          type: number
+          description: ID del profesor creador del Wordle.
+          example: 10
+        difficulty:
+          type: string
+          enum: [low, high]
+          description: Nivel de dificultad del Wordle.
+          example: 'low'
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del Wordle.
+          example: '2024-02-01T09:30:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del Wordle.
+          example: '2024-02-01T09:30:00.000Z'
+    GameResultEntry:
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del resultado del juego.
+          example: 101
+        score:
+          type: number
+          description: Puntuación obtenida en el juego.
+          example: 5
+        attempts:
+          type: number
+          description: Número de intentos utilizados.
+          example: 3
+        createdAt: 
+          type: string
+          format: date-time
+          description: Fecha y hora en que se registró el resultado del juego.
+          example: '2024-05-15T10:00:00.000Z'
+        userId:
+          type: number
+          description: ID del estudiante que jugó.
+          example: 201
+        wordleId:
+          type: number
+          description: ID del Wordle al que se jugó.
+          example: 601
+        player:
+          type: object
+          properties:
+            id:
+              type: number
+              example: 201
+            name:
+              type: string
+              example: 'Juan Pérez'
+            email:
+              type: string
+              example: 'juan.perez@example.com'
+        wordle:
+          type: object
+          properties:
+            id:
+              type: number
+              example: 601
+            name:
+              type: string
+              example: 'Frutas y Verduras'
+            difficulty:
+              type: string
+              enum: [low, high]
+              example: 'low'
+    GameResultWithDetails: 
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del resultado del juego.
+          example: 701
+        score:
+          type: number
+          description: Puntuación obtenida en el juego.
+          example: 100
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora en que se registró el resultado del juego.
+          example: '2024-03-05T14:15:00Z'
+        userId:
+          type: number
+          description: ID del estudiante que jugó.
+          example: 102
+        wordleId:
+          type: number
+          description: ID del Wordle al que se jugó.
+          example: 601
+        player:
+          type: object
+          properties:
+            id:
+              type: number
+              example: 102
+            name:
+              type: string
+              example: 'Carlos Estudiante'
+            email:
+              type: string
+              example: 'carlos.estudiante@example.com'
+        wordle:
+          type: object
+          properties:
+            id:
+              type: number
+              example: 601
+            name:
+              type: string
+              example: 'Animales'
+            difficulty: 
+              type: string
+              enum: [low, high]
+              example: 'low'
+    GroupRankingEntry: 
+      type: object
+      properties:
+        userName:
+          type: string
+          description: Nombre del estudiante.
+          example: 'Carlos Estudiante'
+        score:
+          type: number
+          description: Puntuación total acumulada por el estudiante en los Wordles del grupo.
+          example: 250
+
+    WordleListItem: 
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del Wordle.
+          example: 601
+        name:
+          type: string
+          description: Nombre del Wordle.
+          example: 'Frutas y Verduras'
+        difficulty:
+          type: string
+          enum: [low, high]
+          description: Nivel de dificultad del Wordle.
+          example: 'low'
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del Wordle.
+          example: '2024-02-01T09:30:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del Wordle.
+          example: '2024-02-01T09:30:00.000Z'
+        words: # La palabra principal asociada
+          type: array
+          items:
+            type: object
+            properties:
+              word:
+                type: string
+                description: La palabra principal del Wordle.
+                example: 'manzana'
+              hint:
+                type: string
+                nullable: true
+                description: Una pista opcional para la palabra.
+                example: 'Es una fruta que cae del árbol.'
+    WordleQuestion:
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID de la pregunta.
+          example: 901
+        question:
+          type: string
+          description: El enunciado de la pregunta.
+          example: "¿Qué palabra es un sinónimo de 'contento'?"
+        options:
+          type: array
+          items:
+            type: string
+          description: Opciones de respuesta para preguntas de opción múltiple (serializado a JSON).
+          example: ["feliz", "triste", "enojado"]
+        correctAnswer:
+          type: string # Esto se serializa a JSON, por lo que su tipo es 'string' en la BD, pero lógicamente puede ser array o string.
+          description: La respuesta correcta (serializado a JSON).
+          example: "feliz"
+        type:
+          type: string
+          enum: [multiple_choice, open_ended]
+          description: Tipo de pregunta.
+          example: 'multiple_choice'
+    WordleDetailsResponse: 
+      type: object
+      properties:
+        id:
+          type: number
+          description: ID único del Wordle.
+          example: 601
+        name:
+          type: string
+          description: Nombre del Wordle.
+          example: 'Frutas y Verduras'
+        userId:
+          type: number
+          description: ID del profesor creador del Wordle.
+          example: 10
+        difficulty:
+          type: string
+          enum: [low, high]
+          description: Nivel de dificultad del Wordle.
+          example: 'low'
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del Wordle.
+          example: '2024-02-01T09:30:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del Wordle.
+          example: '2024-02-01T09:30:00.000Z'
+        creator:
+          $ref: '#/components/schemas/UserResponseWithoutPassword' # Reutiliza el schema de usuario
+        words:
+          type: array
+          items:
+            type: object
+            properties:
+              word:
+                type: string
+                description: La palabra principal del Wordle.
+                example: 'manzana'
+              hint:
+                type: string
+                nullable: true
+                description: Una pista opcional para la palabra.
+                example: 'Es una fruta que cae del árbol.'
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WordleQuestion'
+        groupsWithAccess:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+                example: 501
+              name:
+                type: string
+                example: 'Grupo A'
+    CreateWordleRequest:
+      type: object
+      required:
+        - name
+        - difficulty
+        - word
+        - questions
+      properties:
+        name:
+          type: string
+          description: Nombre del Wordle.
+          example: 'Animales de Granja'
+        difficulty:
+          type: string
+          enum: [low, high]
+          description: Nivel de dificultad del Wordle.
+          example: 'low'
+        word:
+          type: object
+          required:
+            - title
+          properties:
+            title:
+              type: string
+              description: La palabra secreta del Wordle.
+              example: 'vaca'
+            hint:
+              type: string
+              nullable: true
+              description: Una pista para la palabra.
+              example: 'Da leche y hace muuu.'
+        questions:
+          type: array
+          minItems: 1
+          description: Lista de preguntas asociadas al Wordle.
+          items:
+            type: object
+            required:
+              - statement
+              - answer
+              - type
+            properties:
+              statement:
+                type: string
+                description: Enunciado de la pregunta.
+                example: "¿Qué animal de granja es conocido por su piel lanuda?"
+              options:
+                type: array
+                items:
+                  type: string
+                nullable: true
+                description: Opciones de respuesta para preguntas de opción múltiple.
+                example: ["oveja", "cerdo", "gallina"]
+              answer:
+                type: string # Esto se serializa a JSON, pero para la entrada se puede aceptar como string/array
+                description: La respuesta correcta.
+                example: "oveja"
+              type:
+                type: string
+                enum: [multiple_choice, open_ended]
+                description: Tipo de pregunta (ej. 'multiple_choice', 'open_ended').
+                example: 'multiple_choice'
+        groupAccessIds:
+          type: array
+          items:
+            type: number
+            format: int32
+          description: IDs de los grupos a los que este Wordle será accesible.
+          example: [501, 502]
+
+
+
+    Wordle:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único del Wordle.
+          readOnly: true
+        name:
+          type: string
+          description: Nombre del Wordle.
+          example: 'Animales'
+        userId:
+          type: integer
+          format: int32
+          description: ID del profesor que creó el Wordle.
+          readOnly: true
+        difficulty:
+          type: string
+          description: Nivel de dificultad del Wordle.
+          enum: [low, high] # Ajustado para coincidir con tu ENUM de Sequelize
+          example: 'low' # Cambiado a 'low'
+        createdAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del Wordle.
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del Wordle.
+          readOnly: true
+       
+    WordleWord: 
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único de la palabra.
+          readOnly: true
+        word:
+          type: string
+          description: La palabra en sí.
+          example: "CASA"
+        hint:
+          type: string
+          description: Pista asociada a la palabra.
+          nullable: true
+          example: "Donde vivimos"
+        wordleId:
+          type: integer
+          format: int32
+          description: ID del Wordle al que pertenece esta palabra.
+          readOnly: true
+    WordleQuestion: 
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único de la pregunta.
+          readOnly: true
+        type:
+          type: string
+          description: Tipo de pregunta (ej. single, multiple, text).
+          example: "single"
+        question:
+          type: string
+          description: Enunciado de la pregunta.
+          example: "¿Cuál es la capital de España?"
+        correctAnswer:
+          type: string
+          description: Respuesta correcta a la pregunta.
+          example: "Madrid"
+        options:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Opciones para preguntas de selección múltiple (si aplica).
+          example: ["París", "Berlín", "Roma", "Madrid"]
+        wordleId:
+          type: integer
+          format: int32
+          description: ID del Wordle al que pertenece esta pregunta.
+          readOnly: true
+    GroupAccess: 
+      type: object
+      properties:
+        wordleId:
+          type: integer
+          format: int32
+          description: ID del Wordle.
+          readOnly: true
+        groupId:
+          type: integer
+          format: int32
+          description: ID del Grupo con acceso.
+          readOnly: true
+    WordleDetails:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Wordle'
+        - type: object
+          properties:
+            words:
+              type: array
+              description: Palabras asociadas a este Wordle.
+              items:
+                $ref: '#/components/schemas/WordleWord'
+            questions:
+              type: array
+              description: Preguntas asociadas a este Wordle.
+              items:
+                $ref: '#/components/schemas/WordleQuestion'
+            groups: 
+              type: array
+              description: Grupos a los que este Wordle tiene acceso.
+              items:
+                $ref: '#/components/schemas/Group' # Referencia al esquema de Group
+    WordleGameData: 
+          type: object
+          description: Datos necesarios para iniciar un juego de Wordle.
+          properties:
+            id:
+              type: integer
+              format: int32
+              description: ID único del Wordle.
+              readOnly: true
+              example: 601
+            name:
+              type: string
+              description: Nombre del Wordle.
+              example: 'Animales'
+            difficulty:
+              type: string
+              description: Nivel de dificultad del Wordle.
+              enum: [low, high]
+              example: 'low'
+            words:
+              type: array
+              description: Lista de palabras para el juego de Wordle.
+              items:
+                type: object
+                properties:
+                  word:
+                    type: string
+                    description: La palabra a adivinar.
+                    example: "PERRO"
+                  hint:
+                    type: string
+                    description: Pista para la palabra.
+                    nullable: true
+                    example: "Mejor amigo del hombre"
+                required:
+                  - word
+            questions:
+              type: array
+              description: Lista de preguntas asociadas al Wordle.
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: Tipo de pregunta (ej. single, multiple, text).
+                    example: "single"
+                  statement:
+                    type: string
+                    description: Enunciado de la pregunta.
+                    example: "¿Cuál es un mamífero doméstico?"
+                  answer:
+                    type: string
+                    description: Respuesta correcta a la pregunta.
+                    example: "Perro"
+                  options:
+                    type: array
+                    items:
+                      type: string
+                    nullable: true
+                    description: Opciones para preguntas de selección (si aplica).
+                    example: ["Gato", "Pez", "Perro"]
+                required:
+                  - type
+                  - statement
+                  - answer   
+
+    GameResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único del resultado del juego.
+          readOnly: true
+          example: 1001
+        userId:
+          type: integer
+          format: int32
+          description: ID del estudiante que jugó.
+          readOnly: true
+          example: 20
+        wordleId:
+          type: integer
+          format: int32
+          description: ID del Wordle jugado.
+          readOnly: true
+          example: 601
+        score:
+          type: integer
+          format: int32
+          description: Puntuación obtenida en el juego.
+          example: 150
+        createdAt: # Incluido por timestamps: true
+          type: string
+          format: date-time
+          description: Fecha y hora en que se guardó el resultado.
+          readOnly: true
+        updatedAt: # Incluido por timestamps: true
+          type: string
+          format: date-time
+          description: Fecha y hora de la última actualización del resultado.
+          readOnly: true
+    GroupRankingEntry:
+      type: object
+      properties:
+        userName:
+          type: string
+          description: Nombre del estudiante.
+          example: 'Juan Alumno'
+        score:
+          type: number
+          format: float
+          description: Puntuación total acumulada por el estudiante en el grupo.
+          example: 250
+      example:
+        userName: 'María Estudiante'
+        score: 320
+
+  responses:
+    UnauthorizedError:
+      description: No autorizado (Token JWT inválido o ausente).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: 'Unauthorized: Invalid token'
+    ForbiddenTeacherError:
+      description: Prohibido (El usuario autenticado no es un profesor o no tiene permisos para este recurso).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: 'Forbidden: User not found or not authorized to access this resource.'
+    WordleNotFoundError:
+      description: Wordle no encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: 'Wordle not found'
+    InvalidInputError:
+      description: Datos de entrada inválidos (ej. validación fallida).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: 'Validation failed'
+            errors:
+              - msg: 'name must not be empty'
+                param: 'name'
+                location: 'body'
+    InternalServerError:
+      description: Error interno del servidor.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: 'Internal Server Error'
+    ForbiddenStudentError:
+      description: Prohibido (El usuario autenticado no es un estudiante o no tiene acceso al recurso).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: 'Forbidden: User not authorized to access this resource.'
+
 security:
   - bearerAuth: []
 
 paths:
+  # -------------------- Rutas de Autenticación --------------------
   /auth/login:
     post:
-      summary: Iniciar sesión de usuario (alumno o profesor)
+      summary: Iniciar sesión de usuario
+      description: Permite a un usuario (profesor o estudiante) iniciar sesión y obtener un token JWT.
       tags:
-        - Autenticación
+        - Authentication
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: juan.perez@example.com
-                  description: Correo electrónico del usuario.
-                password:
-                  type: string
-                  example: Password_123!
-                  description: Contraseña del usuario.
+              $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Autenticación exitosa.
+          description: Inicio de sesión exitoso. Retorna un token JWT y los datos del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401': 
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/logout:
+    post:
+      summary: Cerrar sesión de usuario (Placeholder para JWT sin estado)
+      description: |
+        Para tokens JWT sin estado, esta operación es en gran medida simbólica ya que el token permanece válido hasta su expiración.
+        Puede usarse para limpiar cookies o almacenamiento local en el cliente.
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Sesión cerrada exitosamente (a nivel de cliente).
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  token:
+                  message:
                     type: string
-                    description: Token de autenticación (ej. JWT).
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        description: ID del usuario.
-                      email:
-                        type: string
-                        format: email
-                        description: Correo electrónico del usuario.
-                      role:
-                        type: string
-                        enum: [student, teacher]
-                        description: Rol del usuario.
-        '401':
-          description: Credenciales inválidas.
-
-  /auth/logout:
-    post:
-      summary: Cerrar sesión de usuario
-      tags:
-        - Autenticación
-      responses:
-        '200':
-          description: Sesión cerrada exitosamente.
-        '401':
-          description: Usuario no autenticado.
-
+                    example: 'Logged out successfully'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/create-user:
     post:
       summary: Crea un nuevo usuario (alumno o profesor) - SOLO PARA DESARROLLO/PRUEBAS
       tags:
-        - Autenticación
+        - Authentication
+        - Development Only
       description: |
         Este endpoint permite crear nuevos usuarios (alumnos o profesores)
         directamente en la base de datos. **Está diseñado exclusivamente
         para entornos de desarrollo y pruebas y debe ser deshabilitado
         o protegido adecuadamente en producción.**
+      tags:
+        - Administration (Dev/Test Only)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Nombre completo del usuario.
-                  example: Juan Pérez
-                email:
-                  type: string
-                  format: email
-                  description: Correo electrónico del usuario (debe ser único).
-                  example: juan.perez@example.com
-                password:
-                  type: string
-                  description: Contraseña para el nuevo usuario.
-                  example: Password_123!
-                role:
-                  type: string
-                  enum: [student, teacher]
-                  description: Rol del usuario a crear.
-                  example: student
-              required:
-                - name
-                - email
-                - password
-                - role
+              $ref: '#/components/schemas/CreateUserRequest'
       responses:
         '201':
           description: Usuario creado exitosamente.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del usuario creado.
-                  name:
-                    type: string
-                    description: Nombre del usuario.
-                  email:
-                    type: string
-                    format: email
-                    description: Correo electrónico del usuario.
-                  role:
-                    type: string
-                    enum: [student, teacher]
-                    description: Rol del usuario.
+                $ref: '#/components/schemas/UserResponseWithoutPassword'
+              example:
+                id: 123
+                name: "Nuevo Usuario"
+                email: "nuevo.usuario@example.com"
+                role: "student"
+                createdAt: "2023-01-01T10:00:00.000Z"
+                updatedAt: "2023-01-01T10:00:00.000Z"
         '400':
-          description: Datos de entrada inválidos (ej. validación fallida).
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        msg: { type: string }
-                        param: { type: string }
-                        location: { type: string }
+          $ref: '#/components/responses/BadRequestError'
         '403':
-          description: Endpoint deshabilitado en entorno de producción.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+          $ref: '#/components/responses/ForbiddenStudentError'
         '409':
           description: El correo electrónico ya está en uso.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
+                $ref: '#/components/schemas/Error'
+              example:
+                status: error
+                statusCode: 409
+                message: The email 'existing@example.com' is already in use.
         '500':
-          description: Error interno del servidor.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    
-  /student/groups/active:
-    get:
-      summary: Obtiene los grupos activos a los que pertenece el alumno loggeado
-      tags:
-        - Alumno - Grupos
-      responses:
-        '200':
-          description: Lista de grupos activos del alumno.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del grupo.
-                    name:
-                      type: string
-                      description: Nombre del grupo.
-                    startDate:
-                      type: string
-                      format: date
-                      description: Fecha de inicio del grupo (YYYY-MM-DD).
-                    endDate:
-                      type: string
-                      format: date
-                      nullable: true
-                      description: Fecha de finalización del grupo (YYYY-MM-DD).
-        '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/InternalServerError'
 
-  /student/wordles/accessible:
-    get:
-      summary: Obtiene los wordles accesibles para el alumno loggeado
-      tags:
-        - Alumno - Wordles
-      responses:
-        '200':
-          description: Lista de wordles accesibles para el alumno.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del wordle.
-                    name:
-                      type: string
-                      description: Nombre del wordle.
-                    wordTitle:
-                      type: string
-                      description: Título de la palabra principal del wordle.
-                 
-        '401':
-          description: Usuario no autenticado.
-
-  /student/wordles/{wordleId}/game-data:
-    get:
-      summary: Obtiene los datos necesarios para jugar un wordle específico
-      tags:
-        - Alumno - Wordles
-      parameters:
-        - name: wordleId
-          in: path
+# -------------------- Rutas de Profesor --------------------
+    /teacher/change-password:
+      put:
+        summary: Permite al profesor loggeado cambiar su contraseña
+        tags:
+          - Profesor - Perfil
+        security:
+        - bearerAuth: []
+        requestBody:
           required: true
-          schema:
-            type: integer
-          description: ID del wordle a jugar.
-      responses:
-        '200':
-          description: Datos del wordle para jugar.
           content:
             application/json:
               schema:
                 type: object
+                required:
+                  - oldPassword
+                  - newPassword
                 properties:
-                  wordleId:
-                    type: integer
-                    description: ID del wordle.
-                  name:
+                  oldPassword:
                     type: string
-                    description: Nombre del wordle.
-                  word:
-                    type: object
-                    properties:
-                      title:
-                        type: string
-                        description: La palabra a adivinar.
-                      hint:
-                        type: string
-                        nullable: true
-                        description: Pista opcional para la palabra.
-                  questions:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          description: ID de la pregunta.
-                        type:
-                          type: string
-                          description: Tipo de pregunta (ej. single, multiple, text).
-                        statement:
-                          type: string
-                          description: Enunciado de la pregunta.
-                        answer:
-                          type: string
-                          description: Respuesta correcta a la pregunta (para verificación frontend).
-                        options:
-                          type: array
-                          items:
-                            type: string
-                          nullable: true
-                          description: Opciones para preguntas de selección (si aplica).
-                  difficulty:
-                      type: string
-                      enum: [low, high] 
-                      default: low
-                      description: Dificultad del wordle (ej. low, high).
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El alumno no tiene acceso a este wordle.
-        '404':
-          description: Wordle no encontrado.
-
-  /student/games/{wordleId}/save-result:
-    post:
-      summary: Guarda el resultado de una partida de wordle completada
-      tags:
-        - Alumno - Partidas
-      parameters:
-        - name: wordleId
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del wordle que se ha jugado.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                attemptsTaken:
-                  type: integer
-                  description: Número de intentos realizados en la partida.
-                isGuessed:
-                  type: boolean
-                  description: Indica si la palabra fue adivinada.
-                score:
-                  type: integer
-                  description: Puntuación obtenida en la partida.
-                startTime:
-                  type: string
-                  format: date-time
-                  nullable: true
-                  description: Hora de inicio de la partida (ISO 8601).
-                endTime:
-                  type: string
-                  format: date-time
-                  description: Hora de fin de la partida (ISO 8601).
-      responses:
-        '201':
-          description: Resultado de partida guardado exitosamente.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  gameResultId:
-                    type: integer
-                    description: ID del resultado de partida guardado.
-                  message:
+                    format: password
+                    description: La contraseña actual del usuario.
+                    example: 'CurrentPassword123!'
+                  newPassword:
                     type: string
-                    description: Mensaje de confirmación.
-        '400':
-          description: Datos inválidos.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El alumno no tiene acceso a este wordle.
-        '404':
-          description: Wordle no encontrado.
-
-  /student/change-password:
-    put:
-      summary: Permite al alumno loggeado cambiar su contraseña
-      tags:
-        - Alumno - Perfil
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                oldPassword:
-                  type: string
-                  description: Contraseña actual del alumno.
-                newPassword:
-                  type: string
-                  description: Nueva contraseña para el alumno.
-      responses:
-        '200':
-          description: Contraseña cambiada exitosamente.
-        '400':
-          description: Contraseña antigua incorrecta o nueva contraseña inválida.
-        '401':
-          description: Usuario no autenticado.
-
-  /student/game-results:
-    get:
-      summary: Obtiene todos los resultados de partida para el alumno loggeado
-      tags:
-        - Alumno - Partidas
-      responses:
-        '200':
-          description: Lista de resultados de partida del alumno.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
+                    format: password
+                    description: La nueva contraseña para el usuario.
+                    example: 'NewSecurePassword456#'  
+        responses:
+          '200':
+            description: Contraseña cambiada exitosamente.
+            content:
+              application/json:
+                schema:
                   type: object
                   properties:
-                    id:
-                      type: integer
-                      description: ID del resultado de partida.
-                    score:
-                      type: integer
-                      description: Puntuación obtenida en la partida.
-                    creationDate:
+                    message:
                       type: string
-                      format: date-time
-                      description: Fecha y hora de creación del resultado.
-                    wordleId:
-                      type: integer
-                      description: ID del wordle jugado.
-                    userId:
-                      type: integer
-                      description: ID del alumno que jugó.
-                    # Puedes añadir más detalles si los incluyes en el servicio, ej:
-                    # player:
-                    #   type: object
-                    #   properties:
-                    #     id: { type: integer }
-                    #     name: { type: string }
-                    #     email: { type: string }
-                    # wordle:
-                    #   type: object
-                    #   properties:
-                    #     id: { type: integer }
-                    #     nombre: { type: string }
-        '401':
-          description: Usuario no autenticado.
-        '500':
-          description: Error interno del servidor.
-
-  /student/game-results/{gameResultId}:
-    get:
-      summary: Obtiene los detalles de un resultado de partida específico para el alumno loggeado
-      tags:
-        - Alumno - Partidas
-      parameters:
-        - name: gameResultId
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del resultado de partida a obtener.
-      responses:
-        '200':
-          description: Detalles del resultado de partida.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del resultado de partida.
-                  score:
-                    type: integer
-                    description: Puntuación obtenida en la partida.
-                  creationDate:
-                    type: string
-                    format: date-time
-                    description: Fecha y hora de creación del resultado.
-                  wordleId:
-                    type: integer
-                    description: ID del wordle jugado.
-                  userId:
-                    type: integer
-                    description: ID del alumno que jugó.
-                  player:
-                    type: object
-                    properties:
-                      id: { type: integer }
-                      name: { type: string }
-                      email: { type: string }
-                      role: { type: string, enum: [student, teacher] }
-                    description: Detalles del jugador (alumno).
-                  wordle:
-                    type: object
-                    properties:
-                      id: { type: integer }
-                      nombre: { type: string }
-                    description: Detalles del wordle jugado.
-        '401':
-          description: Usuario no autenticado.
-        '404':
-          description: Resultado de partida no encontrado o acceso denegado.
-        '500':
-          description: Error interno del servidor.
-
-  /teacher/game-results/student/{userId}:
-    get:
-      summary: Obtiene los resultados de partida para un alumno específico (solo para profesores)
-      tags:
-        - Profesor - Partidas
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del alumno cuyos resultados se desean obtener.
-      responses:
-        '200':
-          description: Lista de resultados de partida del alumno.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del resultado de partida.
-                    score:
-                      type: integer
-                      description: Puntuación obtenida en la partida.
-                    creationDate:
-                      type: string
-                      format: date-time
-                      description: Fecha y hora de creación del resultado.
-                    wordleId:
-                      type: integer
-                      description: ID del wordle jugado.
-                    userId:
-                      type: integer
-                      description: ID del alumno que jugó.
-                    player:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        name: { type: string }
-                        email: { type: string }
-                      description: Detalles del jugador (alumno).
-                    wordle:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        nombre: { type: string }
-                      description: Detalles del wordle jugado.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es un profesor o no tiene autorización para ver los resultados de este alumno.
-        '404':
-          description: Alumno no encontrado.
-        '500':
-          description: Error interno del servidor.
-
-  /teacher/game-results/wordle/{wordleId}:
-    get:
-      summary: Obtiene los resultados de partida para un wordle específico (solo para profesores)
-      tags:
-        - Profesor - Partidas
-      parameters:
-        - name: wordleId
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del wordle cuyos resultados se desean obtener.
-      responses:
-        '200':
-          description: Lista de resultados de partida para el wordle.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del resultado de partida.
-                    score:
-                      type: integer
-                      description: Puntuación obtenida en la partida.
-                    creationDate:
-                      type: string
-                      format: date-time
-                      description: Fecha y hora de creación del resultado.
-                    wordleId:
-                      type: integer
-                      description: ID del wordle jugado.
-                    userId:
-                      type: integer
-                      description: ID del alumno que jugó.
-                    player:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        name: { type: string }
-                        email: { type: string }
-                      description: Detalles del jugador (alumno).
-                    wordle:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        nombre: { type: string }
-                      description: Detalles del wordle jugado.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es un profesor o no tiene autorización para ver los resultados de este wordle.
-        '404':
-          description: Wordle no encontrado.
-        '500':
-          description: Error interno del servidor.
-
-  /teacher/game-results/group/{groupId}:
-    get:
-      summary: Obtiene los resultados de partida para un grupo específico (solo para profesores)
-      tags:
-        - Profesor - Partidas
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del grupo cuyos resultados se desean obtener.
-      responses:
-        '200':
-          description: Lista de resultados de partida para el grupo.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del resultado de partida.
-                    score:
-                      type: integer
-                      description: Puntuación obtenida en la partida.
-                    creationDate:
-                      type: string
-                      format: date-time
-                      description: Fecha y hora de creación del resultado.
-                    wordleId:
-                      type: integer
-                      description: ID del wordle jugado.
-                    userId:
-                      type: integer
-                      description: ID del alumno que jugó.
-                    player:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        name: { type: string }
-                        email: { type: string }
-                      description: Detalles del jugador (alumno).
-                    wordle:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        nombre: { type: string }
-                      description: Detalles del wordle jugado.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es un profesor o no tiene autorización para ver los resultados de este grupo.
-        '404':
-          description: Grupo no encontrado.
-        '500':
-          description: Error interno del servidor.
-
-  /teacher/game-results/{gameResultId}:
-    get:
-      summary: Obtiene los detalles de un resultado de partida específico (solo para profesores)
-      tags:
-        - Profesor - Partidas
-      parameters:
-        - name: gameResultId
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del resultado de partida a obtener.
-      responses:
-        '200':
-          description: Detalles del resultado de partida.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del resultado de partida.
-                  score:
-                    type: integer
-                    description: Puntuación obtenida en la partida.
-                  creationDate:
-                    type: string
-                    format: date-time
-                    description: Fecha y hora de creación del resultado.
-                  wordleId:
-                    type: integer
-                    description: ID del wordle jugado.
-                  userId:
-                    type: integer
-                    description: ID del alumno que jugó.
-                  player:
-                    type: object
-                    properties:
-                      id: { type: integer }
-                      name: { type: string }
-                      email: { type: string }
-                      role: { type: string, enum: [student, teacher] }
-                    description: Detalles del jugador (alumno).
-                  wordle:
-                    type: object
-                    properties:
-                      id: { type: integer }
-                      nombre: { type: string }
-                      # userId is included in service but might be filtered out if teacher is not creator
-                      # userId: { type: integer, description: ID del profesor creador del wordle. }
-                    description: Detalles del wordle jugado.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es un profesor o no tiene autorización para ver este resultado de partida.
-        '404':
-          description: Resultado de partida no encontrado.
-        '500':
-          description: Error interno del servidor.
-
-
+                      example: 'Password changed successfully'
+          '400':
+            $ref: '#/components/responses/BadRequestError'
+          '401':
+            $ref: '#/components/responses/UnauthorizedError'
+          '404': 
+            $ref: '#/components/responses/NotFoundError'
+          '500':
+            $ref: '#/components/responses/InternalServerError'
+  # ************ Grupos ************
   /teacher/groups:
     post:
-      summary: Crea un nuevo grupo
+      summary: Crear un nuevo grupo
+      description: Permite a un profesor crear un nuevo grupo, opcionalmente añadiendo estudiantes por su dirección de correo electrónico.
       tags:
         - Profesor - Grupos
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
+                - initDate
               properties:
                 name:
                   type: string
-                  description: Nombre del grupo (obligatorio).
-                startDate:
+                  description: Nombre del grupo.
+                  example: 'Matemáticas B'
+                initDate:
                   type: string
                   format: date
-                  description: Fecha de inicio del grupo (YYYY-MM-DD, obligatorio).
+                  description: Fecha de inicio del grupo (YYYY-MM-DD).
+                  example: '2024-09-01'
                 endDate:
                   type: string
                   format: date
                   nullable: true
-                  description: Fecha de finalización del grupo (YYYY-MM-DD, opcional).
+                  description: Fecha de fin del grupo (YYYY-MM-DD). Opcional.
+                  example: '2025-06-30'
                 studentEmails:
                   type: array
+                  description: Lista de direcciones de correo electrónico de estudiantes a añadir al grupo. Si un estudiante no existe, se creará. Si ya existe, se vinculará.
                   items:
                     type: string
                     format: email
-                  description: Lista de correos electrónicos de alumnos a vincular.
+                  example: ['alumno1@example.com', 'alumno2@example.com','nuevo.alumno@example.com']
       responses:
         '201':
-          description: Grupo creado exitosamente.
+          description: Grupo creado exitosamente con los estudiantes asociados.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del grupo creado.
-                  name:
-                    type: string
-                    description: Nombre del grupo.
-                  startDate:
-                    type: string
-                    format: date
-                    description: Fecha de inicio.
-                  endDate:
-                    type: string
-                    format: date
-                    nullable: true
-                    description: Fecha de finalización.
-                  createdStudents:
-                    type: array
-                    items:
-                      type: string
-                      format: email
-                    description: Correos de alumnos que fueron creados.
-                  linkedStudents:
-                    type: array
-                    items:
-                      type: string
-                      format: email
-                    description: Correos de alumnos que ya existían y fueron vinculados.
+                $ref: '#/components/schemas/GroupWithStudents'
+              example:
+                id: 101
+                name: "Matemáticas Avanzadas"
+                initDate: "2024-09-01T00:00:00.000Z"
+                endDate: "2025-06-30T00:00:00.000Z"
+                userId: 1
+                createdAt: "2024-07-01T12:00:00.000Z"
+                updatedAt: "2024-07-01T12:00:00.000Z"
+                students:
+                  - id: 2
+                    name: "Estudiante Uno"
+                    email: "student1@example.com"
+                    role: "student"
+                createdStudents:
+                  - id: 3
+                    email: "new.student@example.com"
+                linkedStudents:
+                  - id: 2
+                    email: "student1@example.com"
+                  - id: 3
+                    email: "new.student@example.com"
         '400':
-          description: Datos de grupo inválidos.
+          $ref: '#/components/responses/BadRequestError'
         '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/UnauthorizedError'
         '403':
-          description: El usuario no es un profesor.
+          $ref: '#/components/responses/ForbiddenStudentError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     get:
-      summary: Obtiene los grupos creados por el profesor loggeado
+      summary: Obtener la lista de grupos creados por el profesor autenticado
+      description: Permite a un profesor obtener una lista de todos los grupos que ha creado, con opciones para filtrar por estado de actividad o nombre.
       tags:
         - Profesor - Grupos
+      security:
+        - bearerAuth: []
       parameters:
-        - name: status
-          in: query
-          required: false
+        - in: query
+          name: isActive
           schema:
-            type: string
-            enum: [active, inactive, all]
-            default: all
-          description: Filtra por estado del grupo (activo/inactivo).
-        - name: startDateFrom
-          in: query
+            type: boolean
           required: false
-          schema:
-            type: string
-            format: date
-          description: Filtra grupos con fecha de inicio igual o posterior a esta fecha (YYYY-MM-DD).
-        - name: startDateTo
-          in: query
-          required: false
+          description: |
+            Filtra los grupos por su estado de actividad.
+            - `true`: Retorna solo grupos activos en la fecha actual.
+            - `false`: Retorna solo grupos inactivos.
+            Si se omite, retorna todos los grupos (activos e inactivos).
+          example: true
+        - in: query
+          name: startDateFrom
           schema:
             type: string
             format: date
-          description: Filtra grupos con fecha de inicio igual o anterior a esta fecha (YYYY-MM-DD).
-        - name: endDateFrom
-          in: query
-          required: false
+          description: Filtra grupos con fecha de inicio igual o posterior a esta fecha.
+          example: 2024-01-01
+        - in: query
+          name: startDateTo
           schema:
             type: string
             format: date
-          description: Filtra grupos con fecha de fin igual o posterior a esta fecha (YYYY-MM-DD).
-        - name: endDateTo
-          in: query
-          required: false
+          description: Filtra grupos con fecha de inicio igual o anterior a esta fecha.
+          example: 2024-12-31
+        - in: query
+          name: endDateFrom
           schema:
             type: string
             format: date
-          description: Filtra grupos con fecha de fin igual o anterior a esta fecha (YYYY-MM-DD).
+          description: Filtra grupos con fecha de fin igual o posterior a esta fecha.
+          example: 2024-06-01
+        - in: query
+          name: endDateTo
+          schema:
+            type: string
+            format: date
+          description: Filtra grupos con fecha de fin igual o anterior a esta fecha.
+          example: 2025-05-31
+        - in: query
+          name: name
+          schema:
+            type: string
+          required: false
+          description: Filtra los grupos por una coincidencia parcial en su nombre.
+          example: 'matemáticas'
       responses:
         '200':
-          description: Lista de grupos creados por el profesor.
+          description: Lista de grupos creados por el profesor. Puede ser un array vacío si no hay grupos.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del grupo.
-                    name:
-                      type: string
-                      description: Nombre del grupo.
-                    startDate:
-                      type: string
-                      format: date
-                      description: Fecha de inicio.
-                    endDate:
-                      type: string
-                      format: date
-                      nullable: true
-                      description: Fecha de finalización.
-                    isActive:
-                      type: boolean
-                      description: Indica si el grupo está activo para los alumnos.
+                  $ref: '#/components/schemas/GroupResponseWithStatus'
+              example:
+                - id: 101
+                  name: "Matemáticas Avanzadas"
+                  initDate: "2024-09-01T00:00:00.000Z"
+                  endDate: "2025-06-30T00:00:00.000Z"
+                  userId: 1
+                  isActive: true
+                - id: 102
+                  name: "Historia Antigua"
+                  initDate: "2023-01-15T00:00:00.000Z"
+                  endDate: "2023-05-30T00:00:00.000Z"
+                  userId: 1
+                  isActive: false
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/UnauthorizedError'
         '403':
-          description: El usuario no es un profesor.
-
-  /teacher/groups/{groupId}/ranking:
-   get:
-     summary: Obtiene el ranking de puntuaciones de los estudiantes de un grupo específico en los Wordles accesibles al grupo.
-     tags:
-       - Profesor - Grupos
-     parameters:
-       - name: groupId
-         in: path
-         required: true
-         schema:
-           type: integer
-         description: ID del grupo del que se desea obtener el ranking.
-     responses:
-       '200':
-         description: Ranking de los estudiantes del grupo, ordenado por puntuación total descendente.
-         content:
-           application/json:
-             schema:
-               type: array
-               items:
-                 type: object
-                 properties:
-                   userId:
-                     type: integer
-                     description: ID del estudiante.
-                   studentName:
-                     type: string
-                     description: Nombre del estudiante.
-                   studentEmail:
-                     type: string
-                     format: email
-                     description: Correo electrónico del estudiante.
-                   totalScore:
-                     type: string # Sequelize SUM a veces devuelve string
-                     description: Puntuación total acumulada por el estudiante en los Wordles accesibles al grupo.
-       '401':
-         description: Usuario no autenticado.
-       '403':
-         description: El usuario no es un profesor.
-       '404':
-         description: Grupo no encontrado o el profesor no es el creador del grupo.
-       '500':
-         description: Error interno del servidor.
+          $ref: '#/components/responses/ForbiddenTeacherError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /teacher/groups/{groupId}:
     get:
-      summary: Obtiene los detalles de un grupo específico creado por el profesor
+      summary: Obtener los detalles de un grupo específico
+      description: Permite a un profesor obtener los detalles completos de un grupo que ha creado, incluyendo sus estudiantes y los Wordles asociados.
       tags:
         - Profesor - Grupos
+      security:
+        - bearerAuth: []
       parameters:
-        - name: groupId
-          in: path
-          required: true
+        - in: path
+          name: groupId
           schema:
             type: integer
-          description: ID del grupo.
+            format: int32
+          required: true
+          description: ID del grupo a obtener.
+          example: 501
       responses:
         '200':
-          description: Detalles del grupo.
+          description: Detalles completos del grupo, incluyendo estudiantes y Wordles.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del grupo.
-                  name:
-                    type: string
-                    description: Nombre del grupo.
-                  startDate:
-                    type: string
-                    format: date
-                    description: Fecha de inicio.
-                  endDate:
-                    type: string
-                    format: date
-                    nullable: true
-                    description: Fecha de finalización.
-                  students:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          description: ID del alumno.
-                        email:
-                          type: string
-                          format: email
-                          description: Correo electrónico del alumno.
-                    description: Lista de alumnos en el grupo.
-                  wordles:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          description: ID del wordle.
-                        name:
-                          type: string
-                          description: Nombre del wordle.
-                    description: Lista de wordles asociados al grupo.
+                $ref: '#/components/schemas/GroupDetailsResponse'
+              example:
+                id: 501
+                name: 'Matemáticas A'
+                initDate: '2024-01-15'
+                endDate: '2025-06-30'
+                userId: 10
+                createdAt: '2024-01-10T10:00:00Z'
+                updatedAt: '2024-01-10T10:00:00Z'
+                isActive: true
+                students:
+                  - id: 101
+                    name: 'Juan Alumno'
+                    email: 'juan.alumno@example.com'
+                    role: 'student'
+                  - id: 102
+                    name: 'María Alumna'
+                    email: 'maria.alumna@example.com'
+                    role: 'student'
+                accesibleWordles:
+                  - id: 601
+                    name: 'Frutas y Verduras'
+                    difficulty: 'low'
+                    userId: 10
+                    createdAt: '2024-02-01T09:30:00Z'
+                    updatedAt: '2024-02-01T09:30:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
         '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/UnauthorizedError'
         '403':
-          description: El usuario no es el profesor creador del grupo.
+          $ref: '#/components/responses/ForbiddenGroupAccessError'
         '404':
-          description: Grupo no encontrado.
+          $ref: '#/components/responses/GroupNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
-      summary: Actualiza un grupo específico creado por el profesor
+      summary: Actualizar un grupo existente
+      description: Permite a un profesor actualizar los detalles de un grupo que ha creado, así como añadir o eliminar estudiantes y Wordles asociados.
       tags:
         - Profesor - Grupos
+      security:
+        - bearerAuth: []
       parameters:
-        - name: groupId
-          in: path
-          required: true
+        - in: path
+          name: groupId
           schema:
             type: integer
+            format: int32
+          required: true
           description: ID del grupo a actualizar.
+          example: 501
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Nuevo nombre del grupo.
-                startDate:
-                  type: string
-                  format: date
-                  description: Nueva fecha de inicio (YYYY-MM-DD).
-                endDate:
-                  type: string
-                  format: date
-                  nullable: true
-                  description: Nueva fecha de finalización (YYYY-MM-DD).
-                addStudentEmails:
-                  type: array
-                  items:
-                    type: string
-                    format: email
-                  description: Correos electrónicos de alumnos a añadir al grupo.
-                removeStudentIds:
-                  type: array
-                  items:
-                    type: integer
-                  description: IDs de alumnos a eliminar del grupo.
+              $ref: '#/components/schemas/UpdateGroupRequest'
       responses:
         '200':
-          description: Grupo actualizado exitosamente.
+          description: Grupo actualizado exitosamente con los estudiantes y Wordles asociados.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del grupo actualizado.
-                  name:
-                    type: string
-                    description: Nombre del grupo.
-                  startDate:
-                    type: string
-                    format: date
-                    description: Fecha de inicio.
-                  endDate:
-                    type: string
-                    format: date
-                    nullable: true
-                    description: Fecha de finalización.
-                  createdStudents:
-                    type: array
-                    items:
-                      type: string
-                      format: email
-                    description: Correos de alumnos que fueron creados.
-                  linkedStudents:
-                    type: array
-                    items:
-                      type: string
-                      format: email
-                    description: Correos de alumnos que ya existían y fueron vinculados.
+                $ref: '#/components/schemas/GroupUpdateResponse'
+              example:
+                id: 501
+                name: 'Matemáticas C'
+                initDate: '2024-09-15'
+                endDate: '2025-07-31'
+                userId: 10
+                createdAt: '2024-01-10T10:00:00Z'
+                updatedAt: '2025-05-29T10:00:00Z'
+                isActive: true
+                students:
+                  - id: 102
+                    name: 'María Alumna'
+                    email: 'maria.alumna@example.com'
+                    role: 'student'
+                  - id: 103
+                    name: 'Nuevo Alumno 3'
+                    email: 'nuevo.alumno3@example.com'
+                    role: 'student'
+                wordles:
+                  - id: 602
+                    name: 'Capitales del Mundo'
+                    difficulty: 'high'
+                    userId: 10
+                    createdAt: '2024-02-10T10:00:00Z'
+                    updatedAt: '2024-02-10T10:00:00Z'
+                  - id: 603
+                    name: 'Deportes'
+                    difficulty: 'high'
+                    userId: 10
+                    createdAt: '2024-03-01T12:00:00Z'
+                    updatedAt: '2024-03-01T12:00:00Z'
         '400':
-          description: Datos inválidos.
+          $ref: '#/components/responses/BadRequestError'
         '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/UnauthorizedError'
         '403':
-          description: El usuario no es el profesor creador del grupo.
+          $ref: '#/components/responses/ForbiddenGroupAccessError'
         '404':
-          description: Grupo no encontrado.
+          $ref: '#/components/responses/GroupNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
-      summary: Elimina un grupo específico creado por el profesor
+      summary: Eliminar un grupo
+      description: Permite a un profesor eliminar un grupo que ha creado.
       tags:
         - Profesor - Grupos
+      security:
+        - bearerAuth: []
       parameters:
-        - name: groupId
-          in: path
-          required: true
+        - in: path
+          name: groupId
           schema:
             type: integer
+            format: int32
+          required: true
           description: ID del grupo a eliminar.
+          example: 501
       responses:
         '204':
-          description: Grupo eliminado exitosamente.
+          description: Grupo eliminado exitosamente. No hay contenido de respuesta.
         '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/UnauthorizedError'
         '403':
-          description: El usuario no es el profesor creador del grupo.
+          $ref: '#/components/responses/ForbiddenGroupAccessError'
         '404':
-          description: Grupo no encontrado.
+          $ref: '#/components/responses/GroupNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
+   
+  # ************ Game Results ************ 
+  /teacher/game-results/student/{userId}:
+    get:
+      summary: Obtener resultados de juegos de un estudiante específico (para Profesor)
+      description: |
+        Permite a un profesor obtener todos los resultados de juegos asociados a un estudiante específico.
+        El profesor debe ser el creador de los grupos a los que el estudiante pertenece.
+      tags:
+        - Profesor - Resultados de Juego
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del estudiante cuyos resultados de juegos se desean obtener.
+          example: 102
+      responses:
+        '200':
+          description: Lista de resultados de juegos del estudiante. Puede ser un array vacío si no hay resultados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameResultEntry'
+              
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenStudentAccessError'
+        '404':
+          $ref: '#/components/responses/StudentNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /teacher/game-results/wordle/{wordleId}:
+    get:
+      summary: Obtener resultados de juegos de un Wordle específico (para Profesor)
+      description: |
+        Permite a un profesor obtener todos los resultados de juegos asociados a un Wordle específico.
+        El profesor debe ser el creador del Wordle.
+      tags:
+        - Profesor - Resultados de Juego
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: wordleId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del Wordle cuyos resultados de juegos se desean obtener.
+          example: 601
+      responses:
+        '200':
+          description: Lista de resultados de juegos del Wordle. Puede ser un array vacío si no hay resultados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameResultWithDetails'
+              example:
+                - id: 701
+                  userId: 102
+                  wordleId: 601
+                  score: 100
+                  createdAt: '2024-03-05T14:15:00Z'
+                  updatedAt: '2024-03-05T14:15:00Z'
+                  player:
+                    id: 102
+                    name: 'Carlos Estudiante'
+                    email: 'carlos.estudiante@example.com'
+                  wordle:
+                    id: 601
+                    name: 'Animales'
+                    difficulty: 'low'
+                - id: 703
+                  userId: 103
+                  wordleId: 601
+                  score: 80
+                  createdAt: '2024-03-07T11:00:00Z'
+                  updatedAt: '2024-03-07T11:00:00Z'
+                  player:
+                    id: 103
+                    name: 'Daniel Estudiante'
+                    email: 'daniel.estudiante@example.com'
+                  wordle:
+                    id: 601
+                    name: 'Animales'
+                    difficulty: 'low'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenWordleAccessError'
+        '404':
+          $ref: '#/components/responses/WordleNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /teacher/game-results/group/{groupId}:
+    get:
+      summary: Obtener el ranking de resultados de juegos para un grupo específico (para Profesor)
+      description: |
+        Permite a un profesor obtener el ranking de estudiantes de un grupo específico,
+        basado en la puntuación total acumulada en los Wordles accesibles por el grupo.
+        El profesor debe ser el creador del grupo.
+      tags:
+        - Profesor - Resultados de Juego
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del grupo para el cual se desea obtener el ranking.
+          example: 501
+      responses:
+        '200':
+          description: Lista de estudiantes con sus puntuaciones totales en el grupo, ordenada descendentemente por puntuación. Puede ser un array vacío si el grupo no tiene estudiantes, Wordles accesibles, o no hay resultados de juegos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupRankingEntry'
+              example:
+                - userName: 'Carlos Estudiante'
+                  score: 250
+                - userName: 'Daniel Estudiante'
+                  score: 180
+                - userName: 'Laura Estudiante'
+                  score: 120
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenGroupAccessError'
+        '404':
+          $ref: '#/components/responses/GroupNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /teacher/game-results/{gameResultId}:
+    get:
+      summary: Obtener detalles de un resultado de juego específico (para Profesor)
+      description: |
+        Permite a un profesor obtener los detalles completos de un resultado de juego individual.
+        El profesor debe ser el creador del Wordle asociado a la partida, o el estudiante que realizó la partida debe pertenecer
+        a un grupo creado por el profesor.
+      tags:
+        - Profesor - Resultados de Juego
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameResultId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del resultado de juego del cual se desean obtener los detalles.
+          example: 701
+      responses:
+        '200':
+          description: Detalles del resultado de juego.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameResultWithDetails'
+              example:
+                id: 701
+                userId: 102
+                wordleId: 601
+                score: 100
+                createdAt: '2024-03-05T14:15:00Z'
+                updatedAt: '2024-03-05T14:15:00Z'
+                player:
+                  id: 102
+                  name: 'Carlos Estudiante'
+                  email: 'carlos.estudiante@example.com'
+                wordle:
+                  id: 601
+                  name: 'Animales'
+                  difficulty: 'low'
+                  userId: 10
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenGameResultAccessError'
+        '404':
+          $ref: '#/components/responses/GameResultNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  
+  # ************ Wordles ************ 
   /teacher/wordles:
-    post:
-      summary: Crea un nuevo wordle
+    get:
+      summary: Obtener la lista de Wordles creados por el profesor autenticado
+      description: Permite a un profesor obtener una lista de todos los Wordles que ha creado.
       tags:
         - Profesor - Wordles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de Wordles creados por el profesor. Puede ser un array vacío si no hay Wordles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WordleListItem'
+              example:
+                - id: 601
+                  name: 'Frutas y Verduras'
+                  difficulty: 'low'
+                  createdAt: '2024-02-01T09:30:00.000Z'
+                  updatedAt: '2024-02-01T09:30:00.000Z'
+                  words:
+                    - word: 'manzana'
+                      hint: 'Es una fruta que cae del árbol.'
+                - id: 602
+                  name: 'Animales'
+                  difficulty: 'high'
+                  createdAt: '2024-02-05T10:00:00.000Z'
+                  updatedAt: '2024-02-05T10:00:00.000Z'
+                  words:
+                    - word: 'elefante'
+                      hint: 'El animal terrestre más grande.'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenUserRoleError' # Si el usuario no es un profesor
+        '500':
+          $ref: '#/components/responses/InternalServerError'      
+    post:
+      summary: Crear un nuevo Wordle
+      description: Permite a un profesor crear un nuevo juego de Wordle.
+      tags:
+        - Profesor - Wordles
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Nombre del wordle (obligatorio).
-                word:
-                  type: object
-                  description: Palabra y pista del wordle.
-                  properties:
-                    title:
-                      type: string
-                      description: La palabra a adivinar.
-                    hint:
-                      type: string
-                      nullable: true
-                      description: Pista opcional.
-                  required:
-                    - title
-                questions:
-                  type: array
-                  description: Lista de preguntas asociadas al wordle (obligatorio, al menos una).
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        description: Tipo de pregunta (ej. single, multiple, text).
-                      statement:
-                        type: string
-                        description: Enunciado de la pregunta.
-                      answer:
-                        type: string
-                        description: Respuesta correcta a la pregunta.
-                      options:
-                        type: array
-                        items:
-                          type: string
-                        nullable: true
-                        description: Opciones para preguntas de selección (si aplica).
-                    required:
-                      - type
-                      - statement
-                      - answer
-                  minItems: 1
-                groupAccessIds:
-                  type: array
-                  items:
-                    type: integer
-                  description: Lista de IDs de grupos a los que dar acceso a este wordle.
-
-                difficulty:
-                  type: string
-                  enum: [low, high] 
-                  default: low
-                  description: Dificultad del wordle (ej. low, high).
+              $ref: '#/components/schemas/CreateWordleRequest'
       responses:
         '201':
           description: Wordle creado exitosamente.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del wordle creado.
-                  name:
-                    type: string
-                    description: Nombre del wordle.
-                  word:
-                    type: object
-                    properties:
-                      title:
-                        type: string
-                      hint:
-                        type: string
-                        nullable: true
-                  questions:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        type:
-                          type: string
-                        statement:
-                          type: string
-                        answer:
-                          type: string
-                        options:
-                          type: array
-                          items:
-                            type: string
-                          nullable: true
-                  groupAccessIds:
-                    type: array
-                    items:
-                      type: integer
-                  difficulty:
-                    type: string
-                    enum: [low, high]
-                    default: low
+                $ref: '#/components/schemas/WordleDetailsResponse'
+              example:
+                id: 603
+                name: 'Deportes'
+                userId: 10
+                difficulty: 'low'
+                createdAt: '2024-06-02T10:00:00.000Z'
+                updatedAt: '2024-06-02T10:00:00.000Z'
+                creator:
+                  id: 10
+                  name: 'Profesor X'
+                  email: 'profesor.x@example.com'
+                words:
+                  - word: 'futbol'
+                    hint: 'Se juega con los pies.'
+                questions:
+                  - id: 903
+                    question: "¿Cuántos jugadores tiene un equipo de fútbol en el campo?"
+                    options: ["9", "10", "11", "12"]
+                    correctAnswer: "11"
+                    type: 'multiple_choice'
+                groupsWithAccess:
+                  - id: 501
+                    name: 'Grupo A'
         '400':
-          description: Datos inválidos.
+          $ref: '#/components/responses/WordleBadRequestError'
         '401':
-          description: Usuario no autenticado.
+          $ref: '#/components/responses/UnauthorizedError'
         '403':
-          description: El usuario no es un profesor o intenta dar acceso a un grupo que no ha creado.
-    get:
-      summary: Obtiene los wordles creados por el profesor loggeado
-      tags:
-        - Profesor - Wordles
-      responses:
-        '200':
-          description: Lista de wordles creados por el profesor.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      description: ID del wordle.
-                    name:
-                      type: string
-                      description: Nombre del wordle.
-                    wordTitle:
-                      type: string
-                      description: Título de la palabra principal del wordle.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es un profesor.
+          $ref: '#/components/responses/ForbiddenUserRoleError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /teacher/wordles/{wordleId}:
     get:
-      summary: Obtiene los detalles de un wordle específico creado por el profesor
+      summary: Obtener los detalles de un Wordle específico
+      description: Permite a un profesor obtener los detalles completos de un Wordle creado por él.
       tags:
         - Profesor - Wordles
+      security:
+        - bearerAuth: []
       parameters:
-        - name: wordleId
-          in: path
-          required: true
+        - in: path
+          name: wordleId
           schema:
             type: integer
-          description: ID del wordle.
+            format: int32
+          required: true
+          description: ID del Wordle a obtener.
+          example: 601
       responses:
         '200':
-          description: Detalles del wordle.
+          description: Detalles del Wordle.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del wordle.
-                  name:
-                    type: string
-                    description: Nombre del wordle.
-                  word:
-                    type: object
-                    properties:
-                      title:
-                        type: string
-                      hint:
-                        type: string
-                        nullable: true
-                  questions:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          description: ID de la pregunta.
-                        type:
-                          type: string
-                          description: Tipo de pregunta.
-                        statement:
-                          type: string
-                          description: Enunciado de la pregunta.
-                        answer:
-                          type: string
-                          description: Respuesta correcta.
-                        options:
-                          type: array
-                          items:
-                            type: string
-                          nullable: true
-                    description: Lista de preguntas asociadas al wordle.
-                  groupsWithAccess:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          description: ID del grupo.
-                        name:
-                          type: string
-                          description: Nombre del grupo.
-                    description: Lista de grupos con acceso a este wordle.
-
-                  difficulty:
-                    type: string
-                    enum: [low, high]
-                    default: low
-                    description: Dificultad del wordle (ej. low, high).
+                $ref: '#/components/schemas/Wordle'
+              example:
+                id: 601
+                name: 'Frutas y Verduras'
+                userId: 10
+                difficulty: 'low'
+                createdAt: '2024-02-01T09:30:00Z'
+                updatedAt: '2024-02-01T09:30:00Z'
+                words:
+                  - id: 1
+                    word: "MANZANA"
+                    hint: "Fruta roja o verde"
+                    wordleId: 601
+                  - id: 2
+                    word: "PLATANO"
+                    hint: "Fruta amarilla"
+                    wordleId: 601
+                questions:
+                  - id: 101
+                    type: "single"
+                    statement: "¿Qué fruta es roja?"
+                    answer: "Manzana"
+                    options: ["Plátano", "Naranja", "Manzana"]
+                    wordleId: 601
+                groups:
+                  - id: 1001
+                    wordleId: 601
+                    groupId: 1
+                  - id: 1002
+                    wordleId: 601
+                    groupId: 2
+        
         '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es el profesor creador del wordle.
+          $ref: '#/components/responses/UnauthorizedError'
         '404':
-          description: Wordle no encontrado.
+          $ref: '#/components/responses/GameResultNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
-      summary: Actualiza un wordle específico creado por el profesor
+      summary: Actualizar un Wordle existente
+      description: Permite a un profesor actualizar los detalles de un Wordle que ha creado.
       tags:
         - Profesor - Wordles
+      security:
+        - bearerAuth: []
       parameters:
-        - name: wordleId
-          in: path
-          required: true
+        - in: path
+          name: wordleId
           schema:
             type: integer
-          description: ID del wordle a actualizar.
+            format: int32
+          required: true
+          description: ID del Wordle a actualizar.
+          example: 601
       requestBody:
         required: true
         content:
@@ -1356,158 +2155,459 @@ paths:
             schema:
               type: object
               properties:
-                name:
-                  type: string
-                  description: Nuevo nombre del wordle.
-                word:
-                  type: object
-                  description: Palabra y pista actualizadas del wordle.
-                  properties:
-                    title:
-                      type: string
-                      description: La palabra a adivinar.
-                    hint:
-                      type: string
-                      nullable: true
-                      description: Pista opcional.
-                  required:
-                    - title
-                questions:
-                  type: array
-                  description: Lista completa de preguntas actualizadas (incluir ID para existentes, omitir para nuevas).
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        nullable: true
-                        description: ID de la pregunta (incluir para actualizar, omitir para nueva).
-                      type:
-                        type: string
-                        description: Tipo de pregunta.
-                      statement:
-                        type: string
-                        description: Enunciado de la pregunta.
-                      answer:
-                        type: string
-                        description: Respuesta correcta.
-                      options:
-                        type: array
-                        items:
+                  name:
+                    type: string
+                    description: Nuevo nombre del Wordle.
+                    example: 'Vocabulario Intermedio'
+                  difficulty:
+                    type: string
+                    enum: [low, high] 
+                    description: Nuevo nivel de dificultad.
+                    example: 'high'
+                  words:
+                    type: array
+                    description: Nuevas palabras asociadas al wordle. Se espera el array completo.
+                    items:
+                      type: object
+                      properties:
+                        word:
                           type: string
-                        nullable: true
-                        description: Opciones para preguntas de selección (si aplica).
-                    required:
-                      - type
-                      - statement
-                      - answer
-                  minItems: 1
-                groupAccessIds:
-                  type: array
-                  items:
-                    type: integer
-                  description: Lista completa de IDs de grupos con acceso a este wordle.
-                difficulty:
-                  type: string
-                  enum: [low, high]
-                  default: low
-                  description: Dificultad del wordle (ej. low, high).
+                          description: Palabra.
+                          example: "DRAGON"
+                        hint:
+                          type: string
+                          description: Pista.
+                          nullable: true
+                          example: "Criatura mítica"
+                      required:
+                        - word
+                    minItems: 1 
+                  questions:
+                    type: array
+                    description: Nuevas preguntas asociadas al wordle. Se espera el array completo.
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: Tipo de pregunta.
+                          example: "text"
+                        question:
+                          type: string
+                          description: Enunciado.
+                          example: "Escribe un sinónimo de 'casa'."
+                        correctAnswer:
+                          type: string
+                          description: Respuesta.
+                          example: "Hogar"
+                        options:
+                          type: array
+                          items:
+                            type: string
+                          nullable: true
+                      required:
+                        - type
+                        - statement
+                        - answer
+                    minItems: 0 
+                  groupAccessIds:
+                    type: array
+                    items:
+                      type: integer
+                    description: Nueva lista de IDs de grupos a los que dar acceso. Se espera el array completo.
+                    example: [4, 5]
       responses:
         '200':
           description: Wordle actualizado exitosamente.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    description: ID del wordle actualizado.
-                  name:
-                    type: string
-                    description: Nombre del wordle.
-                  word:
-                    type: object
-                    properties:
-                      title:
-                        type: string
-                      hint:
-                        type: string
-                        nullable: true
-                  questions:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        type:
-                          type: string
-                        statement:
-                          type: string
-                        answer:
-                          type: string
-                        options:
-                          type: array
-                          items:
-                            type: string
-                          nullable: true
-                  difficulty:
-                    type: string
-                    enum: [low, high]
-                    default: low
-                    description: Dificultad del wordle (ej. low, high).
+                $ref: '#/components/schemas/Wordle'
+              example:
+                id: 601
+                name: 'Vocabulario Intermedio'
+                difficulty: 'low'
+                userId: 10
+                createdAt: '2024-02-01T09:30:00Z'
+                updatedAt: '2024-03-10T15:00:00Z'
         '400':
-          description: Datos inválidos.
+          $ref: '#/components/responses/BadRequestError'
         '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es el profesor creador del wordle o intenta dar acceso a un grupo que no ha creado.
+          $ref: '#/components/responses/UnauthorizedError'
         '404':
-          description: Wordle no encontrado.
+          $ref: '#/components/responses/GameResultNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'  
     delete:
-      summary: Elimina un wordle específico creado por el profesor
+      summary: Eliminar un Wordle
+      description: Permite a un profesor eliminar un Wordle que ha creado.
       tags:
         - Profesor - Wordles
+      security:
+        - bearerAuth: []
       parameters:
-        - name: wordleId
-          in: path
-          required: true
+        - in: path
+          name: wordleId
           schema:
             type: integer
-          description: ID del wordle a eliminar.
+            format: int32
+          required: true
+          description: ID del Wordle a eliminar.
+          example: 601
       responses:
         '204':
-          description: Wordle eliminado exitosamente.
-        '401':
-          description: Usuario no autenticado.
-        '403':
-          description: El usuario no es el profesor creador del wordle.
-        '404':
-          description: Wordle no encontrado.
+          description: Wordle eliminado exitosamente. No hay contenido de respuesta.
 
-  /teacher/change-password:
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenUserRoleError' 
+        '404':
+          $ref: '#/components/responses/GameResultNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'  
+
+# -------------------- Rutas de Alumno --------------------
+
+  /student/change-password:
     put:
-      summary: Permite al profesor loggeado cambiar su contraseña
+      summary: Cambiar la contraseña del estudiante autenticado
+      description: Permite a un estudiante cambiar su contraseña actual.
       tags:
-        - Profesor - Perfil
+        - Alumno - Perfil
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - oldPassword
+                - newPassword
               properties:
                 oldPassword:
                   type: string
-                  description: Contraseña actual del profesor.
+                  format: password
+                  description: La contraseña actual del usuario.
+                  example: 'CurrentPassword123!'
                 newPassword:
                   type: string
-                  description: Nueva contraseña para el profesor.
+                  format: password
+                  description: La nueva contraseña para el usuario.
+                  example: 'NewSecurePassword456#' 
       responses:
         '200':
           description: Contraseña cambiada exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Password changed successfully'
         '400':
-          description: Contraseña antigua incorrecta o nueva contraseña inválida.
+          $ref: '#/components/responses/BadRequestError'
         '401':
-          description: Usuario no autenticado.
+            $ref: '#/components/responses/UnauthorizedError'
+        '404': 
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ************ Grupos ************
+  /student/groups/active:
+    get:
+      summary: Obtener grupos activos del estudiante autenticado
+      description: Permite a un estudiante obtener una lista de los grupos a los que pertenece y que están activos.
+      tags:
+        - Alumno - Grupos
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de grupos activos del estudiante. Puede ser un array vacío.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+              example:
+                - id: 1
+                  name: 'Clase de 5ºA'
+                  initDate: '2023-09-01T00:00:00Z'
+                  endDate: '2024-06-30T00:00:00Z' 
+                  userId: 10 
+                  isActive: true
+                - id: 2
+                  name: 'Grupo de Refuerzo Matemáticas'
+                  initDate: '2023-10-15'
+                  endDate: null 
+                  userId: 10
+                  isActive: true
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  
+  /student/groups/{groupId}:
+    get:
+      summary: Obtener detalles de un grupo específico
+      description: Permite a un estudiante obtener los detalles de un grupo al que pertenece.
+      tags:
+        - Alumno - Grupos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del grupo a obtener.
+          example: 1
+      responses:
+        '200':
+          description: Detalles del grupo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              example:
+                id: 1
+                name: 'Clase de 5ºA'
+                initDate: '2023-09-01' 
+                endDate: '2024-06-30' 
+                userId: 10 
+                createdAt: '2023-09-01T08:00:00Z'
+                updatedAt: '2023-09-01T08:00:00Z'
+                isActive: true
+                students:
+                  - id: 101
+                    name: 'Juan Alumno'
+                    email: 'juan.alumno@example.com'
+                    role: 'student'
+                  - id: 102
+                    name: 'María Alumna'
+                    email: 'maria.alumna@example.com'
+                    role: 'student'
+                accesibleWordles:
+                  - id: 601
+                    name: 'Frutas y Verduras'
+                    difficulty: 'low'
+                    userId: 10
+                    createdAt: '2024-02-01T09:30:00Z'
+                    updatedAt: '2024-02-01T09:30:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenStudentError'
+        '404':
+          $ref: '#/components/responses/GroupNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  # ************ Wordles ************
+  /student/wordles/accessible:
+    get:
+      summary: Obtener Wordles accesibles para el estudiante autenticado
+      description: Permite a un estudiante obtener una lista de los Wordles a los que tiene acceso a través de sus grupos.
+      tags:
+        - Alumno - Wordles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de Wordles accesibles para el estudiante. Puede ser un array vacío.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WordleListItem' 
+              example:
+                - id: 601
+                  name: 'Frutas y Verduras'
+                  difficulty: 'low'
+                  userId: 10
+                  createdAt: '2024-02-01T09:30:00Z'
+                  updatedAt: '2024-02-01T09:30:00Z'
+                  words:
+                    - word: 'manzana'
+                      hint: 'Es una fruta que cae del árbol.'
+                - id: 604
+                  name: 'Historia Antigua'
+                  difficulty: 'high'
+                  userId: 12
+                  createdAt: '2024-03-05T11:00:00Z'
+                  updatedAt: '2024-03-05T11:00:00Z'
+                  words:
+                    - word: 'elefante'
+                      hint: 'El animal terrestre más grande.'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/WordlesNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /student/wordles/{wordleId}/game-data:
+    get:
+      summary: Obtener datos de juego para un Wordle específico
+      description: Permite a un estudiante obtener la palabra objetivo y las preguntas asociadas a un Wordle específico para poder jugar.
+      tags:
+        - Alumno - Wordles
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: wordleId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del Wordle del que se quieren obtener los datos de juego.
+          example: 601
+      responses:
+        '200':
+          description: Datos de juego del Wordle.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WordleGameData'
+              example:
+                id: 601
+                name: 'Frutas y Verduras'
+                difficulty: 'low'
+                words:
+                  - word: "MANZANA"
+                    hint: "Fruta roja o verde"
+                  - word: "PERA"
+                    hint: "Fruta verde o amarilla"
+                questions:
+                  - type: "single"
+                    statement: "¿Qué fruta es roja?"
+                    answer: "Manzana"
+                    options: ["Plátano", "Naranja", "Manzana"]
+                  - type: "text"
+                    statement: "Nombra una fruta que empiece por 'P'."
+                    answer: "Pera"
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/WordleNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ************ Game Results ************
+  # /student/game-results:
+  #   get:
+  #     summary: Obtener todos los resultados de juego del estudiante autenticado
+  #     description: Permite a un estudiante ver un historial de todos los juegos de Wordle que ha jugado.
+  #     tags:
+  #       - Alumno - Resultados de Juego
+  #     security:
+  #       - bearerAuth: []
+  #     responses:
+  #       '200':
+  #         description: Lista de resultados de juego del estudiante. Puede ser un array vacío.
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: array
+  #               items:
+  #                 $ref: '#/components/schemas/GameResult'
+  #             example:
+  #               - id: 1001
+  #                 userId: 20
+  #                 wordleId: 601
+  #                 score: 150
+  #                 createdAt: '2024-04-10T10:00:00Z'
+  #                 updatedAt: '2024-04-10T10:00:00Z'
+  #               - id: 1002
+  #                 userId: 20
+  #                 wordleId: 604
+  #                 score: 80
+  #                 createdAt: '2024-04-12T15:30:00Z'
+  #                 updatedAt: '2024-04-12T15:30:00Z'
+  #       '400':
+  #         $ref: '#/components/responses/BadRequestError'
+  #       '401':
+  #         $ref: '#/components/responses/UnauthorizedError'
+  #       '403':
+  #         $ref: '#/components/responses/ForbiddenStudentError'
+  #       '404':
+  #         $ref: '#/components/responses/StudentNotFoundError'
+  #       '500':
+  #         $ref: '#/components/responses/InternalServerError'
+
+  /student/games/{wordleId}/save-result:
+    post:
+      summary: Guardar el resultado de un juego completado
+      description: Permite a un estudiante guardar la puntuación de un juego de Wordle que ha terminado.
+      tags:
+        - Alumno - Resultados de Juego
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: wordleId
+          schema:
+            type: integer
+            format: int32
+          required: true
+          description: ID del Wordle para el que se guarda el resultado.
+          example: 601
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - score
+              properties:
+                score:
+                  type: integer
+                  format: int32
+                  description: Puntuación obtenida en el juego.
+                  minimum: 0
+                  example: 150
+      responses:
+        '201':
+          description: Resultado del juego guardado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameResult'
+              example:
+                id: 1003
+                userId: 20
+                wordleId: 601
+                score: 150
+                createdAt: '2024-04-15T09:00:00Z'
+                updatedAt: '2024-04-15T09:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '403':
+          $ref: '#/components/responses/ForbiddenStudentError'
+        '404':
+          $ref: '#/components/responses/WordleNotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+

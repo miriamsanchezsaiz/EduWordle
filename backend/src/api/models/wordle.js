@@ -14,11 +14,11 @@ const Wordle = sequelize.define('Wordle', {
     allowNull: false,
     field: 'name'
   },
-  // Foreign key column - now 'userId' in the DB
-  userId: { // Model attribute name (English)
+  // Foreign key column 'userId' in the DB
+  userId: { 
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'userId', // Mapea a la columna 'userId' en la BD
+    field: 'userId', 
     references: {
         model: 'user', 
         key: 'id'

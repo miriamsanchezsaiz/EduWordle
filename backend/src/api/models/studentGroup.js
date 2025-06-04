@@ -5,22 +5,22 @@ const sequelize = require('../../config/database');
 const StudentGroup = sequelize.define('StudentGroup', {
  
   // Foreign key to the user table (for the student) - now 'userId' in DB
-  userId: { // Model attribute name (English)
+  userId: { 
     type: DataTypes.INTEGER,
     primaryKey: true,
     allowNull: false,
-    field: 'userId', // Mapea a la columna 'userId' en la BD
+    field: 'userId', 
     references: {
         model: 'user',
         key: 'id'
     }
   },
   // Foreign key to the grupos table
-  groupId: { // Model attribute name (English)
+  groupId: { 
     type: DataTypes.INTEGER,
     primaryKey: true,
     allowNull: false,
-    field: 'groupId', // Mapea a la columna 'groupId' en la BD
+    field: 'groupId', 
     references: {
         model: 'group',
         key: 'id'

@@ -16,11 +16,10 @@ module.exports = {
   wordleService,
   gameService,
   emailService,
-  // Export all functions from services here for easy access in controllers
   ...userService,
   ...authService,
-  ...groupService, // Export functions from groupService
-  ...wordleService, // Export functions from wordleService
-  ...gameService, // Export functions from gameService
+  ...groupService, 
+  ...wordleService, 
+  ...gameService, 
   ...emailService,
 };

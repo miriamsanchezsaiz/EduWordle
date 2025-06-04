@@ -3,8 +3,8 @@ const express = require('express');
 const router = express.Router();
 
 const authRoutes = require('./authRoutes');
-const studentRoutes = require('./studentRoutes'); // Import student routes
-const teacherRoutes = require('./teacherRoutes'); // Import teacher routes
+const studentRoutes = require('./studentRoutes'); 
+const teacherRoutes = require('./teacherRoutes'); 
 
 
 // Mount the auth routes under the /auth path
@@ -16,9 +16,6 @@ router.use('/student', studentRoutes);
 // Mount the teacher routes under the /teacher path
 router.use('/teacher', teacherRoutes);
 
-// If you have game routes not covered by student/teacher prefixes:
-// const gameRoutes = require('./gameRoutes');
-// router.use('/game', gameRoutes);
 
 
 module.exports = router;

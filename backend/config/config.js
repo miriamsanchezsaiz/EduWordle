@@ -1,10 +1,7 @@
 // backend/config/config.js
 
-require('dotenv').config({
-  path: process.env.NODE_ENV === 'test'
-    ? require('path').resolve(__dirname, '../.env.test') 
-    : require('path').resolve(__dirname, '../.env'), 
-});
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') }); 
+
 
 module.exports = {
   development: {

@@ -1,13 +1,13 @@
 // src/api/services/groupService.js
-const { User, Group, StudentGroup, Wordle, WordleGroup } = require('../models'); // Import necessary models
-const { Op } = require('sequelize'); // Import Op for Sequelize operators
-const userService = require('./userService'); // Import userService to create/find users
+const { User, Group, StudentGroup, Wordle, WordleGroup } = require('../models'); 
+const { Op } = require('sequelize');
+const userService = require('./userService'); 
 const sequelize = require('../../config/database');
-const emailService = require('./emailService'); // Import the new email service
+const emailService = require('./emailService'); 
 const { generateInitialPassword } = require('../../utils/passwordUtils');
+const ApiError = require('../../utils/ApiError');
 
-
-// Function to get active groups for a specific student user (already implemented)
+// CHECKED: Function to get active groups for a specific student user 
 const getActiveGroupsForStudent = async (userId) => {
     try {
         const studentUser = await User.findByPk(userId, {
@@ -28,14 +28,18 @@ const getActiveGroupsForStudent = async (userId) => {
         });
 
         if (!studentUser) {
-            throw new NotFoundError('Student not found.');
+            throw ApiError.notFound('Student not found.');
             return [];
         }
 
         return studentUser.groups || [];
     } catch (error) {
         console.debug('Error getting active groups for student:', error);
-        throw error;
+        if (error instanceof ApiError) {
+            throw error;
+        } else {
+            throw ApiError.internal('An unexpected error occurred while getting active groups for student.');
+        }
     }
 };
 
@@ -44,20 +48,17 @@ const getActiveGroupsForStudent = async (userId) => {
 const getGroupsByTeacher = async (teacherId, filters = {}) => {
     try {
         const teacher = await userService.getUserById(teacherId);
-        if (!teacher || teacher.role !== 'teacher') {
-            throw new Error('User not found or not authorized to view groups');
+        if (!teacher) {
+            throw ApiError.notFound('Teacher not found.');
         }
-
+        if (teacher.role !== 'teacher') {
+            throw ApiError.forbidden('User not authorized to view groups.');
+        }
         const whereClause = {
             userId: teacherId,
         };
 
-        // console.log('FINAL-DEBUG groupService.getGroupsByTeacher: filters.status:', filters.status);
-
-        // Estado activo/inactivo
         const now = new Date();
-
-        // console.log('FINAL-DEBUG groupService.getGroupsByTeacher: now:', now);
 
         if (filters.status === 'active') {
 
@@ -68,8 +69,8 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
             ];
         } else if (filters.status === 'inactive') {
             whereClause[Op.or] = [
-                { initDate: { [Op.gt]: now } }, // No ha empezado
-                { endDate: { [Op.lt]: now } }   // Ya terminó
+                { initDate: { [Op.gt]: now } },
+                { endDate: { [Op.lt]: now } }
             ];
         }
 
@@ -90,8 +91,6 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
             };
         }
 
-        console.log('MEGA-FINAL-DEBUG groupService.getGroupsByTeacher: whereClause:', whereClause);
-
         const groups = await Group.findAll({
             where: whereClause,
             attributes: ['id', 'name', 'initDate', 'endDate', 'userId']
@@ -102,14 +101,9 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
         const today = new Date();
         const groupsWithStatus = groups.map(group => {
             const { initDate, endDate } = group;
-
-            // Convertir a fecha si es necesario
             const initDateObj = new Date(initDate);
             const endDateObj = endDate ? new Date(endDate) : null;
             const isActive = initDateObj <= today && (!endDateObj || endDateObj >= today);
-            // console.log('FINAL-DEBUG : Grupo:', group.name);
-            // console.log('FINAL-DEBUG : init:', initDateObj.toISOString(), 'end:', endDateObj?.toISOString(), 'today:', today.toISOString());
-            // console.log('FINAL-DEBUG : isActive:', isActive);
 
             return {
                 ...group.toJSON(),
@@ -121,82 +115,87 @@ const getGroupsByTeacher = async (teacherId, filters = {}) => {
 
     } catch (error) {
         console.debug('Error getting groups by teacher:', error);
-        throw error;
-    }
-};
-
-
-// Function to get details of a specific group (Teacher functionality)
-const getGroupDetails = async (groupId, currentUserId, currentUserRole) => {
-    try {
-
-        let group;
-        let whereCondition = { id: groupId };
-
-        if (currentUserRole === 'teacher') {
-            whereCondition.userId = currentUserId;
-            group = await Group.findOne({
-                where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        as: 'students',
-                        through: { attributes: [] },
-                        attributes: ['id', 'name', 'email', 'role']
-                    },
-                    {
-                        model: Wordle,
-                        as: 'accessibleWordles',
-                        through: { attributes: [] },
-                        attributes: ['id', 'name']
-                    }
-
-
-                ]
-            });
-        }
-        else if (currentUserRole === 'student') {
-            group = await Group.findOne({
-                where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        as: 'students', 
-                        through: {
-                            model: StudentGroup, 
-                            where: { userId: currentUserId }, 
-                            attributes: []
-                        },
-                        attributes: ['id', 'name', 'email', 'role'],
-                        required: true 
-                    },
-                    {
-                        model: Wordle,
-                        as: 'accessibleWordles',
-                        through: { attributes: [] },
-                        attributes: ['id', 'name']
-                    }
-                ]
-            });
+        if (error instanceof ApiError) {
+            throw error;
         } else {
-            // Rol no soportado o desconocido
-            throw new Error('Unsupported user role for group details access');
+            throw ApiError.internal('An unexpected error occurred while retrieving groups.');
         }
-
-        // Return group details or null if not found or access denied
-        return group ? group.toJSON() : null;
-
-    } catch (error) {
-        console.debug('Error getting group details in service:', error);
-        throw error;
     }
 };
 
+
+// CHECKED: Function to get details of a specific group (Teacher functionality)
+const getGroupDetails = async (groupId, currentUserId, currentUserRole) => {
+
+    let group;
+    let whereCondition = { id: groupId };
+
+    if (currentUserRole === 'teacher') {
+        whereCondition.userId = currentUserId;
+        group = await Group.findOne({
+            where: whereCondition,
+            include: [
+                {
+                    model: User,
+                    as: 'students',
+                    through: { attributes: [] },
+                    attributes: ['id', 'name', 'email', 'role']
+                },
+                {
+                    model: Wordle,
+                    as: 'accessibleWordles',
+                    through: { attributes: [] },
+                    attributes: ['id', 'name']
+                }
+
+
+            ]
+        });
+    }
+    else if (currentUserRole === 'student') {
+        group = await Group.findOne({
+            where: whereCondition,
+            include: [
+                {
+                    model: User,
+                    as: 'students',
+                    through: {
+                        model: StudentGroup,
+                        where: { userId: currentUserId },
+                        attributes: []
+                    },
+                    attributes: ['id', 'name', 'email', 'role'],
+                    required: true
+                },
+                {
+                    model: Wordle,
+                    as: 'accessibleWordles',
+                    through: { attributes: [] },
+                    attributes: ['id', 'name']
+                }
+            ]
+        });
+    } else {
+        throw ApiError.forbidden('Unsupported user role for group details access.');
+    }
+    if (!group) {
+        throw ApiError.notFound('Group not found or access denied.');
+    }
+
+    const groupJson = group.toJSON();
+
+    const now = new Date();
+    const initDateObj = new Date(groupJson.initDate);
+    const endDateObj = groupJson.endDate ? new Date(groupJson.endDate) : null;
+    groupJson.isActive = initDateObj <= now && (!endDateObj || endDateObj >= now);
+
+    return groupJson;
+
+
+};
 
 
 const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
-
-
     const createdStudents = [];
     const linkedStudents = [];
     const studentUserIdsToLink = [];
@@ -209,8 +208,7 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 
                 if (existingUser) {
                     if (existingUser.role !== 'student') {
-                        console.warn(`User with email ${email} exists but is not a student (role: ${existingUser.role}). Skipping linking to group.`);
-                        throw new Error(`User with email ${email} exists but is not a student.`); continue;
+                        throw ApiError.badRequest(`User with email ${email} exists but is not a student.`);
                     }
                     const isAlreadyInGroup = await group.hasStudent(existingUser, { transaction });
                     if (isAlreadyInGroup) {
@@ -231,15 +229,18 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 
 
                     emailService.sendWelcomeEmail(newUser.email, newUser.name, initialPassword)
-                        .catch(err => console.debug(`Failed to send email to ${newUser.email}:`, err));
+                        .catch(err => console.error(`Failed to send welcome email to ${newUser.email}:`, err));
                 }
             } catch (error) {
                 console.error(`Error processing student with email ${email}:`, error);
-                throw error;
+                if (error instanceof ApiError) {
+                    throw error;
+                } else {
+                    throw ApiError.internal(`An unexpected error occurred while processing student ${email}.`);
+                }
             }
         }
 
-        // 4. Link students to the group using bulkCreate (only for those que no estaban previamente)
         try {
             if (studentUserIdsToLink.length > 0) {
                 const studentGroupEntries = studentUserIdsToLink.map(userId => ({
@@ -250,7 +251,11 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
             }
         } catch (error) {
             console.error(`Error linking students to group ${group.id}:`, error);
-            throw error;
+            if (error instanceof ApiError) {
+                throw error;
+            } else {
+                throw ApiError.internal(`An unexpected error occurred while linking students to group ${group.id}.`);
+            }
         }
 
     }
@@ -259,19 +264,73 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 };
 
 const updateWordleGroup = async (groupId, updatedWordleIds) => {
-    const current = await WordleGroup.findAll({ where: { groupId } });
-    const currentIds = current.map(wg => wg.wordleId);
-    // Wordles a eliminar: estaban, pero ya no vienen
-    const toRemove = currentIds.filter(id => !updatedWordleIds.includes(id));
-    if (toRemove.length) {
-        await WordleGroup.destroy({
-            where: { groupId, wordleId: toRemove }
+        const transaction = await sequelize.transaction(); 
+
+     try {
+        const group = await Group.findByPk(groupId, {
+            attributes: ['id', 'userId'], 
+            transaction
         });
-    }
+
+        if (!group) {
+            throw ApiError.notFound('Group not found for Wordle association update.');
+        }
+        const currentWordleGroups = await WordleGroup.findAll({
+            where: { groupId },
+            attributes: ['wordleId'], 
+            transaction
+        });
+        const currentWordleIds = currentWordleGroups.map(wg => wg.wordleId);
+
+    // Wordles a eliminar: estaban, pero ya no vienen
+    const toRemove = currentWordleIds.filter(id => !updatedWordleIds.includes(id));
+        if (toRemove.length > 0) {
+            await WordleGroup.destroy({
+                where: {
+                    groupId: groupId,
+                    wordleId: { [Op.in]: toRemove }
+                },
+                transaction
+            });
+            console.debug(`Removed Wordle associations: ${toRemove.join(', ')} from group ${groupId}`);
+        }
     // Wordles a añadir: vienen, pero no estaban
-    const toAdd = updatedWordleIds.filter(id => !currentIds.includes(id));
-    for (const wordleId of toAdd) {
-        await WordleGroup.create({ groupId, wordleId });
+    const toAdd = updatedWordleIds.filter(id => !currentWordleIds.includes(id));
+
+        if (toAdd.length > 0) {
+            const existingAndOwnedWordles = await Wordle.findAll({
+                where: {
+                    id: { [Op.in]: toAdd },
+                    userId: group.userId 
+                },
+                attributes: ['id'],
+                transaction
+            });
+
+            const existingAndOwnedWordleIds = existingAndOwnedWordles.map(w => w.id);
+
+            const invalidWordles = toAdd.filter(id => !existingAndOwnedWordleIds.includes(id));
+            if (invalidWordles.length > 0) {
+                throw ApiError.badRequest(`One or more Wordles to add (${invalidWordles.join(', ')}) do not exist or do not belong to this teacher.`);
+            }
+
+            // Crear las nuevas asociaciones
+            const newWordleGroupEntries = toAdd.map(wordleId => ({
+                groupId: groupId,
+                wordleId: wordleId
+            }));
+
+            
+            await WordleGroup.bulkCreate(newWordleGroupEntries, { transaction, ignore: true });
+            console.debug(`Added Wordle associations: ${toAdd.join(', ')} to group ${groupId}`);
+        }
+        } catch (error) {
+        console.error(`Error in updateWordleGroup for group ${groupId}:`, error);
+        if (error instanceof ApiError) {
+            throw error;
+        } else {
+            throw ApiError.internal(`An unexpected error occurred while updating Wordles for group ${groupId}.`);
+        }
     }
 };
 
@@ -280,7 +339,7 @@ async function prepareForUpdate(req) {
     const updateData = {};
 
     if (body.name !== undefined) updateData.name = body.name;
-    if (body.startDate !== undefined) updateData.startDate = body.startDate;
+    if (body.initDate !== undefined) updateData.initDate = body.initDate;
     if (body.endDate !== undefined) updateData.endDate = body.endDate;
     if (Array.isArray(body.studentEmails)) updateData.addStudentEmails = body.studentEmails;
     if (Array.isArray(body.removeStudentIds)) updateData.removeStudentIds = body.removeStudentIds;
@@ -311,16 +370,19 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
         const teacher = await userService.getUserById(teacherId);
         console.log('DEBUG groupService.createGroup: Found teacher:', teacher ? teacher.id : null);
 
-        if (!teacher || teacher.role !== 'teacher') {
-            throw new Error('User not found or not authorized to create groups');
+        if (!teacher) {
+            throw ApiError.notFound('Teacher not found.');
+        }
+        if (teacher.role !== 'teacher') {
+            throw ApiError.forbidden('User not authorized to create groups.');
         }
 
         console.log('DEBUG groupService.createGroup: Proceeding to Group.create with userId:', teacherId);
 
         const newGroup = await Group.create({
             name: groupData.name,
-            initDate: new Date(groupData.startDate),
-            endDate: new Date(groupData.endDate),
+            initDate: new Date(groupData.initDate),
+            endDate: groupData.endDate ? new Date(groupData.endDate) : null,
             userId: teacherId
         }, { transaction });
 
@@ -351,7 +413,11 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
     } catch (error) {
         await transaction.rollback();
         console.debug('Error creating group:', error);
-        throw error;
+        if (error instanceof ApiError) {
+            throw error;
+        } else {
+            throw ApiError.internal('An unexpected error occurred while creating the group.');
+        }
     }
 };
 
@@ -367,17 +433,29 @@ const updateGroup = async (groupId, teacherId, updateData) => {
                 id: groupId,
                 userId: teacherId
             },
-            transaction
+            transaction,
+            include: [
+              {
+                model: User,
+                as: 'students',
+                attributes: ['id', 'email', 'role']
+              },
+              {
+                model: Wordle,
+                as: 'accessibleWordles',
+                attributes: ['id'] 
+              }
+            ]
         });
 
         if (!group) {
             await transaction.rollback();
-            return null;
+            throw ApiError.notFound('Group not found or access denied.')
         }
 
         // 2. Update group basic details
         if (updateData.name !== undefined) group.name = updateData.name;
-        if (updateData.startDate !== undefined) group.initDate = updateData.startDate;
+        if (updateData.initDateDate !== undefined) group.initDate = updateData.initDate;
         if (updateData.endDate !== undefined) group.endDate = updateData.endDate;
 
         await group.save({ transaction });
@@ -391,11 +469,24 @@ const updateGroup = async (groupId, teacherId, updateData) => {
         if (removedStudentIds.length > 0) {
             await group.removeStudents(removedStudentIds, { transaction });
 
-            // Consider if you want to handle the deletion of students with no groups here
-            // or in a separate process as discussed previously.
             await Promise.all(removedStudentIds.map(async (userId) => {
                 await userService.deleteStudentIfNoGroups(userId, transaction);
             }));
+        }
+
+        // 5. Gestionar la asociación/desasociación de Wordles
+        if (updateData.addWordleIds || updateData.removeWordleIds) {
+            
+            const currentWordleIds = group.accessibleWordles.map(w => w.id);
+            const targetWordleIds = new Set(currentWordleIds);
+
+            if (Array.isArray(updateData.addWordleIds)) {
+                updateData.addWordleIds.forEach(id => targetWordleIds.add(id));
+            }
+            if (Array.isArray(updateData.removeWordleIds)) {
+                updateData.removeWordleIds.forEach(id => targetWordleIds.delete(id));
+            }
+            await updateWordleGroup(groupId, Array.from(targetWordleIds), transaction);
         }
 
         await transaction.commit();
@@ -409,44 +500,52 @@ const updateGroup = async (groupId, teacherId, updateData) => {
                 attributes: ['id', 'name', 'email', 'role']
             }
         });
+        const now = new Date();
+        const initDateObj = new Date(updatedGroupWithStudents.initDate);
+        const endDateObj = updatedGroupWithStudents.endDate ? new Date(updatedGroupWithStudents.endDate) : null;
+        updatedGroupWithStudents.dataValues.isActive = initDateObj <= now && (!endDateObj || endDateObj >= now);
+
 
         return {
             ...updatedGroupWithStudents.toJSON(),
-            createdStudents: createdStudents, // Students created during this update
-            linkedStudents: linkedStudents,   // Students linked during this update
+            createdStudents: createdStudents, 
+            linkedStudents: linkedStudents,   
 
         };
 
     } catch (error) {
         await transaction.rollback();
         console.debug('Error updating group:', error);
-        throw error;
+        if (error instanceof ApiError) {
+            throw error;
+        } else {
+            throw ApiError.internal('An unexpected error occurred while updating the group.');
+        }
     }
 };
 
 
 // Function to delete a specific group (Teacher functionality)
 const deleteGroup = async (groupId, teacherId) => {
-    const transaction = await sequelize.transaction(); // Start a transaction
+    const transaction = await sequelize.transaction(); 
 
     try {
         // 1. Find the group and verify it belongs to the teacher
         const group = await Group.findOne({
             where: {
                 id: groupId,
-                userId: teacherId // Ensure the group is created by this teacher
+                userId: teacherId 
             },
             transaction
         });
 
         if (!group) {
             await transaction.rollback();
-            return false; // Group not found or access denied
+            throw ApiError.notFound('Group not found or access denied.');
         }
 
-        // Get the list of student IDs in this group BEFORE deleting the group
         const studentsInGroup = await group.getStudents({
-            attributes: ['id'], // Only fetch IDs
+            attributes: ['id'], 
             through: { attributes: [] },
             transaction
         });
@@ -454,31 +553,24 @@ const deleteGroup = async (groupId, teacherId) => {
 
 
         // 2. Delete the group
-        // Sequelize should handle cascading deletes for associations defined with ON DELETE CASCADE
-        // If not using ON DELETE CASCADE in DB, you might need to manually delete
-        // entries in join tables (StudentGroup, WordleGroup) first.
-        // Your SQL scripts for wordle_groups had ON DELETE CASCADE, but student_groups didn't.
-        // You might need to manually delete from student_groups here.
-        // await StudentGroup.destroy({ where: { groupId: groupId }, transaction }); // Example if needed
+        await group.destroy({ transaction }); 
 
-        await group.destroy({ transaction }); // Delete the group
-
-        // After deleting the group, check if any of the students who were in this group
-        // now have no groups and should be deleted.
-        // Use Promise.all to run checks concurrently
         await Promise.all(studentIdsInGroup.map(async (userId) => {
-            // Pass the transaction to deleteStudentIfNoGroups
             await userService.deleteStudentIfNoGroups(userId, transaction);
         }));
 
 
-        await transaction.commit(); // Commit the transaction
-        return true; // Indicate successful deletion
+        await transaction.commit(); 
+        return true; 
 
     } catch (error) {
-        await transaction.rollback(); // Rollback transaction on error
-        console.debug('Error deleting group:', error);
-        throw error;
+        await transaction.rollback(); 
+        console.debug('Error deleting group in groupService:', error);
+        if (error instanceof ApiError) {
+            throw error; 
+        } else {
+            throw ApiError.internal('An unexpected error occurred while deleting the group.'); 
+        }
     }
 };
 
@@ -487,7 +579,7 @@ const isStudentInTeacherGroup = async (studentId, teacherId) => {
     try {
         const student = await User.findByPk(studentId);
         if (!student || student.role !== 'student') {
-            return false; // Student not found or not a student
+            return false;
         }
 
         const groups = await student.getGroups({

@@ -6,7 +6,7 @@ const WordleGroup = sequelize.define('WordleGroup', {
   // Model based on composite primary key (wordleId, groupId) as per your SQL script
   wordleId: {
     type: DataTypes.INTEGER,
-    primaryKey: true, // Part of the composite primary key
+    primaryKey: true, 
     allowNull: false,
     field: 'wordleId',
     references: {
@@ -16,7 +16,7 @@ const WordleGroup = sequelize.define('WordleGroup', {
   },
   groupId: {
     type: DataTypes.INTEGER,
-    primaryKey: true, // Part of the composite primary key
+    primaryKey: true, 
     allowNull: false,
     field: 'groupId',
     references: {
@@ -26,8 +26,7 @@ const WordleGroup = sequelize.define('WordleGroup', {
   }
 }, {
   tableName: 'wordle_group',
-  // If using the composite primary key from the SQL script:
-  primaryKey: ['wordleId', 'groupId'] // Define the composite primary key
+  primaryKey: ['wordleId', 'groupId'] 
 });
 
 module.exports = WordleGroup;
