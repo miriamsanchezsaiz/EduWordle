@@ -59,7 +59,7 @@ components:
         email:
           type: string
           format: email
-          example: teacher.Swagger@example.com
+          example: juan.perez@example.com
           description: Correo electrónico del usuario.
         password:
           type: string
@@ -338,7 +338,7 @@ components:
                 type: string
                 description: Nombre del grupo.
                 example: 'Grupo A'
-    Group:
+    GroupWithDetails:
       type: object
       properties:
         id:
@@ -378,6 +378,53 @@ components:
           format: date-time
           description: Fecha y hora de la última actualización del grupo.
           readOnly: true
+        students:
+          type: array
+          items:
+            $ref: '#/components/responses/UserResponseWithoutPassword' 
+          description: Lista de estudiantes asociados al grupo.
+        accessibleWordles:
+          type: array
+          items:
+            type: object
+            properties:
+            id:
+              type: integer
+              format: int32
+              description: ID único del Wordle.
+              readOnly: true
+              example: 601
+            name:
+              type: string
+              description: Nombre del Wordle.
+              example: 'Animales'
+          description: Lista de Wordles asociados a este grupo.
+    GroupSimple:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: ID único del grupo.
+          readOnly: true
+          example: 1
+        name:
+          type: string
+          description: Nombre del grupo.
+          example: 'Clase de 5ºA'
+        initDate:
+          type: string
+          format: date 
+          description: Fecha de inicio del grupo.
+          example: '2023-09-01'
+        endDate:
+          type: string
+          format: date 
+          description: Fecha de fin del grupo (opcional).
+          nullable: true
+          example: '2024-06-30'
+        
+  
     WordleGameData: 
           type: object
           description: Datos necesarios para iniciar un juego de Wordle.
@@ -424,7 +471,7 @@ components:
                     type: string
                     description: Tipo de pregunta (ej. single, multiple, text).
                     example: "single"
-                  statement:
+                  question:
                     type: string
                     description: Enunciado de la pregunta.
                     example: "¿Cuál es un mamífero doméstico?"
@@ -441,8 +488,8 @@ components:
                     example: ["Gato", "Pez", "Perro"]
                 required:
                   - type
-                  - statement
-                  - answer   
+                  - question
+                  - correctAnswer   
     GameResult:
       type: object
       properties:
@@ -469,12 +516,12 @@ components:
           format: int32
           description: Puntuación obtenida en el juego.
           example: 150
-        createdAt: # Incluido por timestamps: true
+        createdAt: 
           type: string
           format: date-time
           description: Fecha y hora en que se guardó el resultado.
           readOnly: true
-        updatedAt: # Incluido por timestamps: true
+        updatedAt: 
           type: string
           format: date-time
           description: Fecha y hora de la última actualización del resultado.
@@ -1815,7 +1862,7 @@ paths:
                 questions:
                   - id: 101
                     type: "single"
-                    statement: "¿Qué fruta es roja?"
+                    question: "¿Qué fruta es roja?"
                     answer: "Manzana"
                     options: ["Plátano", "Naranja", "Manzana"]
                     wordleId: 601
@@ -1910,7 +1957,7 @@ paths:
                           minItems: 2
                       required:
                         - type
-                        - statement
+                        - question
                         - correctAnswer
                         - options
                     minItems: 0 
@@ -2038,20 +2085,18 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Group'
+                  $ref: '#/components/schemas/GroupSimple'
               example:
                 - id: 1
                   name: 'Clase de 5ºA'
                   initDate: '2023-09-01T00:00:00Z'
                   endDate: '2024-06-30T00:00:00Z' 
                   userId: 10 
-                  isActive: true
                 - id: 2
                   name: 'Grupo de Refuerzo Matemáticas'
                   initDate: '2023-10-15'
                   endDate: null 
                   userId: 10
-                  isActive: true
         '400':
           $ref: '#/components/responses/BadRequestError'
         '401':
@@ -2084,7 +2129,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
+                $ref: '#/components/schemas/GroupWithDetails'
               example:
                 id: 1
                 name: 'Clase de 5ºA'
@@ -2139,23 +2184,45 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/responses/WordleListItem' 
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int32
+                      description: ID del Wordle.
+                      example: 601
+                    name:
+                      type: string
+                      description: Nombre del Wordle.
+                      example: 'Frutas y Verduras'
+                    difficulty:
+                      type: string
+                      enum: [low, high]
+                      description: Nivel de dificultad del Wordle.
+                      example: 'low'
+                    words:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          word:
+                            type: string
+                            description: Palabra del Wordle.
+                            example: 'manzana'
+                          hint:
+                            type: string
+                            description: Pista para la palabra.
+                            example: 'Es una fruta que cae del árbol.' 
               example:
                 - id: 601
                   name: 'Frutas y Verduras'
                   difficulty: 'low'
-                  userId: 10
-                  createdAt: '2024-02-01T09:30:00Z'
-                  updatedAt: '2024-02-01T09:30:00Z'
                   words:
                     - word: 'manzana'
                       hint: 'Es una fruta que cae del árbol.'
                 - id: 604
                   name: 'Historia Antigua'
                   difficulty: 'high'
-                  userId: 12
-                  createdAt: '2024-03-05T11:00:00Z'
-                  updatedAt: '2024-03-05T11:00:00Z'
                   words:
                     - word: 'elefante'
                       hint: 'El animal terrestre más grande.'
@@ -2203,11 +2270,11 @@ paths:
                     hint: "Fruta verde o amarilla"
                 questions:
                   - type: "single"
-                    statement: "¿Qué fruta es roja?"
+                    question: "¿Qué fruta es roja?"
                     answer: "Manzana"
                     options: ["Plátano", "Naranja", "Manzana"]
                   - type: "text"
-                    statement: "Nombra una fruta que empiece por 'P'."
+                    question: "Nombra una fruta que empiece por 'P'."
                     answer: "Pera"
         '400':
           $ref: '#/components/responses/BadRequestError'
