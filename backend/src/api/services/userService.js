@@ -15,26 +15,46 @@ const findUserByEmail = async (email) => {
     }
     return user;
   } catch (error) {
-     console.debug('Error finding user by email in userService:', error); 
+    console.debug('Error finding user by email in userService:', error);
     if (error instanceof ApiError) {
       throw error;
+    }
   }
-}};
+};
 
 // Function to create a new user with a specific role
 const createUser = async (email, name, password, role, transaction = null) => {
 
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  try {
+    const newUser = await User.create({
+      email: email,
+      name: name,
+      password: hashedPassword,
+      role: role
+    }, { transaction });
 
-  const newUser = await User.create({
-    email: email,
-    name: name,
-    password: hashedPassword,
-    role: role
-  }, { transaction });
+    return newUser;
+  } catch (error) {
+    console.debug('Error creating user in userService:', error);
+    if (error instanceof UniqueConstraintError) {
 
-  return newUser;
+      const field = Object.keys(error.fields)[0];
+      const value = error.fields[field];
 
+
+      if (field === 'email') {
+        throw ApiError.conflict(`El email '${value}' ya está en uso. Por favor, utiliza otro email.`);
+      } else {
+        throw ApiError.conflict(`Un recurso con el valor '${value}' para el campo '${field}' ya existe.`);
+      }
+    }
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw ApiError.internal('An unexpected error occurred while creating the user.');
+    }
+  }
 };
 
 // Function to change a user's password
@@ -60,7 +80,7 @@ const changePassword = async (userId, oldPassword, newPassword) => {
     await user.save({ transaction });
 
     await transaction.commit();
-    return true; 
+    return true;
 
   } catch (error) {
     await transaction.rollback();
@@ -79,7 +99,7 @@ const getUserById = async (userId) => {
     const user = await User.findByPk(userId);
     return user;
   } catch (error) {
-    console.error('Error getting user by ID in userService:', error); 
+    console.error('Error getting user by ID in userService:', error);
     throw ApiError.internal('An unexpected error occurred while fetching user by ID.');
   }
 };
@@ -97,24 +117,24 @@ const deleteStudentIfNoGroups = async (userId, transaction = null) => {
     }
 
     const groups = await user.getStudentGroups({
-            where: { userId: userId },
-            through: { attributes: [] },
-            attributes: ['id']
-        },{ transaction });
+      where: { userId: userId },
+      through: { attributes: [] },
+      attributes: ['id']
+    }, { transaction });
 
     if (groups.length === 0) {
       await user.destroy({ transaction });
       console.log(`Student user ${userId} deleted due to no group memberships.`);
-      return true; 
+      return true;
     }
 
     console.log(`Student user ${userId} still belongs to groups. Not deleting.`);
-    return false; 
+    return false;
 
   } catch (error) {
     console.debug('Error deleting student user if no groups:', error);
     if (error instanceof ApiError) {
-      throw error; 
+      throw error;
     } else {
       throw ApiError.internal(`An unexpected error occurred while checking/deleting student user ${userId}.`);
     }

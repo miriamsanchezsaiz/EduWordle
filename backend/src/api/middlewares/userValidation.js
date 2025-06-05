@@ -57,18 +57,18 @@ const validateCreateGroup = [
   body('name')
     .notEmpty()
     .withMessage('Group name is required'),
-  body('startDate')
+  body('initDate')
     .notEmpty()
-    .withMessage('Start date is required')
+    .withMessage('Init date is required')
     .isDate()
-    .withMessage('Invalid date format for start date'),
+    .withMessage('Invalid date format for init date'),
   body('endDate')
     .optional({ nullable: true })
     .isDate()
     .withMessage('Invalid date format for end date')
     .custom((endDate, { req }) => {
-      if (endDate && req.body.startDate && new Date(endDate) < new Date(req.body.startDate)) {
-        throw ApiError.badRequest('End date must be after start date');
+      if (endDate && req.body.initDate && new Date(endDate) < new Date(req.body.initDate)) {
+        throw ApiError.badRequest('End date must be after init date');
       }
       return true;
     }),
@@ -99,10 +99,10 @@ const validateUpdateGroup = [
     .optional()
     .notEmpty()
     .withMessage('Group name cannot be empty'),
-  body('startDate')
+  body('initDate')
     .optional()
     .isDate()
-    .withMessage('Invalid date format for start date'),
+    .withMessage('Invalid date format for init date'),
   body('endDate')
     .optional({ nullable: true })
     .isDate()
@@ -276,8 +276,13 @@ const validateChangePassword = [
     .matches(/[A-Z]/).withMessage('New password must contain at least one uppercase letter')
     .matches(/[a-z]/).withMessage('New password must contain at least one lowercase letter')
     .matches(/\d/).withMessage('New password must contain at least one number')
-    .matches(/[<>_.,!@#$%^&*()\-\+=\[\]{}|\\;:'"/?]/).withMessage('New password must contain at least one special character'),
-
+    .matches(/[<>_.,!@#$%^&*()\-\+=\[\]{}|\\;:'"/?]/).withMessage('New password must contain at least one special character')
+    .custom((newPassword, { req }) => {
+      if (newPassword === req.body.oldPassword) {
+        throw new Error('New password cannot be the same as the old password.');
+      }
+      return true; 
+    }),
 
   // Middleware to handle validation results
   (req, res, next) => {

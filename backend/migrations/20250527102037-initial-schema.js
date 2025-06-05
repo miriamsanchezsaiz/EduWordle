@@ -102,7 +102,9 @@ module.exports = {
         references: {
           model: 'user',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
       },
       difficulty: {
         type: Sequelize.ENUM('low', 'high'),
@@ -144,7 +146,8 @@ module.exports = {
         references: {
           model: 'wordle',
           key: 'id'
-        }
+        },onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
       },
       createdAt: {
         allowNull: false,
@@ -153,7 +156,8 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
+      },
+      
     });
 
     await queryInterface.createTable('game', {
@@ -235,7 +239,9 @@ module.exports = {
         references: {
           model: 'wordle',
           key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
       },
       createdAt: {
         allowNull: false,
@@ -244,7 +250,8 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE
-      }
+      },
+      
     });
 
     await queryInterface.createTable('wordle_group', {
@@ -299,9 +306,14 @@ module.exports = {
       }
 
     });
+
+
+
   },
 
   async down(queryInterface, Sequelize) {
+  
+
     await queryInterface.dropTable('student_group');
     await queryInterface.dropTable('wordle_group');
     await queryInterface.dropTable('question');

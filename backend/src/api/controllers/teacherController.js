@@ -1,13 +1,14 @@
 // src/api/controllers/teacherController.js
 const {
-  userService, 
+  userService,
   groupService,
   wordleService,
   gameService
 } = require('../services');
-const { validationResult } = require('express-validator'); 
+const { validationResult } = require('express-validator');
 const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('express-async-handler');
+const sequelize = require('../../config/database');
 
 // Controller function to create a new group
 const createGroup = asyncHandler(async (req, res, next) => {
@@ -17,10 +18,10 @@ const createGroup = asyncHandler(async (req, res, next) => {
   }
 
   const teacherId = req.user.id;
-  const { name, startDate, endDate, studentEmails } = req.body;
-  
+  const { name, initDate, endDate, studentEmails } = req.body;
 
-  const newGroup = await groupService.createGroup(teacherId, { name, startDate, endDate }, studentEmails);
+
+  const newGroup = await groupService.createGroup(teacherId, { name, initDate, endDate }, studentEmails);
   res.status(201).json(newGroup);
 });
 
@@ -29,7 +30,7 @@ const getTeacherGroups = asyncHandler(async (req, res, next) => {
   const teacherId = req.user.id;
   const filters = req.query;
   if (!teacherId) {
-    throw ApiError.badRequest('Teacher ID is required');  
+    throw ApiError.badRequest('Teacher ID is required');
   }
 
   const groups = await groupService.getGroupsByTeacher(teacherId, filters);
@@ -58,7 +59,7 @@ const updateGroup = asyncHandler(async (req, res, next) => {
   const teacherId = req.user.id;
   const groupId = req.params.groupId;
   const updateData = await groupService.prepareForUpdate(req);
-  
+
 
   const updatedGroup = await groupService.updateGroup(groupId, teacherId, updateData);
   res.status(200).json(updatedGroup);
@@ -87,9 +88,9 @@ const createWordle = asyncHandler(async (req, res, next) => {
 
   const teacherId = req.user.id;
   const wordleData = req.body;
-  
+
   const newWordle = await wordleService.createWordle(teacherId, wordleData);
-  
+
   res.status(201).json(newWordle);
 });
 
@@ -97,7 +98,7 @@ const createWordle = asyncHandler(async (req, res, next) => {
 const getTeacherWordles = asyncHandler(async (req, res, next) => {
   const teacherId = req.user.id;
   if (!teacherId) {
-    throw ApiError.badRequest('Teacher ID is required');  
+    throw ApiError.badRequest('Teacher ID is required');
   }
 
   const wordles = await wordleService.getWordlesByTeacher(teacherId);
@@ -119,30 +120,47 @@ const getWordleDetails = asyncHandler(async (req, res, next) => {
 });
 
 // Controller function to update a specific wordle
-const updateWordle = asyncHandler( async (req, res, next) => { 
+const updateWordle = asyncHandler(async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw ApiError.badRequest('Validation failed', errors.array());
   }
 
-  const teacherId = req.user.id; 
+  const teacherId = req.user.id;
   const wordleId = req.params.wordleId;
   const updateData = req.body;
 
-   const updatedWordle = await wordleService.updateWordle(wordleId, teacherId, updateData);
-    res.status(200).json(updatedWordle);
+  const updatedWordle = await wordleService.updateWordle(wordleId, teacherId, updateData);
+  res.status(200).json(updatedWordle);
 });
 
 // Controller function to delete a specific wordle
-const deleteWordle = asyncHandler( async (req, res, next) => { 
-  const teacherId = req.user.id; 
-  const wordleId = req.params.wordleId; 
+const deleteWordle = asyncHandler(async (req, res, next) => {
+  const teacherId = req.user.id;
+  const wordleId = req.params.wordleId;
   if (!teacherId || !wordleId) {
     throw ApiError.badRequest('Teacher ID and Wordle ID are required');
   }
 
-  await wordleService.deleteWordle(wordleId, teacherId);
+  const transaction = await sequelize.transaction();
+
+  try {
+    await wordleService.deleteWordle(wordleId, teacherId);
+    await transaction.commit();
     res.status(204).send();
+  }
+  catch (error) {
+    console.error('Error in teacherController.deleteWordle:', error);
+
+    await transaction.rollback();
+    if (error instanceof ApiError) {
+      next(error);
+    } else {
+      next(ApiError.internal(`An unexpected error occurred in controller while deleting Wordle: ${error.message || 'Unknown error'}`));
+    }
+  }
+
+
 });
 
 // Controller function to get game results for a specific student (Teacher functionality)

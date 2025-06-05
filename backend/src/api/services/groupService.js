@@ -534,14 +534,17 @@ const deleteGroup = async (groupId, teacherId) => {
         const group = await Group.findOne({
             where: {
                 id: groupId,
-                userId: teacherId 
             },
             transaction
         });
 
         if (!group) {
             await transaction.rollback();
-            throw ApiError.notFound('Group not found or access denied.');
+            throw ApiError.notFound('Group not found.');
+        }
+        if (group.userId !== teacherId) {
+            await transaction.rollback();
+            throw ApiError.forbidden('You are not authorized to delete this group. Only the group creator can delete it.');
         }
 
         const studentsInGroup = await group.getStudents({

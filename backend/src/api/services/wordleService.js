@@ -1,5 +1,5 @@
 // src/api/services/wordleService.js
-const { User, Group, Wordle, Word, Question, StudentGroup, WordleGroup } = require('../models');
+const { User, Group, Wordle, Word, Question, WordleGroup } = require('../models');
 const { Op } = require('sequelize');
 const userService = require('./userService'); 
 const sequelize = require('../../config/database'); 
@@ -618,37 +618,40 @@ const updateWordle = async (wordleId, teacherId, updateData) => {
 };
 
 // CHECKED: Function to delete a specific wordle (Teacher functionality)
-const deleteWordle = async (wordleId, teacherId) => {
-    const transaction = await sequelize.transaction();
+const deleteWordle = async (wordleId, teacherId, transaction) => {
 
     try {
         // 1. Find the wordle and verify it belongs to the teacher
         const wordle = await Wordle.findOne({
             where: {
                 id: wordleId,
-                userId: teacherId
             },
             transaction
         });
 
         if (!wordle) {
-            await transaction.rollback();
-            throw ApiError.notFound('Wordle not found or access denied.');
+            
+            throw ApiError.notFound('Wordle not found ');
+
+        }
+        if (wordle.userId !== teacherId) {
+           
+            throw ApiError.forbidden('You are not authorized to delete this Wordle. Only the Wordle creator can delete it.');
         }
 
         // 2. Delete the wordle
         await wordle.destroy({ transaction });
 
-        await transaction.commit();
+        
         return true;
 
     } catch (error) {
-        await transaction.rollback();
+       
         console.debug('Error deleting wordle:', error);
         if (error instanceof ApiError) {
             throw error;
         } else {
-            throw ApiError.internal('An unexpected error occurred while deleting the wordle.');
+            throw ApiError.internal('An unexpected error occurred while deleting the wordle: ' + error.message);    
         }
     }
 };
