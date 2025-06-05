@@ -173,10 +173,10 @@ const validateCreateWordle = [
     .withMessage('Question type must be "single" or "multychoice"'),
   body('questions.*.question')
     .notEmpty()
-    .withMessage('Question statement is required'),
+    .withMessage('Question statement (question) is required'),
   body('questions.*.correctAnswer')
     .notEmpty()
-    .withMessage('Question answer is required'),
+    .withMessage('Question answer (correctAnswer) is required'),
   body('questions.*.options')
     .notEmpty()
     .withMessage('Question options are required')

@@ -276,8 +276,7 @@ const checkStudentAccess = async (userId, wordleId) => {
 // --- Teacher Functions ---
 
 // CHECKED: Function to create a new wordle (Teacher functionality)
-const createWordle = async (teacherId, wordleData) => {
-    const transaction = await sequelize.transaction();
+const createWordle = async (teacherId, wordleData, transaction) => {
 
     try {
 
@@ -297,12 +296,16 @@ const createWordle = async (teacherId, wordleData) => {
         // --- END DEBUGGING LOG ---
 
         if (!teacher ) {
-            await transaction.rollback();
             throw ApiError.notFound('User not found.');
         }
         if (teacher.role !== 'teacher') {
-            await transaction.rollback();
             throw ApiError.unauthorized('User not authorized to create wordles');
+        }
+        if (!wordleData.name) {
+            throw ApiError.badRequest('Wordle name is required.');
+        }
+        if (!wordleData.difficulty) {
+             throw ApiError.badRequest('Wordle difficulty is required.');
         }
 
         // 2. Create the Wordle
@@ -319,29 +322,36 @@ const createWordle = async (teacherId, wordleData) => {
 
         // 3. Create the main Word for the Wordle
         if (!wordleData.words || wordleData.words.length === 0) {
-            await transaction.rollback();
             throw ApiError.badRequest('At least one word is required');
         }
-        const wordEntries = wordleData.words.map(w => ({
-            word: w.word || w.title,
+        const wordEntries = wordleData.words.map(w => {
+            if (!w.word) { 
+                throw ApiError.badRequest('Each word object must contain a "word" field.');
+            }
+            return{
+            word: w.word,
             hint: w.hint || null,
-            wordleId: newWordle.id
-        }));
+            wordleId: newWordle.id}
+        });
         await Word.bulkCreate(wordEntries, { transaction });
 
 
         // 4. Create Questions for the Wordle
         if (!wordleData.questions || wordleData.questions.length === 0) {
-            await transaction.rollback();
             throw ApiError.badRequest('At least one question is required for the wordle.');
         }
-        const questionEntries = wordleData.questions.map(q => ({
-            question: q.statement,
-            options: q.options ? JSON.stringify(q.options) : null,
-            correctAnswer: JSON.stringify(q.answer),
-            type: q.type,
-            wordleId: newWordle.id
-        }));
+        const questionEntries = wordleData.questions.map(q => {
+           if (!q.question || q.options === undefined || q.correctAnswer === undefined || !q.type) {
+                throw ApiError.badRequest('Each question must have "question", "options", "correctAnswer", and "type" fields.');
+            }
+            return {
+                question: q.question, 
+                options: JSON.stringify(q.options), 
+                correctAnswer: JSON.stringify(q.correctAnswer), 
+                type: q.type,
+                wordleId: newWordle.id
+            };
+        });
         await Question.bulkCreate(questionEntries, { transaction });
 
         // 5. Link Group Access
@@ -361,7 +371,6 @@ const createWordle = async (teacherId, wordleData) => {
             const unauthorizedGroupIds = Array.from(requestedGroupIds).filter(id => !ownedGroupIds.includes(id));
 
             if (unauthorizedGroupIds.length > 0) {
-                await transaction.rollback();
                 throw ApiError.unauthorized(`Cannot grant access to groups not owned by the teacher: ${unauthorizedGroupIds.join(', ')}`);
             }
 
@@ -373,29 +382,32 @@ const createWordle = async (teacherId, wordleData) => {
             await WordleGroup.bulkCreate(wordleGroupEntries, { transaction, ignore: true });
         }
 
-        await transaction.commit();
 
         const createdWordleDetails = await Wordle.findByPk(newWordle.id, {
             include: [
                 { model: User, as: 'creator', attributes: ['id', 'name', 'email'] },
                 { model: Word, as: 'words', attributes: ['word', 'hint'] },
                 { model: Question, as: 'questions', attributes: ['id', 'question', 'options', 'correctAnswer', 'type'] },
-                { model: Group, as: 'groupsWithAccess', attributes: ['id', 'name'], through: { attributes: [] } }
-            ],
+                { model: Group, as: 'groupsWithAccess', attributes: ['id', 'name'], through: { attributes: [] }, required: false }
+            ], transaction: transaction
         });
+
+        if (!createdWordleDetails) {
+            console.error('DEBUG: createdWordleDetails is null after findByPk despite successful inserts. Wordle ID:', newWordle.id);
+            throw ApiError.internal('Failed to retrieve details for the newly created Wordle after creation.');
+        }
 
         const formattedWordle = createdWordleDetails.toJSON();
         if (formattedWordle.questions) {
             formattedWordle.questions = formattedWordle.questions.map(q => ({
                 ...q,
-                options: q.options ? JSON.parse(q.options) : null,
-                correctAnswer: q.correctAnswer ? JSON.parse(q.correctAnswer) : null,
+                options: (typeof q.options === 'string' && (q.options.startsWith('[') || q.options.startsWith('{'))) ? JSON.parse(q.options) : q.options,
+                correctAnswer: (typeof q.correctAnswer === 'string' && (q.correctAnswer.startsWith('[') || q.correctAnswer.startsWith('{') || (q.correctAnswer.startsWith('"') && q.correctAnswer.endsWith('"')))) ? JSON.parse(q.correctAnswer) : q.correctAnswer,
             }));
         }
 
         return formattedWordle;
     } catch (error) {
-        await transaction.rollback();
         console.error('Error creating wordle in wordleService:', error);
         if (error instanceof ApiError) {
             throw error;
@@ -563,7 +575,7 @@ const updateWordle = async (wordleId, teacherId, updateData) => {
         }
 
         // 5. Manage Group Access Links
-        if (updateData.groupAccessIds !== undefined) {
+        if (updateData.groupAccessIds !== undefined && updateData.groupAccessIds.length > 0) {
             const teacherGroups = await Group.findAll({
                 where: {
                     id: { [Op.in]: updateData.groupAccessIds },

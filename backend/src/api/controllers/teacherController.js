@@ -88,10 +88,21 @@ const createWordle = asyncHandler(async (req, res, next) => {
 
   const teacherId = req.user.id;
   const wordleData = req.body;
-
-  const newWordle = await wordleService.createWordle(teacherId, wordleData);
+  const transaction = await sequelize.transaction();
+try {
+  const newWordle = await wordleService.createWordle(teacherId, wordleData, transaction);
 
   res.status(201).json(newWordle);
+  await transaction.commit();
+} catch (error) {
+  console.error('Error in teacherController.createWordle:', error);
+  await transaction.rollback();
+  if (error instanceof ApiError) {
+    next(error);
+  } else {
+    next(ApiError.internal(`An unexpected error occurred in controller while creating Wordle: ${error.message || 'Unknown error'}`));
+  }
+}
 });
 
 // Controller function to get wordles created by the logged-in teacher

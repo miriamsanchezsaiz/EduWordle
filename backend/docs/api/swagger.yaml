@@ -223,20 +223,26 @@ components:
           enum: [low, high]
           description: Nivel de dificultad del Wordle.
           example: 'low'
-        word:
-          type: object
+        words:
+          type: array
+          minItems: 1
           required:
             - title
-          properties:
-            title:
-              type: string
-              description: La palabra secreta del Wordle.
-              example: 'vaca'
-            hint:
-              type: string
-              nullable: true
-              description: Una pista para la palabra.
-              example: 'Da leche y hace muuu.'
+          items:
+            type: object
+            required:
+              - word  
+              - hint
+            properties:
+              word:
+                type: string
+                description: La palabra a adivinar en el Wordle.
+                example: "PERRO"
+              hint:
+                type: string
+                description: Pista para la palabra.
+                nullable: true
+                example: "Mejor amigo del hombre"
         questions:
           type: array
           minItems: 1
@@ -244,11 +250,11 @@ components:
           items:
             type: object
             required:
-              - statement
-              - answer
+              - question
+              - correctAnswer
               - type
             properties:
-              statement:
+              question:
                 type: string
                 description: Enunciado de la pregunta.
                 example: "¿Qué animal de granja es conocido por su piel lanuda?"
@@ -259,22 +265,22 @@ components:
                 nullable: true
                 description: Opciones de respuesta para preguntas de opción múltiple.
                 example: ["oveja", "cerdo", "gallina"]
-              answer:
-                type: string # Esto se serializa a JSON, pero para la entrada se puede aceptar como string/array
+              correctAnswer:
+                type: string 
                 description: La respuesta correcta.
                 example: "oveja"
               type:
                 type: string
-                enum: [multiple_choice, open_ended]
-                description: Tipo de pregunta (ej. 'multiple_choice', 'open_ended').
-                example: 'multiple_choice'
+                enum: [multychoice, single]
+                description: Tipo de pregunta (ej. 'multychoice', 'single').
+                example: 'multychoice'
         groupAccessIds:
           type: array
           items:
             type: number
             format: int32
           description: IDs de los grupos a los que este Wordle será accesible.
-          example: [501, 502]
+          example: [2]
     Wordle:
       type: object
       properties:
@@ -878,7 +884,6 @@ components:
               type: number
               description: ID del profesor que creó el Wordle.
               example: 10
-
     WordleListItem: 
       type: object
       properties:
@@ -954,17 +959,7 @@ components:
         words:
           type: array
           items:
-            type: object
-            properties:
-              word:
-                type: string
-                description: La palabra principal del Wordle.
-                example: 'manzana'
-              hint:
-                type: string
-                nullable: true
-                description: Una pista opcional para la palabra.
-                example: 'Es una fruta que cae del árbol.'
+            $ref: '#/components/schemas/WordleWord'
         questions:
           type: array
           items:
@@ -980,21 +975,6 @@ components:
               name:
                 type: string
                 example: 'Grupo A'
-     
-    GroupAccess: 
-      type: object
-      properties:
-        wordleId:
-          type: integer
-          format: int32
-          description: ID del Wordle.
-          readOnly: true
-        groupId:
-          type: integer
-          format: int32
-          description: ID del Grupo con acceso.
-          readOnly: true
-
     GroupRankingEntry:
       type: object
       properties:
@@ -1779,7 +1759,7 @@ paths:
                     question: "¿Cuántos jugadores tiene un equipo de fútbol en el campo?"
                     options: ["9", "10", "11", "12"]
                     correctAnswer: "11"
-                    type: 'multiple_choice'
+                    type: 'multychoice'
                 groupsWithAccess:
                   - id: 501
                     name: 'Grupo A'
