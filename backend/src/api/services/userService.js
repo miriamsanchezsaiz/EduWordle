@@ -9,16 +9,11 @@ const SALT_ROUNDS = 10;
 // Function to find a user by their email address (searches the single user table)
 const findUserByEmail = async (email) => {
   try {
-    const user = await User.findOne({ where: { email: email } });
-    if (!user) {
-      throw ApiError.notFound(`User with email ${email} not found.`);
-    }
-    return user;
+    const user = await User.findOne({ where: { email } });
+    return user || null;
   } catch (error) {
     console.debug('Error finding user by email in userService:', error);
-    if (error instanceof ApiError) {
-      throw error;
-    }
+    throw ApiError.internal('Unexpected error while looking for user by email');
   }
 };
 
@@ -116,7 +111,7 @@ const deleteStudentIfNoGroups = async (userId, transaction = null) => {
       throw ApiError.badRequest(`User ${userId} is not a student and cannot be processed by deleteStudentIfNoGroups.`);
     }
 
-    const groups = await user.getStudentGroups({
+    const groups = await user.getGroups({
       where: { userId: userId },
       through: { attributes: [] },
       attributes: ['id']

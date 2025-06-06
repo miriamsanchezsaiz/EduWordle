@@ -39,6 +39,21 @@ let originalWordIds = [];
 let originalQuestionIds = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+  const mode = new URLSearchParams(window.location.search).get('mode');
+  
+  // Función para ocultar los botones de información en modo edición
+  const hideInfoButtons = (mode) => {
+    if (mode !== 'create') {
+      document.getElementById('difficulty-info-btn').style.display = 'none';
+      document.getElementById('words-info-btn').style.display = 'none';
+      document.getElementById('questions-info-btn').style.display = 'none';
+      document.getElementById('students-info-btn').style.display = 'none';
+    }
+  };
+
+  hideInfoButtons(mode);
+  
   document.getElementById("pageTitle").textContent =
     mode === "edit" ? "Editar Wordle"
     : mode === "visual" ? "Ver Wordle"
@@ -102,7 +117,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       toastr.error("No se pudo cargar los datos del wordle.");
     }
   } else {
-    sessionWordle = { id: null, name: '', difficulty: 'low', words: [], questions: [], groups: [] };
+    sessionWordle = { name: '', difficulty: 'low', words: [], questions: [], groups: [] };
+    delete sessionWordle.id;
     displayData(sessionWordle);
   }
 
@@ -121,6 +137,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (pendingQ.length > 0) sessionWordle.questions = uniqueById([...sessionWordle.questions, ...pendingQ]);
 
   window.sessionWordle = sessionWordle;
+  if (mode === 'create') {
+  delete sessionWordle.id; 
+  }
 
   document.querySelectorAll(".diff-btn").forEach(btn => {
     btn.onclick = () => {
@@ -238,19 +257,26 @@ async function saveWordleEditor() {
           return null;
         }
 
-        return {
-          id: q.id || null,
-          statement: text,
-          answer: JSON.stringify(answer),   // ✅ Serializado como string
-          options: JSON.stringify(options), // ✅ Serializado como string
+        const question = {
+          question: text,
+          correctAnswer: answer,
+          options: options,
           type: q.type || (answer.length > 1 ? 'multiple' : 'single')
         };
+
+        if (Number.isInteger(q.id)) {
+          question.id = q.id;
+        }
+
+        return question;
+
       } catch (e) {
         console.warn("Error procesando pregunta:", q, e);
         return null;
       }
     })
     .filter(Boolean);
+
 
   if (normalizedQuestions.length === 0) {
     return toastr.error("Debes añadir al menos una pregunta válida.");
@@ -266,10 +292,12 @@ async function saveWordleEditor() {
   };
 
   try {
-    if (sessionWordle.id) {
+    if (sessionWordle.id !== undefined && sessionWordle.id !== null) {
+      console.log('📦 Payload enviado al backend:', JSON.stringify(payload, null, 2));
       await apiService.updateWordle(sessionWordle.id, payload);
       toastr.success("Wordle actualizado correctamente.");
     } else {
+      console.log('📦 Payload enviado al backend:', JSON.stringify(payload, null, 2));
       await apiService.createWordle(payload);
       toastr.success("Wordle creado correctamente.");
     }
@@ -277,9 +305,9 @@ async function saveWordleEditor() {
     localStorage.removeItem("pendingWords");
     localStorage.removeItem("pendingQuestions");
 
-    setTimeout(() => {
+    /*setTimeout(() => {
       window.location.href = "/dashboard.html?type=teacher";
-    }, 2000);
+    }, 2000);*/
   } catch (error) {
     console.error("Error en create/update Wordle:", error);
     toastr.error(error.message || "No se pudo guardar el Wordle.");

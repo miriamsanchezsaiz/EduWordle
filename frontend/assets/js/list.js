@@ -1,10 +1,8 @@
-
 import { apiService } from './apiService.js';
 const toastr = window.toastr;
 
 const authToken = sessionStorage.getItem('authToken');
 const currentUserString = sessionStorage.getItem('currentUser');
-
 
 let role = null;
 let userId = null;
@@ -14,7 +12,7 @@ if (authToken && currentUserString) {
     const currentUser = JSON.parse(currentUserString); 
     role = currentUser.role; 
     userId = currentUser.id; 
-    console.log("List: User autenticated. Rol:", role, "ID:", userId);
+    console.log("List: User authenticated. Role:", role, "ID:", userId);
   } catch (e) {
     console.error("List: Error parsing currentUser from sessionStorage:", e);
     sessionStorage.clear();
@@ -27,9 +25,9 @@ if (!authToken || !userId || !role) {
   window.location.replace('login.html');
 }
 
-document.addEventListener("DOMContentLoaded",  async () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
-    const type = params.get("type"); // "group" o "wordle"
+    const type = params.get("type"); // "group" or "wordle"
     const groupIdFromURL = params.get("groupId");
 
     let pageTitle = "";
@@ -46,10 +44,10 @@ document.addEventListener("DOMContentLoaded",  async () => {
         } else {
             fetchFunction = () => fetchWordles(role); 
         }
-        
     } else {
         pageTitle = "Lista";
     }
+
     if (fetchFunction) await fetchFunction();
 
     // Mostrar botón de creación solo para profesores
@@ -66,16 +64,28 @@ document.addEventListener("DOMContentLoaded",  async () => {
     }
 
     document.getElementById("pageTitle").textContent = pageTitle;
+
+    // Agregar evento de búsqueda
+    document.getElementById("searchInput").addEventListener("input", handleSearch);
 });
 
+let displayedItems = [];
 
+// Función para manejar la búsqueda
+function handleSearch(event) {
+    const searchTerm = event.target.value.toLowerCase();
+    const filteredItems = displayedItems.filter(item => 
+        item.name.toLowerCase().includes(searchTerm)
+    );
+    displayItems(filteredItems, "groupEditor.html");
+}
 
 async function fetchGroups(userRole) {
     try {
         const data = await apiService.fetchGroups(userRole);
         console.log("[list.js] Datos de grupos recibidos del API:", data); 
 
-
+        displayedItems = data;  // Guardamos los grupos mostrados para filtrarlos
         if (userRole === 'student') {
             displayItemsForStudentGroups(data);
         } else {
@@ -83,15 +93,15 @@ async function fetchGroups(userRole) {
         }
     } catch (error) {
         console.error("Error al obtener grupos:", error);
-        toastr.error(error.message || "Error al cargar los grupos."); // Asumiendo que usas toastr
+        toastr.error(error.message || "Error al cargar los grupos.");
     }
 }
 
 async function fetchWordles(userRole) {
     try {
         const data = await apiService.fetchWordles(userRole);
-        // La URL base para wordles depende del rol
         const urlBase = userRole === 'teacher' ? "wordleEditor.html" : "game.html";
+        displayedItems = data;  // Guardamos los wordles mostrados para filtrarlos
         displayItems(data, urlBase);
     } catch (error) {
         console.error("Error al obtener wordles:", error);
@@ -102,6 +112,7 @@ async function fetchWordles(userRole) {
 async function fetchWordlesForGroup(groupId) {
     try {
         const groupData = await apiService.fetchWordlesForGroup(groupId);
+        displayedItems = groupData.wordles;  // Guardamos los wordles del grupo para filtrarlos
         displayItems(groupData.wordles, "game.html");
     } catch (err) {
         console.error("Error al obtener wordles para el grupo:", err);
@@ -128,21 +139,15 @@ function displayItems(items, urlBase) {
         itemElement.textContent = item.name; 
         itemElement.onclick = () => {
             let redirectUrl = `${urlBase}?id=${item.id}`;
-
-            // Siempre añadir `userId` como el ID del usuario logeado
-            redirectUrl += `&userId=${userId}`; 
-            
-            // Lógica específica para profesores que editan/visualizan
+            redirectUrl += `&userId=${userId}`;
             if (role === 'teacher' && (urlBase === "groupEditor.html" || urlBase === "wordleEditor.html")) {
                 redirectUrl += "&mode=visual";
             }
-            
             window.location.href = redirectUrl;
         };
         container.appendChild(itemElement);
     });
 }
-
 
 function displayItemsForStudentGroups(groups) {
     const container = document.getElementById("itemsContainer");

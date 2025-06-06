@@ -161,4 +161,56 @@
     </div>
     </template>
 
+        <!-- Popup: Info sobre dificultad -->
+    <template id="info-difficulty">
+    <div class="words-container">
+        <h3>Dificultad del Wordle</h3>
+        <p><strong>Bajo</strong>: Solo aparecerá una preguntas por intento.</p>
+        <p><strong>Alto</strong>: Aparecerá una pregunta por cada letra acertada o que este en la palabra en cada intento.</p>
+        <button class="save-button" onclick="closePopup()">Entendido</button>
+    </div>
+    </template>
+
+    <!-- Popup: Info CSV Palabras -->
+    <template id="info-words">
+    <div class="words-container">
+        <h3>Formato CSV para Palabras</h3>
+        <p>Debe tener una línea de encabezado, pero se ignorará.</p>
+        <p>Cada línea debe tener:</p>
+        <code>palabra;pista</code>
+        <p>Ejemplo:</p>
+        <code>MADRID;Capital de España</code>
+        <button class="save-button" onclick="closePopup()">Entendido</button>
+    </div>
+    </template>
+
+    <!-- Popup: Info CSV Preguntas -->
+    <template id="info-questions">
+    <div class="words-container">
+        <h3>Formato CSV para Preguntas</h3>
+        <p>Debe tener una línea de encabezado, pero se ignorará.</p>
+        <p>Cada línea debe contener:</p>
+        <code>enunciado;op1,op2,op3;resp1[,resp2];tipo</code>
+        <p>Ejemplo:</p>
+        <code>¿Cuál es la capital?;Madrid,París,Roma;Madrid;single</code>
+        <code>¿Cuáles son las capitales de España?;Madrid,Barcelona,Sevilla,Valencia;Madrid,Barcelona;multiple</code>
+        <button class="save-button" onclick="closePopup()">Entendido</button>
+    </div>
+    </template>
+
+        <!-- Popup: Info CSV Alumnos -->
+    <template id="info-students">
+    <div class="words-container">
+        <h3>Formato CSV para Alumnos</h3>
+        <p>Debe tener una línea de encabezado, que será ignorada.</p>
+        <p>Cada línea debe tener:</p>
+        <code>nombre;email</code>
+        <p>Ejemplo:</p>
+        <code>Juan Pérez;juan.perez@example.com</code>
+        <button class="save-button" onclick="closePopup()">Entendido</button>
+    </div>
+    </template>
+
+
+
 </body>

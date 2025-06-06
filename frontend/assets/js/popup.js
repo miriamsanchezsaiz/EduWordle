@@ -40,19 +40,30 @@ function openPopup(popupType) {
       if (btn) {
         btn.onclick = async function () {
           try {
-            await apiService.deleteGroup(window.sessionGroup.id);
-            toastr.success("Grupo eliminado correctamente");
-            closePopup();
-            const userId = sessionStorage.getItem('userId');
-            window.location.href = `list.html?type=group&teacherId=${userId}`;
+            if (window.sessionGroup?.id) {
+              await apiService.deleteGroup(window.sessionGroup.id);
+              toastr.success("Grupo eliminado correctamente");
+              closePopup();
+              const userId = sessionStorage.getItem('userId');
+              window.location.href = `list.html?type=group&teacherId=${userId}`;
+            } else if (window.sessionWordle?.id) {
+              await apiService.deleteWordle(window.sessionWordle.id);
+              toastr.success("Wordle eliminado correctamente");
+              closePopup();
+              const userId = sessionStorage.getItem('userId');
+              window.location.href = `list.html?type=wordle&teacherId=${userId}`;
+            } else {
+              throw new Error("No hay entidad válida para eliminar");
+            }
           } catch (error) {
-            console.error("Error eliminando grupo:", error);
-            toastr.error(error.message || "Error al eliminar el grupo");
+            console.error("Error eliminando grupo o wordle:", error);
+            toastr.error(error.message || "Error al eliminar el elemento");
           }
         };
       }
     }, 50);
   }
+
 
   // Cargar datos específicos para popups de selección
   if (popupType === "groups") {
@@ -434,26 +445,46 @@ window.backFromEdit = backFromEdit;
 async function uploadStudentsCSV(evt) {
   const file = evt.target.files[0];
   if (!file) return;
+
   const text = await file.text();
-  const lines = text.split(';').map(l => l.trim()).filter(l => l);
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+  // Siempre omitir la primera línea (header)
+  const dataLines = lines.slice(1);
+
   window.sessionGroup = window.sessionGroup || {};
   window.sessionGroup.students = Array.isArray(window.sessionGroup.students)
     ? window.sessionGroup.students
     : [];
-  lines.forEach(line => {
-    const [name, email] = line.split(';').map(cell => cell.trim());
-    if (email) {
-      const student = { id: null, name, email };
-      window.sessionGroup.students.push(student);
-      window.displayItem(student, 'students');
-    }
+
+  const existingEmails = new Set(
+    window.sessionGroup.students.map(s => s.email.trim().toLowerCase())
+  );
+
+  let added = 0;
+
+  dataLines.forEach(line => {
+    const [nameRaw, emailRaw] = line.split(';').map(cell => cell.trim());
+    const email = emailRaw?.toLowerCase();
+    const name = nameRaw?.trim() || '';
+
+    if (!email || existingEmails.has(email)) return;
+
+    const student = { id: null, name, email };
+    window.sessionGroup.students.push(student);
+    window.displayItem(student, 'students');
+    existingEmails.add(email);
+    added++;
   });
+
   localStorage.setItem(
     'pendingStudents',
     JSON.stringify(window.sessionGroup.students)
   );
-  toastr.success(`${lines.length} alumnos importados localmente`);
-};
+
+  toastr.success(`${added} alumno(s) nuevos importados desde CSV`);
+  closePopup();
+}
 
 window.uploadStudentsCSV = uploadStudentsCSV;
 
@@ -463,27 +494,35 @@ window.uploadStudentsCSV = uploadStudentsCSV;
  * Procesa CSV de palabras: cada línea "palabra;pista"
  */
 async function uploadWordsCSV(evt) {
-const file = evt.target.files[0];
+  const file = evt.target.files[0];
   if (!file) return;
+
   const text = await file.text();
-  const lines = text.split(';').map(l => l.trim()).filter(l => l);
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const dataLines = lines.slice(1); // ignorar encabezado
+
   window.sessionWordle = window.sessionWordle || {};
-  window.sessionWordle.words = Array.isArray(window.sessionWordle.words)
-    ? window.sessionWordle.words
-    : [];
-  lines.forEach(line => {
-    const [title, hint] = line.split(';').map(cell => cell.trim());
-    if (title) {
-      const word = { id: null, title, hint };
-      window.sessionWordle.words.push(word);
-      window.displayItem(word, 'words');
-    }
+  window.sessionWordle.words = Array.isArray(sessionWordle.words) ? sessionWordle.words : [];
+
+  const existingWords = new Set(sessionWordle.words.map(w => w.word.trim().toUpperCase()));
+  let added = 0;
+
+  dataLines.forEach(line => {
+    const [wordRaw, hint] = line.split(';').map(cell => cell.trim());
+    const word = wordRaw?.toUpperCase();
+
+    if (!word || existingWords.has(word)) return;
+
+    const entry = { id: null, word, hint };
+    sessionWordle.words.push(entry);
+    window.displayItem(entry, 'words');
+    existingWords.add(word);
+    added++;
   });
-  localStorage.setItem(
-    'pendingWords',
-    JSON.stringify(window.sessionWordle.words)
-  );
-  toastr.success(`${lines.length} palabras importadas localmente`);
+
+  localStorage.setItem('pendingWords', JSON.stringify(sessionWordle.words));
+  toastr.success(`${added} palabra(s) importadas desde CSV`);
+  closePopup();
 }
 window.uploadWordsCSV = uploadWordsCSV;
 
@@ -495,37 +534,46 @@ window.uploadWordsCSV = uploadWordsCSV;
  *   enunciado;op1,op2,op3,op4;corr1,corr2;type
  */
 async function uploadQuestionsCSV(evt) {
- const file = evt.target.files[0];
+  const file = evt.target.files[0];
   if (!file) return;
-  const text = await file.text();
-  const lines = text.split(';').map(l => l.trim()).filter(l => l);
-  window.sessionWordle = window.sessionWordle || {};
-  window.sessionWordle.questions = Array.isArray(window.sessionWordle.questions)
-    ? window.sessionWordle.questions
-    : [];
-  lines.forEach(line => {
-    const cols = line.split(';').map(cell => cell.trim());
-    const statement = cols[0] || '';
-    const options = cols[1]
-      ? cols[1].split(',').map(o => o.trim())
-      : [];
-    const correctAnswer = cols[2]
-      ? cols[2].split(',').map(ca => ca.trim())
-      : [];
-    const qtype = cols[3]
-      ? cols[3]
-      : (correctAnswer.length > 1 ? 'multiple' : 'single');
-    if (statement) {
-      const question = { id: null, statement, options, correctAnswer, type: qtype };
-      window.sessionWordle.questions.push(question);
-      window.displayItem(question, 'questions');
-    }
-  });
-  localStorage.setItem(
-    'pendingQuestions',
-    JSON.stringify(window.sessionWordle.questions)
-  );
-  toastr.success(`${lines.length} preguntas importadas localmente`);
 
+  const text = await file.text();
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const dataLines = lines.slice(1); // ignorar encabezado
+
+  window.sessionWordle = window.sessionWordle || {};
+  window.sessionWordle.questions = Array.isArray(sessionWordle.questions) ? sessionWordle.questions : [];
+
+  const existingStatements = new Set(sessionWordle.questions.map(q => q.statement.trim().toLowerCase()));
+  let added = 0;
+
+  dataLines.forEach(line => {
+    const cols = line.split(';').map(cell => cell.trim());
+    const statement = cols[0];
+    const options = cols[1] ? cols[1].split(',').map(o => o.trim()) : [];
+    const correctAnswer = cols[2] ? cols[2].split(',').map(ca => ca.trim()) : [];
+    const qtype = cols[3] || (correctAnswer.length > 1 ? 'multiple' : 'single');
+
+    const normalized = statement?.toLowerCase();
+    if (!statement || existingStatements.has(normalized)) return;
+
+    const question = {
+      id: null,
+      statement,
+      options,
+      correctAnswer,
+      type: qtype
+    };
+
+    sessionWordle.questions.push(question);
+    window.displayItem(question, 'questions');
+    existingStatements.add(normalized);
+    added++;
+  });
+
+  localStorage.setItem('pendingQuestions', JSON.stringify(sessionWordle.questions));
+  toastr.success(`${added} pregunta(s) importadas desde CSV`);
+  closePopup();
 }
 window.uploadQuestionsCSV = uploadQuestionsCSV;
+

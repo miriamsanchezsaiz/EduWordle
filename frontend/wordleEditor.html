@@ -55,7 +55,9 @@
                 <input type="text" id="wordleTitle" placeholder="Introduce el nombre del Wordle">
                 
             <div class="difficulty-selector">
-            <label>Dificultad</label>
+            <label>Dificultad
+            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-difficulty')" title="¿Qué significa cada uno?" id="difficulty-info-btn"></i>
+            </label>
             <div class="difficulty-options">
                 <button type="button" data-value="low" class="diff-btn">Bajo</button>
                 <button type="button" data-value="high" class="diff-btn">Alto</button>
@@ -65,13 +67,17 @@
             </section>
             
             <section class="wordle-section">
-                <h2>Palabras</h2>
+            <h2>Palabras
+            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-words')" title="Formato CSV" id="words-info-btn"></i>
+            </h2>
                 <div class="container-section" id="container-words">
                 </div>
             </section>
 
             <section class="wordle-section">
-                <h2>Preguntas</h2>
+            <h2>Preguntas
+            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-questions')" title="Formato CSV" id="questions-info-btn"></i>
+            </h2>
                 <div class="container-section" id="container-questions"></div>
             </section>
 

@@ -37,6 +37,15 @@ let originalStudentIds = [];
 
 // DOMContentLoaded: inicialización general
 document.addEventListener("DOMContentLoaded", async () => {
+  
+  const mode = new URLSearchParams(window.location.search).get('mode');
+  const infoBtn = document.getElementById('students-info-btn');
+  
+  // Solo mostrar el botón en modo 'create'
+  if (mode !== 'create') {
+    infoBtn.style.display = 'none';
+  }
+  
   // 1) Configuración de fechas
   const today = new Date().toISOString().split("T")[0];
   const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
@@ -71,7 +80,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       sessionGroup = await loadGroupData(groupId);
       const pending = JSON.parse(localStorage.getItem('pendingStudents') || '[]');
-      sessionGroup.students = [...sessionGroup.students, ...pending];
+
+      const allStudents = [...sessionGroup.students, ...pending];
+      const uniqueByEmail = [];
+      const seenEmails = new Set();
+
+      for (const student of allStudents) {
+        const normalizedEmail = student.email.trim().toLowerCase();
+        if (!seenEmails.has(normalizedEmail)) {
+          seenEmails.add(normalizedEmail);
+          uniqueByEmail.push(student);
+        }
+      }
+      sessionGroup.students = uniqueByEmail;
       console.log(sessionGroup);
       window.sessionGroup = sessionGroup;
       originalStudentIds = sessionGroup.students.map(s => s.id); 
@@ -218,35 +239,36 @@ function toggleDateDisplay(group) {
 window.saveGroup = async function () {
   // 1) Leer y validar campos
   const name = document.getElementById('groupName').value.trim();
-  const startDate = document.getElementById('initDate').value;
+  const initDate = document.getElementById('initDate').value;
   const endDate = document.getElementById('endDate').value || null;
 
-  if (!name || !startDate) {
+  if (!name || !initDate) {
     toastr.error('El nombre y la fecha de inicio son obligatorios');
     return;
   }
 
   // 2) Recoger solo los emails de los alumnos
   const studentEmails = (sessionGroup.students || [])
-    .map(s => s.email)
-    .filter(Boolean);
+    .map(s => s.email?.trim().toLowerCase())
+    .filter(email => email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+
 
   const currentStudentIds = (sessionGroup.students || [])
     .map(s => s.id)
     .filter(id => id !== null && id !== undefined); // ← Filtrar nulls
 
   const removeStudentIds = originalStudentIds
-    .filter(id => !currentStudentIds.includes(id));
+    .filter(id => Number.isInteger(id) && !currentStudentIds.includes(id));
 
   // 3) Recoger solo los IDs de los wordles
   const wordleIds = (sessionGroup.wordles || [])
-    .map(w => w.id)
-    .filter(Boolean);
+    .map(w => parseInt(w.id))
+    .filter(id => !isNaN(id));
 
   // 4) Construir payload
   const payload = {
     name,
-    startDate,
+    initDate,
     endDate,
     studentEmails,
     wordleIds,
@@ -258,6 +280,7 @@ window.saveGroup = async function () {
 
     if (!sessionGroup.id) {
       // Crear grupo nuevo
+      console.log("Payload enviado a la API:", JSON.stringify(payload, null, 2));
       res = await apiService.createGroup(payload);
       sessionGroup.id = res.id;
       toastr.success('Grupo creado correctamente');
@@ -266,6 +289,7 @@ window.saveGroup = async function () {
       );
     } else {
       // Actualizar grupo existente
+      console.log("Payload enviado a la API:", JSON.stringify(payload, null, 2));
       await apiService.updateGroup(sessionGroup.id, payload);
       toastr.success('Grupo actualizado correctamente');
     }
@@ -275,7 +299,7 @@ window.saveGroup = async function () {
 
     setTimeout(() => {
       window.location.href = `groupEditor.html?mode=visual&id=${sessionGroup.id}&userId=${userId}`;
-    }, 300);
+    }, 1000);
 
   } catch (err) {
     console.error('Error en la API:', err);

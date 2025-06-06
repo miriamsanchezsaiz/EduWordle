@@ -211,4 +211,11 @@ export const apiService = {
             method: 'DELETE'
         });
     },
+
+    deleteWordle: async (wordleId) => {
+        return callApi(`/teacher/wordles/${wordleId}`, {
+            method: 'DELETE'
+        });
+    },
+
 };
