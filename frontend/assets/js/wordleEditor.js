@@ -49,10 +49,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Función para ocultar los botones de información en modo edición
   const hideInfoButtons = (mode) => {
     if (mode !== 'create') {
-      document.getElementById('difficulty-info-btn').style.display = 'none';
-      document.getElementById('words-info-btn').style.display = 'none';
-      document.getElementById('questions-info-btn').style.display = 'none';
-      document.getElementById('students-info-btn').style.display = 'none';
+      const difficultyInfoBtn = document.getElementById('difficulty-info-btn');
+      const wordsInfoBtn = document.getElementById('words-info-btn');
+      const questionsInfoBtn = document.getElementById('questions-info-btn');
+      const studentsInfoBtn = document.getElementById('students-info-btn');
+
+      if (difficultyInfoBtn) difficultyInfoBtn.style.display = 'none';
+      if (wordsInfoBtn) wordsInfoBtn.style.display = 'none';
+      if (questionsInfoBtn) questionsInfoBtn.style.display = 'none';
+      if (studentsInfoBtn) studentsInfoBtn.style.display = 'none';
     }
   };
 
