@@ -30,7 +30,7 @@ async function processMoodleXMLAndInsert(xmlFilePath, dbConfig) {
                     }
                 }
 
-                const type = correctAnswers.length > 1 ? 'multiple' : 'single';
+                const type = correctAnswers.length > 1 ? 'multichoice' : 'single';
 
                 // Insertar en la base de datos
                 const query = 'INSERT INTO preguntas (question, options, correctAnswer, type) VALUES (?, ?, ?, ?)';
@@ -72,5 +72,5 @@ processMoodleXMLAndInsert(xmlFilePath, dbConfig);
 //     question TEXT NOT NULL,
 //     options JSON NOT NULL,
 //     correctAnswer JSON NOT NULL,
-//     type ENUM('single', 'multiple') NOT NULL
+//     type ENUM('single', 'multichoice') NOT NULL
 // );

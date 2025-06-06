@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/wordleEditor.css">
     <link rel="stylesheet" href="assets/css/popup.css">
+    <link rel="stylesheet" href="assets/css/tooltip.css">
+
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
@@ -53,40 +55,74 @@
             <section class="wordle-name">
                 <label for="wordleTitle">Nombre del Wordle:</label>
                 <input type="text" id="wordleTitle" placeholder="Introduce el nombre del Wordle">
-                
-            <div class="difficulty-selector">
-            <label>Dificultad
-            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-difficulty')" title="¿Qué significa cada uno?" id="difficulty-info-btn"></i>
-            </label>
-            <div class="difficulty-options">
-                <button type="button" data-value="low" class="diff-btn">Bajo</button>
-                <button type="button" data-value="high" class="diff-btn">Alto</button>
-            </div>
-            </div>
+
+                <div class="difficulty-selector">
+                    <label>Dificultad
+                        <div class="tooltip-container">
+                            <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                            <span class="tooltip-text" id="tooltip-students">
+                                <h3>Dificultad del Wordle</h3>
+                                <ul>
+                                    <li><strong>Bajo</strong>: Solo aparecerá una preguntas por intento.</li>
+                                    <li><strong>Alto</strong>: Aparecerá una pregunta por cada letra acertada o que este
+                                        en la palabra en cada intento.</li>
+                                </ul>
+                            </span>
+                        </div>
+                    </label>
+                    <div class="difficulty-options">
+                        <button type="button" data-value="low" class="diff-btn">Bajo</button>
+                        <button type="button" data-value="high" class="diff-btn">Alto</button>
+                    </div>
+                </div>
 
             </section>
-            
+
             <section class="wordle-section">
-            <h2>Palabras
-            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-words')" title="Formato CSV" id="words-info-btn"></i>
-            </h2>
+                <h2>Palabras
+                    <div class="tooltip-container">
+                        <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                        <span class="tooltip-text" id="tooltip-students">
+                            <h3>Formato CSV para Palabras</h3>
+                                    <ol>
+                                        <li>Debe tener una línea de encabezado, que será ignorada.</li>
+                                        <li>Cada línea debe tener: <code>pista ; pista</code></li>
+                                        <li>Ejemplo: <code>MADRID ; Capital de España</code></li>
+                                    </ol>
+                        </span>
+                    </div>
+                </h2>
                 <div class="container-section" id="container-words">
                 </div>
             </section>
 
             <section class="wordle-section">
-            <h2>Preguntas
-            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-questions')" title="Formato CSV" id="questions-info-btn"></i>
-            </h2>
+                <h2>Preguntas
+                    <div class="tooltip-container">
+                        <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                        <span class="tooltip-text" id="tooltip-students">
+                            <h3>Formato CSV para Preguntas</h3>
+                                    <ol>
+                                        <li>Debe tener una línea de encabezado, que será ignorada.</li>
+                                        <li>Cada línea debe tener:
+                                            <code>enunciado ; op1 , op2 , op3 ; resp1 [,resp2] ; tipo</code></li>
+                                        <li>Ejemplo: <br>
+                                            <code>¿Cuál es la capital? ; Madrid,París,Roma ; Madrid ; single</code> <br>
+                                            <code>¿Cuáles son las capitales de España? ; Madrid,Barcelona,Sevilla,Valencia ; Madrid,Barcelona ; multiple</code>
+                                        </li>
+                                    </ol>
+                        </span>
+                    </div>
+                </h2>
                 <div class="container-section" id="container-questions"></div>
             </section>
 
             <section class="wordle-section">
-            <h2>Grupos Asociados</h2>
-            <div class="container-section" id="container-groups">
-                <div class="add-button" onclick="openPopup('groups')">+</div>
-                <ul class="selected-list"></ul>
-            </div>
+                <h2>Grupos Asociados</h2>
+                <div class="container-section" id="container-groups">
+                    <div class="add-button" onclick="openPopup('groups')">+</div>
+                    <ul class="selected-list"></ul>
+                </div>
             </section>
 
             <button class="action-button save-button " onclick="saveWordleEditor()">Guardar</button>

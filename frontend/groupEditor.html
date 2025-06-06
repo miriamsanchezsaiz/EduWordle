@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="assets/css/wordleEditor.css">
     <link rel="stylesheet" href="assets/css/groupEditor.css">
     <link rel="stylesheet" href="assets/css/popup.css">
+    <link rel="stylesheet" href="assets/css/tooltip.css">
+
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -56,11 +58,22 @@
             </section>
 
             <section class="group-section">
-            <h2>Alumnos
-            <i class="fa-solid fa-circle-info info-icon" onclick="openPopup('info-students')" title="Formato CSV" id="students-info-btn"></i>
-            </h2>
-            <div class="container-section" id="container-students">
-            </div>
+                <h2>Alumnos
+                    <div class="tooltip-container">
+                        <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                        <span class="tooltip-text" id="tooltip-students">
+                                <h3>Formato CSV para Alumnos<h3>
+                            <ol>
+                                <li>Debe tener una línea de encabezado, que será ignorada.</li>
+                                <li>Cada línea debe tener: <code>nombre ; email</code></li>
+                                <li>Ejemplo: <code>Juan Pérez ; juan.perez@example.com</code></li>
+                            </ol>
+                        </span>
+                    </div>
+
+                </h2>
+                <div class="container-section" id="container-students">
+                </div>
             </section>
 
             <section class="group-section">

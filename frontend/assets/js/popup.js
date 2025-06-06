@@ -45,13 +45,13 @@ function openPopup(popupType) {
               toastr.success("Grupo eliminado correctamente");
               closePopup();
               const userId = sessionStorage.getItem('userId');
-              window.location.href = `list.html?type=group&teacherId=${userId}`;
+              window.location.replace (`dashboard.html?type=group&teacherId=${userId}`);
             } else if (window.sessionWordle?.id) {
               await apiService.deleteWordle(window.sessionWordle.id);
               toastr.success("Wordle eliminado correctamente");
               closePopup();
               const userId = sessionStorage.getItem('userId');
-              window.location.href = `list.html?type=wordle&teacherId=${userId}`;
+              window.location.replace(`dashboard.html?type=wordle&teacherId=${userId}`);
             } else {
               throw new Error("No hay entidad válida para eliminar");
             }
@@ -251,6 +251,15 @@ function saveStudent() {
   }
   window.sessionGroup = window.sessionGroup || { students: [], wordles: [] };
   const student = { id: null, email, name };
+
+  // Comprobar si el alumno ya existe
+  const existingStudent = window.sessionGroup.students.find(s => s.email.toLowerCase() === email.toLowerCase());
+  if (existingStudent) {
+    toastr.warning(`El alumno con email ${email} ya está en el grupo.`);
+    return;
+  }
+
+
   window.sessionGroup.students.push(student);
   localStorage.setItem(
     'pendingStudents',
@@ -321,6 +330,12 @@ function saveWord() {
     return;
   }
 
+  const wordExists = sessionWordle.words.some(existingWord => existingWord.word === word);
+  if (wordExists) {
+    toastr.error(`La palabra "${word}" ya ha sido añadida a este Wordle.`);
+    return; 
+  }
+  
   sessionWordle.words.push({
     id: null,
     word,
@@ -355,20 +370,32 @@ function saveQuestion() {
     }
   });
 
+  if (options.length < 2) {
+    toastr.error("Debes añadir al menos dos opciones para la pregunta.");
+    return;
+  }
+
   if (!question || options.length === 0 || correctAnswer.length === 0) {
     toastr.error("Completa todos los campos y marca al menos una respuesta correcta.");
     return;
   }
 
-  const type = correctAnswer.length > 1 ? "multiple" : "single";
+  const type = correctAnswer.length > 1 ? "multichoice" : "single";
 
   const newQuestion = {
     id: null,
-    statement: question,
+    question: question,
     options,
     answer: correctAnswer,
     type
   };
+
+  // Comprobar si la pregunta ya existe
+  const existingQuestion = sessionWordle.questions.find(q => q.question.trim().toLowerCase() === question.toLowerCase());
+  if (existingQuestion) {
+    toastr.error(`La pregunta "${question}" ya ha sido añadida a este Wordle.`);
+    return; 
+  }
 
   sessionWordle.questions.push(newQuestion);
   localStorage.setItem("pendingQuestions", JSON.stringify(sessionWordle.questions));
@@ -552,14 +579,14 @@ async function uploadQuestionsCSV(evt) {
     const statement = cols[0];
     const options = cols[1] ? cols[1].split(',').map(o => o.trim()) : [];
     const correctAnswer = cols[2] ? cols[2].split(',').map(ca => ca.trim()) : [];
-    const qtype = cols[3] || (correctAnswer.length > 1 ? 'multiple' : 'single');
+    const qtype = cols[3] || (correctAnswer.length > 1 ? 'multichoice' : 'single');
 
     const normalized = statement?.toLowerCase();
     if (!statement || existingStatements.has(normalized)) return;
 
     const question = {
       id: null,
-      statement,
+      question: statement,
       options,
       correctAnswer,
       type: qtype

@@ -340,7 +340,7 @@ const createWordle = async (teacherId, wordleData, transaction) => {
         typeof q.question !== 'string' || !q.question.trim() ||
         !Array.isArray(q.options) || q.options.length < 2 ||
         !Array.isArray(q.correctAnswer) || q.correctAnswer.length === 0 ||
-        !['single', 'multiple'].includes(q.type)
+        !['single', 'multichoice'].includes(q.type)
       ) {
         throw ApiError.badRequest('Each question must have valid "question", "options", "correctAnswer", and "type".');
       }
@@ -544,7 +544,7 @@ const updateWordle = async (wordleId, teacherId, updateData, transaction) => {
         typeof q.question !== 'string' || !q.question.trim() ||
         !Array.isArray(q.options) || q.options.length < 2 ||
         !Array.isArray(q.correctAnswer) || q.correctAnswer.length === 0 ||
-        !['single', 'multiple'].includes(q.type)
+        !['single', 'multichoice'].includes(q.type)
       ) {
         throw ApiError.badRequest('Each question must have valid "question", "options", "correctAnswer", and "type".');
       }

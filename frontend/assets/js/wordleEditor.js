@@ -39,9 +39,13 @@ let originalWordIds = [];
 let originalQuestionIds = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
+  //Primero hay que borrar lo almacenado el localStorage
+  sessionStorage.removeItem("pendingWords");
+  sessionStorage.removeItem("pendingQuestions");
+  sessionStorage.removeItem("sessionWordle");
 
   const mode = new URLSearchParams(window.location.search).get('mode');
-  
+
   // Función para ocultar los botones de información en modo edición
   const hideInfoButtons = (mode) => {
     if (mode !== 'create') {
@@ -261,7 +265,7 @@ async function saveWordleEditor() {
           question: text,
           correctAnswer: answer,
           options: options,
-          type: q.type || (answer.length > 1 ? 'multiple' : 'single')
+          type: q.type || (answer.length > 1 ? 'multichoice' : 'single')
         };
 
         if (Number.isInteger(q.id)) {
@@ -299,15 +303,15 @@ async function saveWordleEditor() {
     } else {
       console.log('📦 Payload enviado al backend:', JSON.stringify(payload, null, 2));
       await apiService.createWordle(payload);
-      toastr.success("Wordle creado correctamente.");
+      toastr.success("Wordle creado correctamente. Redirigiendo...");
     }
 
     localStorage.removeItem("pendingWords");
     localStorage.removeItem("pendingQuestions");
 
-    /*setTimeout(() => {
+    setTimeout(() => {
       window.location.href = "/dashboard.html?type=teacher";
-    }, 2000);*/
+    }, 2000);
   } catch (error) {
     console.error("Error en create/update Wordle:", error);
     toastr.error(error.message || "No se pudo guardar el Wordle.");

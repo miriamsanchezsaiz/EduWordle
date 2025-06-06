@@ -552,7 +552,7 @@ async function popup_quest(i = 0, totalQuestions = 1) {
     optionsContainer.classList.add("options-container");
 
     options.forEach((option, index) => {
-      let inputType = question.type === "multiple" ? "checkbox" : "radio";
+      let inputType = question.type === "multichoice" ? "checkbox" : "radio";
 
       let optionElement = document.createElement("p");
 

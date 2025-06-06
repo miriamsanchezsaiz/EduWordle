@@ -168,9 +168,9 @@ const validateCreateWordle = [
   body('questions.*.type')
     .notEmpty()
     .withMessage('Question type is required')
-    // TODO-FIX: Validate against the specific allowed types
-    .isIn(['single', 'multychoice']) // Allow only 'single' or 'multychoice'
-    .withMessage('Question type must be "single" or "multychoice"'),
+    
+    .isIn(['single', 'multichoice']) 
+    .withMessage('Question type must be "single" or "multichoice"'),
   body('questions.*.question')
     .notEmpty()
     .withMessage('Question statement (question) is required'),

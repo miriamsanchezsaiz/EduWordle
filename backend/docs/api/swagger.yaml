@@ -271,9 +271,9 @@ components:
                 example: "oveja"
               type:
                 type: string
-                enum: [multychoice, single]
-                description: Tipo de pregunta (ej. 'multychoice', 'single').
-                example: 'multychoice'
+                enum: [multichoice, single]
+                description: Tipo de pregunta (ej. 'multichoice', 'single').
+                example: 'multichoice'
         groupAccessIds:
           type: array
           items:
@@ -469,7 +469,8 @@ components:
                 properties:
                   type:
                     type: string
-                    description: Tipo de pregunta (ej. single, multiple, text).
+                    enum: [multichoice, single]
+                    description: Tipo de pregunta (ej. single, multichoice).
                     example: "single"
                   question:
                     type: string
@@ -597,7 +598,8 @@ components:
           readOnly: true
         type:
           type: string
-          description: Tipo de pregunta (ej. single, multiple, text).
+          enum: [multichoice, single]
+          description: Tipo de pregunta (ej. single, multichoice).
           example: "single"
         question:
           type: string
@@ -1806,7 +1808,7 @@ paths:
                     question: "¿Cuántos jugadores tiene un equipo de fútbol en el campo?"
                     options: ["9", "10", "11", "12"]
                     correctAnswer: "11"
-                    type: 'multychoice'
+                    type: 'multichoice'
                 groupsWithAccess:
                   - id: 501
                     name: 'Grupo A'
@@ -1938,7 +1940,8 @@ paths:
                       properties:
                         type:
                           type: string
-                          description: Tipo de pregunta (single/mutichoice).
+                          enum: [multichoice, single]
+                          description: Tipo de pregunta (single/mutychoice).
                           example: "single"
                         question:
                           type: string
