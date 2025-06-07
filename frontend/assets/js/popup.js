@@ -1,18 +1,57 @@
 // assets/js/popup.js
 import { apiService } from './apiService.js';
 
-// Asegúrate de que toastr esté disponible globalmente
 const toastr = window.toastr;
 if (typeof toastr === 'undefined') {
   console.error('Toastr.js no está cargado o no es accesible globalmente.');
-  // Considera un fallback o un mensaje de error más visible si es crítico
 }
+
+function loadPopupBaseStructure() {
+  const popupPlaceholder = document.getElementById("popup-placeholder");
+  if (popupPlaceholder) {
+    popupPlaceholder.innerHTML = ""; 
+    popupPlaceholder.innerHTML = `
+      <div id="popup-container" class="popup-overlay"></div>
+      <div class="popup-panel">
+        <button class="close-button" onclick="closePopup()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-4 w-4">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+        <div id="popup-body"></div>
+      </div>
+    `;
+    popupPlaceholder.classList.add("hidden"); 
+  } else {
+    console.error("Element with ID 'popup-placeholder' not found.");
+  }
+}
+
+// Llama a esta función al inicio para cargar la estructura base.
+document.addEventListener('DOMContentLoaded', loadPopupBaseStructure);
+
+
+
 // Cargar dinámicamente los templates de popups
 fetch("/popups.html")
   .then(res => res.text())
   .then(html => {
-    document.getElementById("popup-placeholder").innerHTML = html;
+    // Crea un div temporal para parsear el HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html; 
+    const popupPlaceholder = document.getElementById("popup-placeholder");
+
+    if (popupPlaceholder) {
+      Array.from(tempDiv.children).forEach(child => {
+        if (child.tagName === 'TEMPLATE') {
+          document.body.appendChild(child.cloneNode(true)); 
+        }
+      });
+    }
   }).catch(err => console.error("Error al cargar popups.html:", err));
+
 
 // Función para abrir un popup por su tipo (students o wordles, etc.)
 function openPopup(popupType) {
@@ -119,7 +158,7 @@ function openPopupPoints(points) {
 
     const currentUserString = sessionStorage.getItem('currentUser');
     let role = null;
-    let userId = null; // Este será el studentId o teacherId
+    let userId = null;
     let target = "/login.html";
 
     if (currentUserString) {
@@ -172,14 +211,13 @@ async function loadListGroups() {
 
   // 2) Hacer fetch real al backend
   try {
-    // Usamos apiService.fetchGroups() que ya adaptamos para el profesor
-    const groups = await apiService.fetchGroups("teacher"); // Asumo que este endpoint ya filtra por el teacherId del JWT
+    const groups = await apiService.fetchGroups("teacher"); 
     const select = document.getElementById("group-select");
     select.innerHTML = '<option value="" disabled selected>Selecciona un grupo</option>';
     groups.forEach(g => {
       const opt = document.createElement("option");
       opt.value = g.id;
-      opt.textContent = g.name; // Asumo que el nombre del grupo es 'name'
+      opt.textContent = g.name; 
       select.appendChild(opt);
     });
   } catch (err) {
@@ -241,7 +279,6 @@ function addOption() {
 window.addOption = addOption;
 
 // Función para guardar nuevo alumno vía popup
-//TODO: Adaptar para añadir el nombre y para adaptarlo al nuevo código de groupEditor
 function saveStudent() {
   const email = document.getElementById('email').value.trim();
   const name  = document.getElementById('name')?.value.trim() || '';
