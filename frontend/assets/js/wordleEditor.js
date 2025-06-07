@@ -48,16 +48,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Función para ocultar los botones de información en modo edición
   const hideInfoButtons = (mode) => {
-    if (mode !== 'create') {
+    if (mode === 'visual') {
       const difficultyInfoBtn = document.getElementById('difficulty-info-btn');
       const wordsInfoBtn = document.getElementById('words-info-btn');
       const questionsInfoBtn = document.getElementById('questions-info-btn');
-      const studentsInfoBtn = document.getElementById('students-info-btn');
 
       if (difficultyInfoBtn) difficultyInfoBtn.style.display = 'none';
       if (wordsInfoBtn) wordsInfoBtn.style.display = 'none';
       if (questionsInfoBtn) questionsInfoBtn.style.display = 'none';
-      if (studentsInfoBtn) studentsInfoBtn.style.display = 'none';
     }
   };
 
@@ -73,7 +71,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (mode === 'visual') {
     document.body.classList.add('visual-mode');
+  
   }
+  
 
   if ((mode === "edit" || mode === "visual") && wordleId) {
     try {
@@ -189,12 +189,14 @@ function displayData(w) {
 }
 
 function displayItems(items, type) {
+  
   const cont = document.getElementById(`container-${type}`); cont.innerHTML = '';
-  (Array.isArray(items)?items:[]).forEach(item=>displayItem(item,type));
-  if(mode!="visual" && !cont.querySelector('.add-button')){
+   if(mode!="visual" && !cont.querySelector('.add-button')){
     const btn=document.createElement('div'); btn.classList.add('add-button'); btn.textContent='+';
     btn.onclick=()=>openPopup(type); cont.appendChild(btn);
   }
+  (Array.isArray(items)?items:[]).forEach(item=>displayItem(item,type));
+ 
 }
 
 function displayItem(item,type){

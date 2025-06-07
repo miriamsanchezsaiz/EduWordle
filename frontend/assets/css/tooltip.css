@@ -14,7 +14,7 @@ ol li::marker {
     visibility: hidden;
     opacity: 0;
     font-weight: normal;
-    background-color: rgba(204, 228, 194, 0.626);
+    background-color: rgba(204, 228, 194, 0.874);
     color: #333;
     padding: 8px;
     font-size: 11px;

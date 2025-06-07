@@ -10,26 +10,17 @@
     <link rel="stylesheet" href="assets/css/wordleEditor.css">
     <link rel="stylesheet" href="assets/css/popup.css">
     <link rel="stylesheet" href="assets/css/tooltip.css">
-
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
-
-
-
-
     <script type="module" src="assets/js/wordleEditor.js" defer></script>
     <script type="module" src="assets/js/popup.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-
 </head>
 
 <body>
-
     <header>
         <div class="header-buttons" style="left:1rem;">
             <button class="settings-button" aria-label="Boton back" onclick="backFromEdit()">
@@ -38,14 +29,10 @@
                     <path d="M15 18l-6-6 6-6"></path>
                 </svg>
             </button>
-
         </div>
         <div class="header-title">
             <h1 id="pageTitle"></h1>
         </div>
-
-
-
     </header>
 
     <div id="popup-placeholder" class="hidden"></div>
@@ -59,7 +46,7 @@
                 <div class="difficulty-selector">
                     <label>Dificultad
                         <div class="tooltip-container">
-                            <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                            <i class="fa-solid fa-circle-info info-icon" id="difficulty-info-btn"></i>
                             <span class="tooltip-text" id="tooltip-students">
                                 <h3>Dificultad del Wordle</h3>
                                 <ul>
@@ -81,14 +68,14 @@
             <section class="wordle-section">
                 <h2>Palabras
                     <div class="tooltip-container">
-                        <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                        <i class="fa-solid fa-circle-info info-icon" id="words-info-btn"></i>
                         <span class="tooltip-text" id="tooltip-students">
                             <h3>Formato CSV para Palabras</h3>
-                                    <ol>
-                                        <li>Debe tener una línea de encabezado, que será ignorada.</li>
-                                        <li>Cada línea debe tener: <code>pista ; pista</code></li>
-                                        <li>Ejemplo: <code>MADRID ; Capital de España</code></li>
-                                    </ol>
+                            <ol>
+                                <li>Debe tener una línea de encabezado, que será ignorada.</li>
+                                <li>Cada línea debe tener: <code>pista ; pista</code></li>
+                                <li>Ejemplo: <code>MADRID ; Capital de España</code></li>
+                            </ol>
                         </span>
                     </div>
                 </h2>
@@ -99,18 +86,19 @@
             <section class="wordle-section">
                 <h2>Preguntas
                     <div class="tooltip-container">
-                        <i class="fa-solid fa-circle-info info-icon" id="students-info-btn"></i>
+                        <i class="fa-solid fa-circle-info info-icon" id="questions-info-btn"></i>
                         <span class="tooltip-text" id="tooltip-students">
                             <h3>Formato CSV para Preguntas</h3>
-                                    <ol>
-                                        <li>Debe tener una línea de encabezado, que será ignorada.</li>
-                                        <li>Cada línea debe tener:
-                                            <code>enunciado ; op1 , op2 , op3 ; resp1 [,resp2] ; tipo</code></li>
-                                        <li>Ejemplo: <br>
-                                            <code>¿Cuál es la capital? ; Madrid,París,Roma ; Madrid ; single</code> <br>
-                                            <code>¿Cuáles son las capitales de España? ; Madrid,Barcelona,Sevilla,Valencia ; Madrid,Barcelona ; multiple</code>
-                                        </li>
-                                    </ol>
+                            <ol>
+                                <li>Debe tener una línea de encabezado, que será ignorada.</li>
+                                <li>Cada línea debe tener:
+                                    <code>enunciado ; op1 , op2 , op3 ; resp1 [,resp2] ; tipo</code>
+                                </li>
+                                <li>Ejemplo: <br>
+                                    <code>¿Cuál es la capital? ; Madrid,París,Roma ; Madrid ; single</code> <br>
+                                    <code>¿Cuáles son las capitales de España? ; Madrid,Barcelona,Sevilla,Valencia ; Madrid,Barcelona ; multiple</code>
+                                </li>
+                            </ol>
                         </span>
                     </div>
                 </h2>

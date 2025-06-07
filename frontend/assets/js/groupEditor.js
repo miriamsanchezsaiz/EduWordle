@@ -37,15 +37,15 @@ let originalStudentIds = [];
 
 // DOMContentLoaded: inicialización general
 document.addEventListener("DOMContentLoaded", async () => {
-  
+
   const mode = new URLSearchParams(window.location.search).get('mode');
   const infoBtn = document.getElementById('students-info-btn');
-  
+
   // Solo mostrar el botón en modo 'create'
-  if (mode !== 'create') {
+  if (mode == 'visual') {
     infoBtn.style.display = 'none';
   }
-  
+
   // 1) Configuración de fechas
   const today = new Date().toISOString().split("T")[0];
   const nextYear = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
@@ -73,7 +73,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (mode === 'visual') {
     document.body.classList.add('visual-mode');
+  
   }
+  
+
 
   // 2) Cargar datos si edit o visual, o inicializar vacío
   if ((mode === "edit" || mode === "visual") && groupId) {
@@ -95,13 +98,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       sessionGroup.students = uniqueByEmail;
       console.log(sessionGroup);
       window.sessionGroup = sessionGroup;
-      originalStudentIds = sessionGroup.students.map(s => s.id); 
+      originalStudentIds = sessionGroup.students.map(s => s.id);
       displayData(sessionGroup);
 
     } catch (err) {
       console.error("Error cargando el grupo:", err);
       toastr.error("No se pudo cargar los datos del grupo.");
     }
+    
   } else {
     // Crear nuevo grupo
     sessionGroup = {
@@ -138,7 +142,6 @@ async function loadGroupData(groupId) {
 function displayData(group) {
   const saveBtn = document.querySelector(".save-button");
   if (mode === "visual") {
-    // Nombre como H1
     document.querySelector(".group-name").innerHTML = `<h1>${group.nombre}</h1>`;
     // Ocultar botón 'Guardar'
     if (saveBtn) saveBtn.remove();
