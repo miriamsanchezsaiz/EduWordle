@@ -315,7 +315,7 @@ docker-compose logs -f
 - **bcryptjs**: Hashing de contraseñas.
 - **jsonwebtoken**: Tokens JWT.
 - **express-validator**: Validación.
-- **Resend**: Envío de emails.
+- **Nodemailer**: Envío de emails.
 
 ### Contenerización
 
