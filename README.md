@@ -336,3 +336,5 @@ docker-compose logs -f
 - Se usará **CamelCase** para nombrar variables y funciones.
 - Se evitarán tildes y caracteres especiales.
 
+## DeepWiki
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/miriamsanchezsaiz/EduWordle)
