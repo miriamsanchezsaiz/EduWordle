@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT ;
-const API_BASE_URL_FOR_FRONTEND = process.env.FRONTEND_URL + '/frontend' || `http://localhost:${PORT}/frontend`;
-const API_BASE_URL_FOR_BACKEND = process.env.FRONTEND_URL + '/api' || `http://localhost:${PORT}/api`;
+const API_BASE_URL_FOR_FRONTEND = process.env.APP_URL + '/frontend' || `http://localhost:${PORT}/frontend`;
+const API_BASE_URL_FOR_BACKEND = process.env.APP_URL + '/api' || `http://localhost:${PORT}/api`;
 const configContent = `
 //Aquí se define la URL base de la API para que el frontend pueda hacer peticiones a ella.
 //Este URL se importa añadiendo el script al html y se usa en el fetch seguido de la ruta 

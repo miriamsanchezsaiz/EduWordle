@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 // Enable CORS for all origins
 //CHANGE (23/05): si front y back se ejecutan en puertos diferentes, esto es necesario
 app.use(cors({
-  origin: process.env.FRONTEND_URL ,
+  origin: process.env.APP_URL ,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true, 
   optionsSuccessStatus: 204
@@ -45,20 +45,6 @@ app.use((req, res, next) => {
     console.log(`[HTTP Request Log] Request for ${req.originalUrl} passed static handler.`);
     next();
 });
-
-
-// --- Database Synchronization (Con docker no es necesario) ---
-
-// sequelize.sync()
-//   .then(() => {
-//     console.log('Database models synchronized successfully.\n\n' +
-//       '========================= END OF SYNC =========================\n');
-      
-//   })
-//   .catch((err) => {
-//     console.error('Error synchronizing database models:', err);
-//     process.exit(1);
-//   });
 
 
 // --- Routes ---

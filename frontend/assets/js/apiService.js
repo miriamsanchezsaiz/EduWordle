@@ -23,7 +23,7 @@ async function callApi(endpoint, options = {}) {
         ...options,
         headers: {
             ...defaultHeaders,
-            ...options.headers, // Permite sobrescribir o añadir headers específicos
+            ...options.headers, 
         },
     };
 

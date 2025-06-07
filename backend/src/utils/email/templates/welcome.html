@@ -1,44 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Welcome to EduWordle</title>
-  </head>
-  <body style="font-family: sans-serif; background-color: #f8f9fa; padding: 0; margin: 0">
-    <table align="center" width="100%" style="max-width: 600px; margin: auto; background-color: white; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-     
-      <tr>
-        <td>
-          <img src="image" alt="Welcome to EduWordle" width="100%" />
-        </td>
-      </tr>
-      <tr>
-        <td style="padding: 30px; text-align: center;">
-          <h1>Hi {{name}},</h1>
-          <p style="font-size: 16px; line-height: 1.5;">
-            Welcome to <strong>EduWordle</strong>! A teacher has created an account for you,
-            so we are giving you a temporary password to enter the website.
-          </p>
-          <p style="font-size: 16px; line-height: 1.5;">
-            <strong>Your initial password is:</strong><br />
-            <span style="display: inline-block; margin: 10px 0; font-size: 18px; font-weight: bold; background-color: #f1f1f1; padding: 8px 16px; border-radius: 4px;">
-              {{password}}
-            </span>
-          </p>
-          <p style="font-size: 16px; line-height: 1.5;">
-            Please log in and change your password.
-          </p>
-          <a href="https://www.google.es" style="display: inline-block; margin-top: 20px; background-color: #9ee5bc; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
-            Go to Login
-          </a>
-        </td>
-      </tr>
-      <tr>
-        <td style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #555;">
-          Made with 💡 for learning fun!<br />
-          <a href="https://www.google.es" style="color: #007bff; text-decoration: none;">www.eduwordle.es</a>
-        </td>
-      </tr>
-    </table>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Welcome to EduWordle</title>
+</head>
+
+<body style="font-family: sans-serif; background-color: #f8f9fa; padding: 0; margin: 0">
+  <table margin="0 auto" width="100%"
+    style="max-width: 600px; margin: auto; background-color: white; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+
+    <tr>
+      <td>
+        <img src="{{headerImageUrl}}" alt="Welcome to EduWordle" width="100%" />
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 30px; text-align: center;">
+        <h1>Hi {{name}},</h1>
+        <p style="font-size: 16px; line-height: 1.5;">
+          Welcome to <strong>EduWordle</strong>! A teacher has created an account for you,
+          so we are giving you a temporary password to enter the website.
+        </p>
+        <p style="font-size: 16px; line-height: 1.5;">
+          <strong>Your initial password is:</strong><br />
+          <span
+            style="display: inline-block; margin: 10px 0; font-size: 18px; font-weight: bold; background-color: #f1f1f1; padding: 8px 16px; border-radius: 4px;">
+            {{password}}
+          </span>
+        </p>
+        <p style="font-size: 16px; line-height: 1.5;">
+          Please log in and change your password.
+        </p>
+        <a href="{{frontendUrl}}/login.html"
+          style="display: inline-block; margin-top: 20px; background-color: #9ee5bc; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+          Go to Login
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 14px; color: #555;">
+        Made with 💡 for learning fun!<br>
+        You are receiving this email as part of your EduWordle subscription. <br>
+        If you don't recognize this account, please ignore this message..<br>
+        <a href="{{frontendUrl}}/init.html" style="color: #007bff; text-decoration: none;">www.eduwordle.es</a>
+      </td>
+     </tr>
+  </table>
+</body>
+
 </html>
