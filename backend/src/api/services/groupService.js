@@ -228,8 +228,8 @@ const addStudentsToGroup = async (group, studentEmails = [], transaction) => {
 
 
 
-                    /*emailService.sendWelcomeEmail(newUser.email, newUser.name, initialPassword)
-                        .catch(err => console.error(`Failed to send welcome email to ${newUser.email}:`, err));*/
+                    emailService.sendWelcomeEmail(newUser.email, newUser.name, initialPassword)
+                        .catch(err => console.error(`Failed to send welcome email to ${newUser.email}:`, err));
                 }
             } catch (error) {
                 console.error(`Error processing student with email ${email}:`, error);
