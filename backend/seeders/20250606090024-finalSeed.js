@@ -520,14 +520,32 @@
 
       //--- 6. Crear Resultados de Juego ---
       console.log('6. Creating game results...');
+      const studentGroups = await StudentGroup.findAll(); 
+      const wordleGroups = await WordleGroup.findAll();  
+
+      const groupToWordles = {};
+      wordleGroups.forEach(wg => {
+        if (!groupToWordles[wg.groupId]) {
+          groupToWordles[wg.groupId] = new Set();
+        }
+        groupToWordles[wg.groupId].add(wg.wordleId);
+      });
+
+      const userToWordles = {};
+      studentGroups.forEach(sg => {
+        const wordleIds = groupToWordles[sg.groupId];
+        if (!wordleIds) return;
+        if (!userToWordles[sg.userId]) {
+          userToWordles[sg.userId] = new Set();
+        }
+        wordleIds.forEach(wid => userToWordles[sg.userId].add(wid));
+      });
+
       const gameResultEntries = [];
-      const wordlesToPlay = [wordleIdSE1, wordleIdSE2, wordleIdSE3, wordleIdSE4, wordleIdSE5, wordleIdElena, wordleIdMiriam];
-      console.log('IDs de wordles usados:', wordlesToPlay);
- 
-      demoStudents.forEach(student => {
-        wordlesToPlay.forEach(wordleId => {
+      Object.entries(userToWordles).forEach(([userId, wordleSet]) => {
+        wordleSet.forEach(wordleId => {
           gameResultEntries.push({
-            userId: student.id,
+            userId: parseInt(userId),
             wordleId,
             score: Math.floor(Math.random() * 6) + 5,
             createdAt: new Date(now.getTime() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)),
@@ -535,6 +553,7 @@
           });
         });
       });
+
 
       console.log('Ejemplo de datos de GameResults:', gameResultEntries.slice(0, 5));
       await queryInterface.bulkInsert('game', gameResultEntries, {});
