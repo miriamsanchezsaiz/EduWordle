@@ -79,7 +79,6 @@ async function loadPorWordle() {
     // Para cada Wordle, obtener sus resultados de juego
     for (const wl of wordlesDelProfesor) {
       try {
-        // apiService.getGameResultsByWordleId(wl.id) también usa el token para autenticar.
         const resultadosWordle = await apiService.getGameResultsByWordleId(wl.id);
 
         if (resultadosWordle && resultadosWordle.length > 0) {

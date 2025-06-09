@@ -27,8 +27,6 @@ if (!authToken || !userId || !role) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  // const params = new URLSearchParams(window.location.search);
-  // const type = params.get("type");
 
   let pageTitle = "";
   const mainElement = document.querySelector("main");
