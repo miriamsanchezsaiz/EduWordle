@@ -112,7 +112,6 @@ const deleteStudentIfNoGroups = async (userId, transaction = null) => {
     }
 
     const groups = await user.getGroups({
-      where: { userId: userId },
       through: { attributes: [] },
       attributes: ['id']
     }, { transaction });

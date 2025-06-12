@@ -18,10 +18,10 @@ const createGroup = asyncHandler(async (req, res, next) => {
   }
 
   const teacherId = req.user.id;
-  const { name, initDate, endDate, studentEmails } = req.body;
+  const { name, initDate, endDate, studentEmails, wordleIds } = req.body;
 
 
-  const newGroup = await groupService.createGroup(teacherId, { name, initDate, endDate }, studentEmails);
+  const newGroup = await groupService.createGroup(teacherId, { name, initDate, endDate, wordleIds }, studentEmails);
   res.status(201).json(newGroup);
 });
 

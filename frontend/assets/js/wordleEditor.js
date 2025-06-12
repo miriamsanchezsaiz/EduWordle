@@ -168,7 +168,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 function displayData(w) {
   const saveBtn = document.querySelector(".save-button");
   if (mode === "visual") {
-    document.querySelector(".wordle-name").innerHTML = `<h1>${w.name}</h1>`;
+  document.querySelector(".wordle-name").innerHTML = `<h1>${w.name}</h1>`;
+  if (w.difficulty === 'low' || w.difficulty === 'high') {
+    const diffText = w.difficulty === 'low' ? 'FÁCIL' : 'DIFÍCIL';
+    const container = document.querySelector(".wordle-difficulty-visual");
+
+    if (container) {
+      container.innerHTML = `
+        <h2>Dificultad</h2>
+        <div class="container-section" id="container-difficulty"></div>
+      `;
+
+      const inner = document.getElementById("container-difficulty");
+      if (inner) {
+        const div = document.createElement("div");
+        div.classList.add("list-item");
+        div.textContent = diffText;
+        inner.appendChild(div);
+      }
+    }
+  }
+
     if (saveBtn) saveBtn.remove();
     if (role === 'teacher') {
       const cont = document.querySelector(".container");
@@ -317,7 +337,7 @@ async function saveWordleEditor() {
     localStorage.removeItem("pendingQuestions");
 
     setTimeout(() => {
-      window.location.href = "/dashboard.html?type=teacher";
+      window.location.replace(`dashboard.html?type=teacher`);
     }, 2000);
   } catch (error) {
     console.error("Error en create/update Wordle:", error);

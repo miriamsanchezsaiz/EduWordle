@@ -301,7 +301,7 @@ window.saveGroup = async function () {
     localStorage.removeItem('pendingStudents');
 
     setTimeout(() => {
-      window.location.href = `groupEditor.html?mode=visual&id=${sessionGroup.id}&userId=${userId}`;
+      window.location.replace(`dashboard.html?type=teacher`);
     }, 1000);
 
   } catch (err) {

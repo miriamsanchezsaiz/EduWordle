@@ -71,10 +71,25 @@ btnSave.addEventListener("click", async () => {
     const userId = currentUser.id;
     const userRole = currentUser.role;
 
-    await apiService.changePassword(userRole, {
-      oldPassword: oldPass,
-      newPassword: newPass
-    });
+    try {
+      await apiService.changePassword(userRole, {
+        oldPassword: oldPass,
+        newPassword: newPass
+      });
+    } catch (err) {
+      if (err.message === "Incorrect old password" || err.message?.includes("old password")) {
+        toastr.error("La contraseña actual es incorrecta.");
+        return;
+      }
+      if (err.message === "Sesión expirada") {
+        window.sessionExpiredPopup(); // en caso real
+        return;
+      }
+
+      toastr.error(err.message || "Error al actualizar la contraseña.");
+      return;
+    }
+
 
     toastr.success("Contraseña actualizada con éxito. Redirigiendo...");
     

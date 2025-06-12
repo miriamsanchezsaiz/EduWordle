@@ -30,10 +30,18 @@ async function callApi(endpoint, options = {}) {
     try {
         const response = await fetch(url, config);
 
-        if ((response.status === 401 || response.status === 403) && url != "/api/auth/login") {
-            console.warn("API Service Error: 401 Unauthorized. Token might be expired or invalid.");
-            handleUnauthorizedResponse();
-            throw new Error('Unauthorized or Session Expired');
+        if ((response.status === 401 || response.status === 403) && url !== "/api/auth/login") {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+
+        if (
+            errorData.message === 'Incorrect old password' ||
+            errorData.message === 'Contraseña incorrecta' // si lo devuelves traducido
+        ) {
+            throw new Error(errorData.message); // ← deja que el frontend lo maneje con toastr
+        }
+
+        handleUnauthorizedResponse();
+        throw new Error('Sesión expirada');
         }
 
         if (!response.ok) {

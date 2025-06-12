@@ -99,7 +99,14 @@ async function fetchGroups(userRole) {
 
 async function fetchWordles(userRole) {
     try {
-        const data = await apiService.fetchWordles(userRole);
+        let data = await apiService.fetchWordles(userRole);
+            if (userRole === 'student') {
+            const uniqueById = {};
+            data.forEach(w => {
+                if (!uniqueById[w.id]) uniqueById[w.id] = w;
+            });
+            data = Object.values(uniqueById);
+            }
         const urlBase = userRole === 'teacher' ? "wordleEditor.html" : "game.html";
         displayedItems = data;  // Guardamos los wordles mostrados para filtrarlos
         displayItems(data, urlBase);

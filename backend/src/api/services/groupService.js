@@ -363,7 +363,7 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
             throw ApiError.forbidden('User not authorized to create groups.');
         }
 
-        // ❗ Validar que no exista ya un grupo con ese nombre para ese profesor
+        // Validar que no exista ya un grupo con ese nombre para ese profesor
         const existingGroup = await Group.findOne({
             where: {
                 name: groupData.name.trim(),
@@ -384,19 +384,32 @@ const createGroup = async (teacherId, groupData, studentEmails = []) => {
         }, { transaction });
 
         const { createdStudents, linkedStudents } = await addStudentsToGroup(newGroup, studentEmails, transaction);
+        if (Array.isArray(groupData.wordleIds)) {
+        await updateWordleGroup(newGroup.id, groupData.wordleIds, transaction);
+        }
+
         await transaction.commit();
 
-        const groupWithStudents = await Group.findByPk(newGroup.id, {
-            include: {
-                model: User,
-                as: 'students',
-                through: { attributes: [] },
-                attributes: ['id', 'name', 'email', 'role']
-            }
+        const groupWithStudentsAndWordles = await Group.findByPk(newGroup.id, {
+            include: [
+                {
+                    model: User,
+                    as: 'students',
+                    through: { attributes: [] },
+                    attributes: ['id', 'name', 'email', 'role']
+                },
+                {
+                    model: Wordle,
+                    as: 'accessibleWordles',
+                    through: { attributes: [] },
+                    attributes: ['id', 'name']
+                }
+            ]
         });
 
+
         return {
-            ...groupWithStudents.toJSON(),
+            ...groupWithStudentsAndWordles.toJSON(),
             createdStudents,
             linkedStudents,
         };
@@ -463,7 +476,7 @@ const updateGroup = async (groupId, teacherId, updateData) => {
 
         // 2. Update group basic details
         if (updateData.name !== undefined) group.name = updateData.name;
-        if (updateData.initDateDate !== undefined) group.initDate = updateData.initDate;
+        if (updateData.initDate !== undefined) group.initDate = updateData.initDate;
         if (updateData.endDate !== undefined) group.endDate = updateData.endDate;
 
         await group.save({ transaction });

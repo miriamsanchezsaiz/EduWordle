@@ -457,6 +457,14 @@ async function saveGroupToWordle() {
   }
   const groupName = select.options[select.selectedIndex].textContent;
 
+  const alreadyExists = window.sessionWordle.groups.some(
+  g => parseInt(g.id) === parseInt(groupId)
+  );
+  if (alreadyExists) {
+    toastr.warning("Este grupo ya ha sido añadido.");
+    return;
+  }
+
   // 1) Añadir al array en memoria
   const groupObj = { id: groupId, name: groupName };
   window.sessionWordle.groups.push(groupObj);
