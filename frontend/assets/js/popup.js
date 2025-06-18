@@ -84,13 +84,17 @@ function openPopup(popupType) {
               toastr.success("Grupo eliminado correctamente");
               closePopup();
               const userId = sessionStorage.getItem('userId');
+              setTimeout(() => {
               window.location.replace (`dashboard.html?type=group&teacherId=${userId}`);
+              }, 1000);
             } else if (window.sessionWordle?.id) {
               await apiService.deleteWordle(window.sessionWordle.id);
               toastr.success("Wordle eliminado correctamente");
               closePopup();
               const userId = sessionStorage.getItem('userId');
+              setTimeout(() => {
               window.location.replace(`dashboard.html?type=wordle&teacherId=${userId}`);
+              }, 1000);
             } else {
               throw new Error("No hay entidad válida para eliminar");
             }
@@ -278,12 +282,21 @@ function addOption() {
 }
 window.addOption = addOption;
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+window.isValidEmail = isValidEmail;
+
 // Función para guardar nuevo alumno vía popup
 function saveStudent() {
   const email = document.getElementById('email').value.trim();
   const name  = document.getElementById('name')?.value.trim() || '';
   if (!email) {
     toastr.error('El email es obligatorio');
+    return;
+  }
+  if (!isValidEmail(email)) {
+    toastr.error('El correo no es válido');
     return;
   }
   window.sessionGroup = window.sessionGroup || { students: [], wordles: [] };
@@ -540,7 +553,7 @@ async function uploadStudentsCSV(evt) {
     const email = emailRaw?.toLowerCase();
     const name = nameRaw?.trim() || '';
 
-    if (!email || existingEmails.has(email)) return;
+    if (!email || existingEmails.has(email) || !isValidEmail(email)) return;
 
     const student = { id: null, name, email };
     window.sessionGroup.students.push(student);

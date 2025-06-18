@@ -18,7 +18,7 @@ const login = async (email, password) => {
 
     if (!userResult) {
       console.log('DEBUG (login): Usuario no encontrado para el email:', email);
-      throw ApiError.unauthorized('Invalid credentials');
+      throw ApiError.unauthorized('Credenciales incorrectas');
     }
 
     const user = userResult.get({ plain: true });
@@ -26,7 +26,7 @@ const login = async (email, password) => {
 
     if (!user.password) {
       console.debug(`User found but password is null or undefined for email: ${email}`);
-      throw ApiError.unauthorized('Invalid credentials');
+      throw ApiError.unauthorized('Credenciales incorrectas');
     }
 
     // 2. Compare the provided password with the hashed password from the database
@@ -35,7 +35,7 @@ const login = async (email, password) => {
     console.log('DEBUG (login): Resultado de bcrypt.compare:', isPasswordValid);
 
     if (!isPasswordValid) {
-      throw ApiError.unauthorized('Invalid credentials');
+      throw ApiError.unauthorized('Credenciales incorrectas');
     }
 
     // 3. If credentials are valid, check if the password is the initial weak password, then force change
