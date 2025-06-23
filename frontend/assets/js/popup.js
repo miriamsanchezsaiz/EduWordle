@@ -319,6 +319,7 @@ function saveStudent() {
   toastr.success('Alumno añadido (pendiente de guardar grupo)');
 
   closePopup();
+  checkOverflow();
 }
 window.saveStudent = saveStudent;
 
@@ -363,6 +364,7 @@ function saveWordleToGroup() {
 
   toastr.success('Wordle añadido');
   closePopup();
+  checkOverflow();
 }
 
 
@@ -395,6 +397,7 @@ function saveWord() {
   localStorage.setItem("pendingWords", JSON.stringify(sessionWordle.words));
   closePopup();
   displayItem({ word, hint }, "words");
+  checkOverflow();
 }
 window.saveWord = saveWord;
 
@@ -451,6 +454,7 @@ function saveQuestion() {
   localStorage.setItem("pendingQuestions", JSON.stringify(sessionWordle.questions));
   displayItem(newQuestion, "questions");
   closePopup();
+  checkOverflow();
 }
 
 
@@ -488,6 +492,7 @@ async function saveGroupToWordle() {
 
   // 4) Cerrar popup
   closePopup();
+  checkOverflow();
 }
 window.saveGroupToWordle = saveGroupToWordle;
 

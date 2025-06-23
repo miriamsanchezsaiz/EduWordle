@@ -206,6 +206,8 @@ function displayData(w) {
   displayItems(w.words, "words");
   displayItems(w.questions, "questions");
   displayItems(w.groups, "groups");
+
+  checkOverflow();
 }
 
 function displayItems(items, type) {
@@ -216,7 +218,81 @@ function displayItems(items, type) {
     btn.onclick=()=>openPopup(type); cont.appendChild(btn);
   }
   (Array.isArray(items)?items:[]).forEach(item=>displayItem(item,type));
+
+  const section = cont.parentElement;
+  let showMoreButton = section.querySelector(".show-more");
+  if (!showMoreButton) {
+      showMoreButton = document.createElement("div");
+      showMoreButton.classList.add("show-more", "hidden");
+      showMoreButton.id = "showMoreButton";
+      showMoreButton.textContent = "+";
+      showMoreButton.onclick = function () { toggle(this); };
+      section.appendChild(showMoreButton);
+  }
+
  
+}
+
+
+//*************************************************************************************** 
+//***************************************************************************************
+// Funciones visuales
+
+function checkOverflow() {
+    let elements = ["words", "questions", "groups"];
+    const VISIBLE_LIMIT = 3;
+
+    elements.forEach(element => {
+
+        const container = document.getElementById("container-" + element);
+        const section = container.closest(".wordle-section");
+        const showMoreButton = section.querySelector(".show-more");
+
+
+        if (element === "words") {
+            const wasExpanded = container.classList.contains("expanded");
+            if (wasExpanded) container.classList.remove("expanded");
+
+            
+            const isOverflow = container.scrollHeight > container.clientHeight + 5;
+
+            if (wasExpanded) container.classList.add("expanded");
+
+            if (isOverflow) {
+                showMoreButton.classList.remove("hidden");
+            } else {
+                showMoreButton.classList.add("hidden");
+            }
+        }
+        else {
+            const items = container.querySelectorAll(".list-item");
+            const isOverflow = items.length > VISIBLE_LIMIT;
+
+            if (isOverflow) {
+                showMoreButton.classList.remove("hidden");
+            } else {
+                showMoreButton.classList.add("hidden");
+            }
+        }
+
+
+    });
+}
+window.checkOverflow = checkOverflow;
+
+window.toggle = function toggle(button) {
+    const section = button.closest(".wordle-section");
+    const container = section.querySelector(".container-section");
+    const showMoreButton = section.querySelector(".show-more");
+
+
+    if (container.classList.contains("expanded")) {
+        container.classList.remove("expanded");
+        showMoreButton.textContent = "+";
+    } else {
+        container.classList.add("expanded");
+        showMoreButton.textContent = "-";
+    }
 }
 
 function displayItem(item,type){
@@ -248,6 +324,7 @@ function removeItemById(id,type){
     console.error(e);
     toastr.error('Error eliminando');
   }
+  checkOverflow();
 }
 
 async function saveWordleEditor() {

@@ -130,6 +130,7 @@ header {
 
 
 .show-more {
+    display: block !important;
     background-color: #ccc;
     color: black;
     text-align: center;
@@ -138,8 +139,8 @@ header {
     border-radius: 5px;
 }
 
-.hidden {
-    display: none;
+.show-more.hidden {
+    display: none !important;
 } 
 
 .list-item{
@@ -169,8 +170,8 @@ header {
 
 
 .container-section {
-    max-height: none !important;
-    overflow-y: auto;
+    max-height: 13rem; /* 3 items */
+    overflow: hidden;
     transition: max-height 0.3s ease-in-out;
 }
 
@@ -181,8 +182,7 @@ header {
 #container-words {
     display: flex;
     flex-wrap: wrap;
-    max-height: none !important;
-    overflow-y: auto;
+    max-height: 7.4rem; /* 2 items */ 
 }
 
 /* Boton de eliminación de elementos */

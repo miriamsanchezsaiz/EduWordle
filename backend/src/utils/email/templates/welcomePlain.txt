@@ -1,14 +1,14 @@
-Hi {{name}},
+Hola {{name}},
 
-Welcome to EduWordle! A teacher has created an account for you, so we are giving you a temporary password to enter the website.
+¡Bienvenido a EduWordle! Un profesor ha creado una cuenta para ti, por lo que te proporcionamos una contraseña temporal para que accedas al sitio web.
 
-Your initial password is:
+Tu contraseña inicial es:
 
 {{password}}
 
-Please log in and change your password.
+Por favor, inicia sesión y cambia tu contraseña.
 
-Go to Login: https://www.google.es
+Ir a Iniciar Sesión: https://eduwordle.etsisi.upm.es/login.html
 
-Made with 💡 for learning fun!
-www.eduwordle.es
+¡Hecho con 💡 para una divertida experiencia de aprendizaje!
+https://eduwordle.etsisi.upm.es/init.html

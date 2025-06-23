@@ -156,6 +156,7 @@ header {
 
 
 .show-more {
+    display: block !important;
     background-color: #ccc;
     color: black;
     text-align: center;
@@ -164,9 +165,9 @@ header {
     border-radius: 5px;
 }
 
-.hidden {
-    display: none;
-} 
+.show-more.hidden {
+    display: none !important;
+}
 
 .list-item{
     border: none;

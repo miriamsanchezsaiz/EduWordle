@@ -175,6 +175,8 @@ function displayData(group) {
   // Listados (añade '+' en edit/create)
   displayItems(group.students, "students");
   displayItems(group.wordles, "wordles");
+
+  checkOverflow();
 }
 
 // displayItems: pinta alumnos o wordles en su contenedor
@@ -189,7 +191,78 @@ function displayItems(items, type) {
     cont.appendChild(btn);
   }
   items.forEach(item => displayItem(item, type));
+  const section = cont.parentElement;
+  let showMoreButton = section.querySelector(".show-more");
+  if (!showMoreButton) {
+      showMoreButton = document.createElement("div");
+      showMoreButton.classList.add("show-more", "hidden");
+      showMoreButton.id = "showMoreButton";
+      showMoreButton.textContent = "+";
+      showMoreButton.onclick = function () { toggle(this); };
+      section.appendChild(showMoreButton);
+  }
 
+}
+
+//*************************************************************************************** 
+//***************************************************************************************
+// Funciones visuales
+
+function checkOverflow() {
+    let elements = ["students", "wordles"];
+    const VISIBLE_LIMIT = 3;
+
+    elements.forEach(element => {
+
+        const container = document.getElementById("container-" + element);
+        const section = container.closest(".group-section");
+        const showMoreButton = section.querySelector(".show-more");
+
+
+        if (element === "students") {
+            const wasExpanded = container.classList.contains("expanded");
+            if (wasExpanded) container.classList.remove("expanded");
+
+            
+            const isOverflow = container.scrollHeight > container.clientHeight + 5;
+
+            if (wasExpanded) container.classList.add("expanded");
+
+            if (isOverflow) {
+                showMoreButton.classList.remove("hidden");
+            } else {
+                showMoreButton.classList.add("hidden");
+            }
+        }
+        else {
+            const items = container.querySelectorAll(".list-item");
+            const isOverflow = items.length > VISIBLE_LIMIT;
+
+            if (isOverflow) {
+                showMoreButton.classList.remove("hidden");
+            } else {
+                showMoreButton.classList.add("hidden");
+            }
+        }
+
+
+    });
+}
+window.checkOverflow = checkOverflow;
+
+window.toggle = function toggle(button) {
+    const section = button.closest(".group-section");
+    const container = section.querySelector(".container-section");
+    const showMoreButton = section.querySelector(".show-more");
+
+
+    if (container.classList.contains("expanded")) {
+        container.classList.remove("expanded");
+        showMoreButton.textContent = "+";
+    } else {
+        container.classList.add("expanded");
+        showMoreButton.textContent = "-";
+    }
 }
 
 // displayItem: crea un elemento para un alumno o wordle
@@ -218,6 +291,7 @@ function removeItemById(id, type) {
     window.sessionGroup[type] = window.sessionGroup[type]
       .filter(x => x.id !== id);
   }
+  checkOverflow();
 }
 
 // displayConfig: inputs de fecha en edit/create
