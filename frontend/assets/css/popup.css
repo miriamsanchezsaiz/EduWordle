@@ -14,7 +14,7 @@
     overflow-y: auto;
     position: fixed;
     top: 50%;
-    left: 50%;
+    /* left: 50%; */
     transform: translate(-50%, -50%); 
     background: white;
     z-index: 1001;
@@ -175,5 +175,15 @@ label {
     color: #000000;
 }
 
+/* --- Media Queries para Responsive Design --- */
 
+/* Para Móviles y Tablets */
+@media (max-width: 768px) {
+    .popup-panel {
+        padding: 2rem;
+        max-height: 90vh; /* 90% de la altura de la vista */
+    }
+
+
+}
 

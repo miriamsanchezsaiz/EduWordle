@@ -107,3 +107,12 @@ font-family: "Font Awesome 5 Free";
 font-weight: 900;
 }
 
+@media (max-width: 480px) {
+    .menu-options {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .option {
+        width: 80vw; /* Ocupa el 80% del ancho de la vista */
+    }
+}

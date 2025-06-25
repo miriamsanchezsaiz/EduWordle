@@ -396,3 +396,75 @@ input:checked+.slider:before {
     margin-top: 34px !important;
   }
 }
+
+/* --- Media Queries para Responsive Design --- */
+
+/* Para Tablets */
+@media (max-width: 768px) {
+    body {
+        height: auto;
+    }
+    
+    header {
+        max-width: 100%;
+    }
+
+    .letter-box {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        margin: 2px;
+    }
+
+    .keyboard-button {
+        height: 50px;
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+    
+    #keyboard-cont {
+        width: 100%; /* El teclado debe ocupar el ancho disponible */
+        padding: 0 5px; /* Pequeño padding lateral */
+        box-sizing: border-box;
+    }
+
+    /* Corregimos el botón de pista */
+    .hint-button {
+       position: static; /* Quitamos el posicionamiento absoluto */
+       display: block;
+       margin: 20px auto; /* Lo centramos debajo del teclado */
+       width: 60px;
+       height: 60px;
+    }
+}
+
+/* Para Móviles */
+@media (max-width: 480px) {
+
+    #game-board {
+       transform: scale(0.9); /* Hacemos el tablero un 10% más pequeño */
+       transform-origin: top center;
+    }
+
+    .letter-box {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+    }
+
+    #keyboard-cont {
+        margin-top: 0;
+        transform: scale(0.95); /* Hacemos el teclado un 5% más pequeño */
+        
+    }
+
+    .keyboard-button {
+        height: 45px;
+        font-size: 0.8rem;
+        margin: 2px;
+        padding: 0.4rem;
+    }
+    .points-box{
+      top: 90px;
+    }
+}

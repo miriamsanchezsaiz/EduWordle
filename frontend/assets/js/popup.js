@@ -500,25 +500,7 @@ window.saveGroupToWordle = saveGroupToWordle;
 function backFromEdit() {
   const mode = new URLSearchParams(window.location.search).get("mode");
   if (mode !== "visual") {
-    const placeholder = document.getElementById("popup-placeholder");
-    placeholder.className = 'popup-overlay';
-    placeholder.innerHTML = `
-        <div class="popup-panel">
-          <button class="close-button" onclick="closePopup()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-4 w-4">
-                <path d="M18 6 6 18"></path>
-                <path d="m6 6 12 12"></path>
-            </svg></button>
-          <div class="popup-body">
-            <h2>Salir de la página</h2>
-            <p>¿Seguro que quieres salir de la edición? Los cambios no se guardarán.</p>
-            <div class="buttonSection">
-              <button class="exit-button" onclick="window.history.back()">Salir</button>
-            </div>
-          </div>
-        </div>
-      `;
-    placeholder.classList.remove("hidden");
+    openPopup("back-edit");
   } else {
     window.history.back();
   }
