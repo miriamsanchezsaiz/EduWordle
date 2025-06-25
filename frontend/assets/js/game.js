@@ -274,14 +274,14 @@ async function checkGuess() {
       toastr.success("Bien hecho! Siguiente Palabra!");
       guessesRemaining = NUMBER_OF_GUESSES;
       delete_popup();
-
       updatePoints(1);
+      await animateRow(row, letterColor, guessString);
+
       setTimeout(() => {
         loadWord();
         isProcessingGuess = false;
       }, 2000);
 
-      await animateRow(row, letterColor, guessString);
       return;
     }
     else {
