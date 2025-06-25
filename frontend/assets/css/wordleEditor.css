@@ -264,6 +264,7 @@ header {
         margin: 1rem auto;
         box-shadow: none;
         border-radius: 0;
+        overflow: hidden;
     }
 
     .wordle-name, .group-name {
@@ -284,5 +285,8 @@ header {
     .save-button {
         width: 100%;
         margin-top: 20px;
+    }
+    .header-title h1 {
+        font-size: 1.75rem; 
     }
 }

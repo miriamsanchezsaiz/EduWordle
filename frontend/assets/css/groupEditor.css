@@ -249,6 +249,7 @@ header {
 
 /* Para Tablets */
 @media (max-width: 768px) {
+    
     .container {
         width: 90%;
         padding: 2rem;
@@ -268,11 +269,15 @@ header {
 
 /* Para Móviles */
 @media (max-width: 480px) {
+    .header-title h1 {
+        font-size: 1.75rem; 
+    }
     .container {
         padding: 1.5rem;
         margin: 1rem auto;
         box-shadow: none;
         border-radius: 0;
+        overflow: hidden;
     }
 
     .wordle-name, .group-name {

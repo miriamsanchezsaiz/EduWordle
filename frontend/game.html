@@ -17,20 +17,21 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    
-    <script src="/assets/js/popup.js"  type="module"></script> 
+
+    <script src="/assets/js/popup.js" type="module"></script>
     <script src="/assets/js/apiService.js" type="module"></script>
     <script src="/assets/js/game.js" type="module"></script>
-  
+
 
 </head>
 
 <body>
 
     <header>
-        <div class="header-buttons" style= "left:1rem;">
-            <button class= "settings-button" aria-label="Boton back" onclick="backFromWordle()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+        <div class="header-buttons" style="left:1rem;">
+            <button class="settings-button" aria-label="Boton back" onclick="backFromWordle()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="grey" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 18l-6-6 6-6"></path>
                 </svg>
             </button>
@@ -41,7 +42,7 @@
         </div>
 
         <div class="header-buttons">
-           
+
 
             <button id="settings-button" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2" stroke-linecap="round" class="settings-button" onclick="toggleSettings()">
@@ -58,16 +59,15 @@
     <!-- Settings modal -->
     <div id="settings-panel" class="settings-panel">
         <button class="close-button" onclick="toggleSettings()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="grey" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="lucide lucide-x h-4 w-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="grey"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-4 w-4">
                 <path d="M18 6 6 18"></path>
                 <path d="m6 6 12 12"></path>
             </svg>
 
         </button>
         <div class="settings-element">
-            <p >Daltonic Mode</p> <label class="switch">
+            <p>Daltonic Mode</p> <label class="switch">
                 <input type="checkbox" id="daltonic-mode" onchange="toggleDaltonicMode()" unchecked>
                 <span class="slider"></span>
             </label>
@@ -89,11 +89,14 @@
 
 
 
-
-    <!-- Hint-button -->
-    <div id="game-board">
-        <button title ="Pista" id="hint-button" class="hint-button" onclick="askForHint()"></button>
+<div class="game-main-container">
+    <div class="game-board-wrapper" id="game-board-wrapper">
+        <div id="game-board"></div>
     </div>
+    <button title="Pista" id="hint-button" class="hint-button" onclick="askForHint()"></button>
+
+</div>
+
 
     <div id="keyboard-cont">
         <div class="first-row">
@@ -143,7 +146,7 @@
         </div>
     </div>
 
-    
+
 
 </body>
 

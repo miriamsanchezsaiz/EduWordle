@@ -33,13 +33,13 @@ header {
 .header-title {
   justify-content: center;
   align-items: center;
-  flex : 1;
-  
+  flex: 1;
+
   display: flex;
 }
 
 .header-buttons {
-  
+
   display: flex;
   right: 1rem;
   gap: 10px;
@@ -62,9 +62,9 @@ header {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro con transparencia */
-  display: none; /* Oculto por defecto */
-  z-index: 1000; /* Asegura que esté por encima de otros elementos */
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 1000;
 }
 
 .settings-panel {
@@ -73,8 +73,8 @@ header {
   left: 50%;
   transform: translate(-50%, -50%);
   background: white;
-  z-index: 1001; /* Asegura que el panel esté sobre el overlay */
-  display: none; /* Oculto por defecto */
+  z-index: 1001;
+  display: none;
   padding: 3rem;
 }
 
@@ -91,47 +91,65 @@ header {
 }
 
 
-.settings-element{
+.settings-element {
   border-bottom-width: 1px;
   padding-top: 1rem;
   padding-bottom: 1rem;
   align-items: center;
   display: flex;
-  gap : 4rem;
-  border : 1px solid #aab5b6;
+  gap: 4rem;
+  border: 1px solid #aab5b6;
   border-width: 1px 0;
 }
 
 
-
-#game-board {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  
-  /* display: inline-block; */
+.game-main-container {
   position: relative;
-}
-
-.letter-box {
-  width: 56px;
-  /* Más grande */
-  height: 56px;
-  border-radius: 5px;
-  border: 2px solid #dee1e9;
-  font-size: 28px;
-  font-weight: 700;
-  text-transform: uppercase;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 3px;
+  margin-top: 1rem;;
+}
+
+.game-board-wrapper {
+  max-width: 700px;
+  width: 100%;
+  padding-bottom: 1rem;
+  box-sizing: border-box;
+  margin-left: 4rem;
+}
+
+
+#game-board {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.letter-box {
+  flex: 1;
+  max-width: 56px;
+  aspect-ratio: 1 / 1;
+  border: 2px solid #dee1e9;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 28px;
+  font-weight: 700;
+  text-transform: uppercase;
+  /* font-size: clamp(1.2rem, 5vw, 2.5rem); */
   color: #393e4c;
   background-color: #fbfcff;
   transition: background-color 1s ease, border 1s ease;
-  /* Animación */
 }
 
+
+.long-word-board .letter-box {
+  font-size: 1.5rem;
+  /* Reducimos la fuente si la palabra es larga */
+}
 
 .filled-box {
   border: 2px solid #a7adc0;
@@ -139,43 +157,52 @@ header {
 
 .letter-row {
   display: flex;
+  justify-content: center;
+  gap: 5px;
+  container-type: inline-size;
+  container-name: letter-row;
+  width: 100%;
 }
 
 #keyboard-cont {
-  margin: 30px 0;
+  width: 100%;
+  max-width: 520px;
+  /* Un poco más ancho que el tablero */
+  margin: 1rem auto 0;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  /* Espacio entre las filas del teclado */
 
 }
 
 #keyboard-cont div {
 
   display: flex;
-  flex-direction: row;
-  justify-content: stretch;
+  justify-content: center;
+  gap: 6px;
+  /* Espacio entre las teclas */
+  width: 100%;
 }
 
 
 .keyboard-button {
 
+  flex: 1;
+  /* Las teclas se reparten el espacio */
+  display: flex;
   align-items: center;
+  justify-content: center;
   background-color: #dce1ed;
-  border: 2px solid transparent;
+  border: none;
   border-radius: 4px;
   color: #414a5e;
-
-  flex-grow: 1;
-
+  height: 56px;
   font-size: 1rem;
   font-weight: 700;
-  justify-content: center;
-  margin: 3px;
-  height: 56px;
-
-  padding: 1rem;
   text-transform: uppercase;
-
   cursor: pointer;
+  padding: 0 8px;
 
 }
 
@@ -183,6 +210,11 @@ header {
   background-color: #4f6a9657;
   transition: background-color 0.25s ease;
 
+}
+
+.third-row .keyboard-button:first-child,
+.third-row .keyboard-button:last-child {
+  flex: 1.5;
 }
 
 
@@ -252,14 +284,14 @@ header {
 }
 
 .options-container {
-  display: inline-block; 
-  text-align: left; 
+  display: inline-block;
+  text-align: left;
 }
 
 .options-container p {
   display: flex;
-  align-items: center; 
-  gap: 10px; 
+  align-items: center;
+  gap: 10px;
 }
 
 #submit {
@@ -280,7 +312,7 @@ header {
 
 
 /* Toggle button */
-  /* The switch - the box around the slider */
+/* The switch - the box around the slider */
 .switch {
   position: relative;
   display: inline-block;
@@ -288,14 +320,14 @@ header {
   height: 34px;
 }
 
-  /* Hide default HTML checkbox */
+/* Hide default HTML checkbox */
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-  /* The slider */
+/* The slider */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -338,23 +370,23 @@ input:checked+.slider:before {
 
 
 /* Hint button */
-.hint-button {
-  width: 70px;
-  height: 70px;
+#hint-button {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  left: 1rem;
   background-image: url("../img/hint_icon.png");
-  background-size: cover;
-  background-position: center;
+  background-size: contain;
   background-repeat: no-repeat;
+  background-position: center;
   border: none;
+  background-color: transparent;
   cursor: pointer;
-  margin-left: 40rem;
-  margin-top: 10rem;
-  background-color: white;
+  transition: transform 0.2s ease;
+}
 
-  position: absolute;
-  right: -120px;
-  top: 10px;
-
+#hint-button:hover {
+  transform: translateY(-50%) scale(1.1);
 }
 
 
@@ -364,13 +396,14 @@ input:checked+.slider:before {
   position: absolute;
   top: 20px;
   left: 20px;
-  background: rgba(0, 0, 0, 0.7); /* Fondo oscuro translúcido */
+  background: rgba(0, 0, 0, 0.7);
   color: white;
   padding: 10px 20px;
   border-radius: 8px;
   font-size: 18px;
   font-weight: bold;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
 
 
@@ -391,80 +424,74 @@ input:checked+.slider:before {
   animation: flip 0.6s ease;
 }
 
-@media (max-width: 767px) {
-  .Game-keyboard {
-    margin-top: 34px !important;
+@media (max-width: 900px) {
+
+  .game-board-wrapper {
+    padding-bottom: 5px;
+    max-width: 530px;
+    margin-left: 0;
   }
-}
 
-/* --- Media Queries para Responsive Design --- */
+  #hint-button {
+    position: static;
+    transform: none;
+    margin: 0 auto 15px auto;
+    width: 50px;
+    height: 50px;
+  }
 
-/* Para Tablets */
-@media (max-width: 768px) {
-    body {
-        height: auto;
-    }
-    
-    header {
-        max-width: 100%;
-    }
+  #hint-button {
+    order: 0;
+  }
 
-    .letter-box {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        margin: 2px;
-    }
+  #game-board-wrapper {
+    order: 1;
+  }
 
-    .keyboard-button {
-        height: 50px;
-        font-size: 0.9rem;
-        padding: 0.5rem;
-    }
-    
-    #keyboard-cont {
-        width: 100%; /* El teclado debe ocupar el ancho disponible */
-        padding: 0 5px; /* Pequeño padding lateral */
-        box-sizing: border-box;
-    }
 
-    /* Corregimos el botón de pista */
-    .hint-button {
-       position: static; /* Quitamos el posicionamiento absoluto */
-       display: block;
-       margin: 20px auto; /* Lo centramos debajo del teclado */
-       width: 60px;
-       height: 60px;
-    }
-}
 
-/* Para Móviles */
-@media (max-width: 480px) {
+  .game-main-container {
+    flex-direction: column;
+  }
 
-    #game-board {
-       transform: scale(0.9); /* Hacemos el tablero un 10% más pequeño */
-       transform-origin: top center;
-    }
+  #game-board {
+    max-width: 100%;
+    padding: 5px;
+    gap: 3px;
+  }
 
-    .letter-box {
-        width: 45px;
-        height: 45px;
-        font-size: 22px;
-    }
+  .letter-row {
+    gap: 3px;
+  }
 
-    #keyboard-cont {
-        margin-top: 0;
-        transform: scale(0.95); /* Hacemos el teclado un 5% más pequeño */
-        
-    }
+  .letter-box {
+    /* La fuente se adapta a la pantalla y al largo de la palabra */
+    font-size: 1.6rem;
+  }
 
-    .keyboard-button {
-        height: 45px;
-        font-size: 0.8rem;
-        margin: 2px;
-        padding: 0.4rem;
-    }
-    .points-box{
-      top: 90px;
-    }
+
+  #keyboard-cont {
+    gap: 5px;
+  }
+
+  #keyboard-cont div {
+    gap: 3px;
+  }
+
+  .keyboard-button {
+    height: 45px;
+    border-radius: 3px;
+  }
+
+  .points-box {
+    font-size: 14px;
+    padding: 5px 10px;
+    top: 75px;
+  }
+
+  .header-title h1 {
+    font-size: 1.5rem;
+  }
+
+
 }

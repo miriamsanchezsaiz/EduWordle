@@ -93,4 +93,7 @@ width: 100%;
     .option {
         width: 80vw; /* Ocupa el 80% del ancho de la vista */
     }
+    .header-title h1 {
+        font-size: 1.5rem; 
+    }
 }

@@ -68,3 +68,9 @@ ol li::marker {
     visibility: visible;
     opacity: 1;
 }
+
+@media (max-width: 480px) {
+    .tooltip-text {
+        width: 13rem;
+    }
+}

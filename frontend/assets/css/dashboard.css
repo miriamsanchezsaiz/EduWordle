@@ -113,6 +113,10 @@ font-weight: 900;
         gap: 1rem;
     }
     .option {
-        width: 80vw; /* Ocupa el 80% del ancho de la vista */
+        width: 80vw; 
     }
+    .header-title h1 {
+        font-size: 1.75rem; 
+    }
+
 }

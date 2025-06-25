@@ -175,6 +175,10 @@ function initBoard() {
   let board = document.getElementById("game-board");
   board.innerHTML = `<button title ="Pista" id="hint-button" class="hint-button" onclick="askForHint()"></button>`;
 
+  board.innerHTML = '';
+  board.classList.remove("long-word-board");
+  
+  
   for (let i = 0; i < NUMBER_OF_GUESSES; i++) {
     let row = document.createElement("div");
     row.className = "letter-row";
