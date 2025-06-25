@@ -11,4 +11,4 @@ Por favor, inicia sesión y cambia tu contraseña.
 Ir a Iniciar Sesión: https://eduwordle.etsisi.upm.es/login.html
 
 ¡Hecho con 💡 para una divertida experiencia de aprendizaje!
-https://eduwordle.etsisi.upm.es/init.html
+https://eduwordle.etsisi.upm.es/
