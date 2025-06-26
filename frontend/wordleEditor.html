@@ -50,8 +50,8 @@
                             <span class="tooltip-text" id="tooltip-students">
                                 <h3>Dificultad del Wordle</h3>
                                 <ul>
-                                    <li><strong>Bajo</strong>: Solo aparecerá una preguntas por intento.</li>
-                                    <li><strong>Alto</strong>: Aparecerá una pregunta por cada letra acertada o que este
+                                    <li><strong>Bajo</strong>: Solo aparecerá una pregunta del temario por cada intento, independientemente de las letras que se hayan acertado o no.</li>
+                                    <li><strong>Alto</strong>: Aparecerá una pregunta por cada letra acertada o que esté
                                         en la palabra en cada intento.</li>
                                 </ul>
                             </span>
@@ -73,7 +73,7 @@
                             <h3>Formato CSV para Palabras</h3>
                             <ol>
                                 <li>Debe tener una línea de encabezado, que será ignorada.</li>
-                                <li>Cada línea debe tener: <code>pista ; pista</code></li>
+                                <li>Cada línea debe tener: <code>palabra ; pista</code></li>
                                 <li>Ejemplo: <code>MADRID ; Capital de España</code></li>
                             </ol>
                         </span>
@@ -92,11 +92,11 @@
                             <ol>
                                 <li>Debe tener una línea de encabezado, que será ignorada.</li>
                                 <li>Cada línea debe tener:
-                                    <code>enunciado ; op1 , op2 , op3 ; resp1 [,resp2] ; tipo</code>
+                                    <code>enunciado ; op1 , op2 [,op3 ... ,opN] ; resp1 [,resp2 ... ,respN] ; tipo</code>
                                 </li>
                                 <li>Ejemplo: <br>
                                     <code>¿Cuál es la capital? ; Madrid,París,Roma ; Madrid ; single</code> <br>
-                                    <code>¿Cuáles son las capitales de España? ; Madrid,Barcelona,Sevilla,Valencia ; Madrid,Barcelona ; multiple</code>
+                                    <code>¿Cuáles son las capitales de España? ; Madrid,Barcelona,Sevilla,Valencia ; Madrid,Barcelona ; multichoice</code>
                                 </li>
                             </ol>
                         </span>
