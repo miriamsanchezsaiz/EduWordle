@@ -167,17 +167,20 @@ header {
 }
 
 .list-item{
+    display: flex;
+    align-items: center;
     border: none;
     background-color: #f3c237;
     padding: 0.8rem;
-    text-align: left;
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
     margin: 0.5rem;
 
-    max-height: 1.5rem;
+    max-height: 1.5rem; 
     position: relative;
+    min-width: 0;
+    word-break: break-all;
 }
 
 .list-item a{
