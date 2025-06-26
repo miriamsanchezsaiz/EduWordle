@@ -536,13 +536,10 @@ async function uploadStudentsCSV(evt) {
   let added = 0;
 
   dataLines.forEach(line => {
-    const [nameRaw, emailRaw] = line.split(';').map(cell => cell.trim());
-    const email = emailRaw?.toLowerCase();
-    const name = nameRaw?.trim() || '';
-
+    const email = line.trim().toLowerCase();
     if (!email || existingEmails.has(email) || !isValidEmail(email)) return;
 
-    const student = { id: null, name, email };
+    const student = { id: null, name: '', email };
     window.sessionGroup.students.push(student);
     window.displayItem(student, 'students');
     existingEmails.add(email);
