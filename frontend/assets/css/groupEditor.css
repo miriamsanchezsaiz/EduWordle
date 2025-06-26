@@ -21,9 +21,8 @@ header {
     display: flex;
     flex-direction: column;
     gap: 10px;
-
+    width: 100%;
     max-width: 28rem;
-    width: 32rem;
     margin: 2rem auto;
     padding: 3rem;
     background: white;
@@ -189,6 +188,7 @@ header {
     text-overflow: ellipsis;
     max-width: 100%;
     white-space: normal;
+    overflow-wrap: break-word;
 }
 
 
@@ -268,16 +268,31 @@ header {
 }
 
 /* Para Móviles */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+    main{
+        width: 100%;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
     .header-title h1 {
         font-size: 1.75rem; 
     }
+
+    header {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
     .container {
-        padding: 1.5rem;
+        padding: 1.5rem 1rem;
+        max-width: 100%;
         margin: 1rem auto;
         box-shadow: none;
         border-radius: 0;
-        overflow: hidden;
+        min-height: 100vh;
     }
 
     .wordle-name, .group-name {
@@ -290,13 +305,23 @@ header {
     }
 
     .buttonSection {
-        flex-direction: column; /* Apila los botones verticalmente */
+        flex-direction: column; 
         gap: 1rem;
         padding-inline: 0;
+        margin-top: 0;
     }
 
     .save-button {
         width: 100%;
         margin-top: 20px;
     }
+
+    .group-section {
+        margin-bottom: 1rem;
+    }
+
+    .group-section h2 {
+        font-size: 1.3rem;
+    }
+
 }
