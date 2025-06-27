@@ -83,6 +83,52 @@ input {
     user-select: none; /* Evita que el emoji se pueda seleccionar */
 }
 
+.label-with-tooltip {
+  display: inline-flex;
+  align-items: center;
+  font-weight: bold;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.info-icon {
+  color: #007bff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 260px;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  border-radius: 5px;
+  padding: 10px;
+  position: absolute;
+  z-index: 100;
+  top: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+}
+
+.info-icon {
+  color: #0d0d0e;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
 @media (max-width: 480px) {
     .menu-options {
         flex-direction: column;

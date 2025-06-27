@@ -40,22 +40,39 @@
         <div class="settings">
             <form id="configForm" class="form">
                 <div class="form-group">
-                    <label for="old-password">Contraseña actual</label>
+                   <label for="old-password">Contraseña actual</label>
                     <div class="password-input-wrapper">
-                        <input type="password" name="old-password" id="old-password" required>
-                        <span class="password-toggle-icon">🐵</span>
-                    </div> <label for="password">Nueva contraseña</label>
-                    <div class="password-input-wrapper">
-                        <input type="password" name="password" id="password" required>
-                        <span class="password-toggle-icon">🐵</span>
+                    <input type="password" name="old-password" id="old-password" required>
+                    <span class="password-toggle-icon">🐵</span>
                     </div>
 
-                    <label for="confirm-password">Repetir nueva contraseña</label>
-                    <div class="password-input-wrapper">
-                        <input type="password" name="confirm-password" id="confirm-password" required>
-                        <span class="password-toggle-icon">🐵</span>
+                    <label for="password" class="label-with-tooltip">
+                    Nueva contraseña
+                    <div class="tooltip-container">
+                        <i class="fa-solid fa-circle-info info-icon"></i>
+                        <span class="tooltip-text" id="tooltip-password">
+                        <h3>Requisitos de la contraseña</h3>
+                        <ul>
+                            <li>Al menos 8 caracteres</li>
+                            <li>Una letra mayúscula (A-Z)</li>
+                            <li>Una letra minúscula (a-z)</li>
+                            <li>Un número (0-9)</li>
+                            <li>Un carácter especial (!@#$...)</li>
+                        </ul>
+                        </span>
                     </div>
+                    </label>
+                <div class="password-input-wrapper">
+                <input type="password" name="password" id="password" required>
+                <span class="password-toggle-icon">🐵</span>
                 </div>
+
+                <label for="confirm-password">Repetir nueva contraseña</label>
+                <div class="password-input-wrapper">
+                <input type="password" name="confirm-password" id="confirm-password" required>
+                <span class="password-toggle-icon">🐵</span>
+                </div>
+            </div>
             </form>
         </div>
         <button id="savePasswordBtn" class="change-password-btn" type="button">
