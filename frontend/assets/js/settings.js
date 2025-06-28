@@ -55,8 +55,10 @@ btnSave.addEventListener("click", async () => {
     return;
   }
 
-  if (newPass.length < 8) {
-    toastr.error("La contraseña debe tener al menos 8 caracteres");
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+  if (!passwordRegex.test(newPass)) {
+    toastr.error("La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un carácter especial.");
     return;
   }
 
