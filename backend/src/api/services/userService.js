@@ -1,6 +1,6 @@
 // src/api/services/userService.js (Simplified)
 const bcrypt = require('bcryptjs');
-const { User } = require('../models');
+const { User, Group } = require('../models');
 const ApiError = require('../../utils/ApiError');
 const sequelize = require('../../config/database');
 
@@ -111,10 +111,16 @@ const deleteStudentIfNoGroups = async (userId, transaction = null) => {
       throw ApiError.badRequest(`User ${userId} is not a student and cannot be processed by deleteStudentIfNoGroups.`);
     }
 
-    const groups = await user.getGroups({
-      through: { attributes: [] },
-      attributes: ['id']
-    }, { transaction });
+    const groups = await Group.findAll({
+      include: {
+        model: User,
+        as: 'students',
+        where: { id: user.id },
+        through: { attributes: [] }
+      },
+      attributes: ['id'],
+      transaction
+    });
 
     if (groups.length === 0) {
       await user.destroy({ transaction });
