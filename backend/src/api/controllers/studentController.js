@@ -79,7 +79,41 @@ const saveGameResult = asyncHandler(async (req, res, next) => {
   res.status(201).json({ message: 'Game result saved successfully', gameResult: savedResult });
 });
 
+//TODO (delete if not used): Estas funciones son erróneas ya que gameService solo está preprado para aceptar solicitudes de profesores
+// Controller function to get all game results for the logged-in student
+// const getStudentGameResults = asyncHandler(async (req, res, next) => {
+//   const studentId = req.user.id;
+//   if (!studentId) {
+//     throw ApiError.badRequest('Student ID is required');
+//   }
 
+//   const gameResults = await gameService.getGameResultsForStudent(studentId);
+//   res.status(200).json(gameResults);
+
+// });
+
+// // Controller function to get details of a specific game result for the logged-in student
+// const getStudentGameResultDetails = async (req, res, next) => {
+//   const studentId = req.user.id;
+//   const gameResultId = req.params.gameResultId;
+//   if (!studentId || !gameResultId) {
+//     throw ApiError.badRequest('Student ID is required');
+//   }
+
+//   try {
+//     const gameResult = await gameService.getGameResultDetails(gameResultId);
+
+//     if (!gameResult || gameResult.userId !== studentId) {
+//       return res.status(404).json({ message: 'Game result not found or access denied' });
+//     }
+
+//     res.status(200).json(gameResult);
+
+//   } catch (error) {
+//     console.error('Error in getStudentGameResultDetails controller:', error);
+//     next(error);
+//   }
+// };
 
 
 // CHECKED: Controller function to handle change password request for the logged-in student

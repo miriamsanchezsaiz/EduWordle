@@ -36,7 +36,7 @@ echo "Executing database seeds..."
 
 echo "Starting Node.js application"
 # Asegúrate de que NODE_ENV se establece aquí si no está en .env o si quieres sobrescribir
-export NODE_ENV=production
+export NODE_ENV=development
 
 # Iniciar la aplicación Node.js
 exec npm start
