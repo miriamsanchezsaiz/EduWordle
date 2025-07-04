@@ -38,8 +38,5 @@ echo "Starting Node.js application"
 # Asegúrate de que NODE_ENV se establece aquí si no está en .env o si quieres sobrescribir
 export NODE_ENV=production
 
-# Ejecutar el script prestart.
-node ./src/utils/generateFrontendConfig.js
-npm run prestart
 # Iniciar la aplicación Node.js
 exec npm start
