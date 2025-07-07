@@ -43,6 +43,7 @@ let words = [];
 let difficulty = 'low';
 
 let isProcessingGuess = false;
+let isInputBlocked = false; 
 let allQuestionsFromWordle = [];
 let availableQuestionsForGame = [];
 
@@ -239,7 +240,7 @@ async function checkGuess() {
   let guessedLetters = [];
 
   if (guessString.length !== wordsize) {
-    toastr.error("Not enough letters!");
+    toastr.error("No has introducido suficientes letras!");
     isProcessingGuess = false;
     return;
   }
@@ -393,7 +394,7 @@ overlay.addEventListener("click", toggleSettings);
 let hintUnlocked = false;
 async function askForHint() {
   if (hintUnlocked) {
-    toastr.info(`Hint: ${selectedWordObj.hint}`);
+    toastr.info(`Pista: ${selectedWordObj.hint}`);
     return;
   }
 
@@ -401,10 +402,10 @@ async function askForHint() {
 
   if (answer) {
     hintUnlocked = true;
-    toastr.info(`Hint: ${selectedWordObj.hint}`);
+    toastr.info(`Pista: ${selectedWordObj.hint}`);
   }
   else {
-    toastr.error("Wrong answer! No hint for you!");
+    toastr.error("Respuesta incorrecta! No hay pista para ti");
   }
 
 }
@@ -467,7 +468,7 @@ function toggleDaltonicMode() {
 }
 
 
-//************************* TODO : Trasladar al script ************************************* */
+//************************* Eliminar popup ************************************* */
 function delete_popup() {
   let modal = document.querySelector(".modal-content");
   modal.innerHTML = "";
@@ -475,12 +476,12 @@ function delete_popup() {
   questionModal.style.display = "none";
 
 }
-//************************* TODO : Trasladar al script ************************************* */
+//************************* Mostrar Pregunta ************************************* */
 
 
 async function popup_quest(i = 0, totalQuestions = 1) {
   return new Promise(async (resolve) => {
-    
+    isInputBlocked = true;
     if (availableQuestionsForGame.length === 0) { 
         console.warn("Se han jugado todas las preguntas. Reiniciando preguntas.");
         resetAvailableQuestions();
@@ -580,9 +581,10 @@ async function popup_quest(i = 0, totalQuestions = 1) {
       if (selectedOptions.length > 0) {
         let result = checkAnswer(selectedOptions, rightAnswers);
         document.getElementById("questionModal").style.display = "none";
+        isInputBlocked = false;
         resolve(result);
       } else {
-        toastr.error("Please select at least one option before submitting.");
+        toastr.error("Por favor, selecciona al menos una respuesta.");
       }
     });
   });
@@ -592,9 +594,9 @@ async function popup_quest(i = 0, totalQuestions = 1) {
 function checkAnswer(selected, correct) {
   let isCorrect = selected.length === correct.length && selected.every(ans => correct.includes(ans));
   if (isCorrect) {
-    toastr.success("Correct Answer!");
+    toastr.success("Respuesta Correcta!");
   } else {
-    toastr.error("Wrong Answer!");
+    toastr.error("Respuesta Incorrecta!");
   }
   return isCorrect;
 }
@@ -636,11 +638,12 @@ const animateCSS = (element, animation, prefix = "animate__") =>
   });
 
 document.addEventListener("keyup", (e) => {
+  if (isInputBlocked) return;
   if (guessesRemaining === 0) {
     return;
   }
 
-  let pressedKey = String(e.key).toLowerCase(); // Convertir siempre a minúscula
+  let pressedKey = String(e.key).toLowerCase(); 
 
   if (["shift", "control", "alt", "meta", "capslock", "tab", "escape"].includes(pressedKey)) {
     return;

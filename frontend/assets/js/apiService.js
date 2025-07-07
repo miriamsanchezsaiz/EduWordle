@@ -69,8 +69,6 @@ async function callApi(endpoint, options = {}) {
 function handleUnauthorizedResponse() {
 
     sessionStorage.clear();
-    console.log("[JWT ERROR] opening popup");
-
     sessionExpiredPopup();
 }
 
