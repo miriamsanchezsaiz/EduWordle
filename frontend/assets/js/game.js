@@ -393,6 +393,7 @@ overlay.addEventListener("click", toggleSettings);
 //************************* askForHint() ************************************* */
 let hintUnlocked = false;
 async function askForHint() {
+  if (isInputBlocked) return; 
   if (hintUnlocked) {
     toastr.info(`Pista: ${selectedWordObj.hint}`);
     return;
