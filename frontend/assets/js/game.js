@@ -54,7 +54,6 @@ async function fetchWordleMeta() {
   try {
     const w = await apiService.getWordleGameData(wordleId);
     difficulty = w.difficulty;
-    console.log('Dificultad del Wordle:', difficulty);
 
   } catch (e) {
     console.warn("No se pudo leer dificultad, asumiendo 'low':", e);
@@ -156,10 +155,6 @@ function loadWord() {
   rightGuessString = selectedWordObj.word.toLowerCase();
   wordsize = rightGuessString.length;
   let config_hint = selectedWordObj.hint ? true : false;
-
-
-  console.log("Palabra seleccionada:", rightGuessString);
-  console.log("Hint disponible:", config_hint ? selectedWordObj.hint : "No hay hint");
 
   currentGuess = [];
   nextLetter = 0;
@@ -425,10 +420,7 @@ async function generate_questions(guessedLetters, letterColor) {
   var totalQuestions = guessedLetters.length;
  
   for (var i = 0; i < totalQuestions; i++) {
-
-    //print number of question/ total questions
-    console.log("Pregunta " + (i + 1) + "/" + totalQuestions);
-    //preguntar
+    
     try {
       if (guessedLetters[i][1] == "letter-yellow" && letterColor[guessedLetters[i][0]] == "letter-green") continue;
       let answer = await popup_quest(i, totalQuestions);
@@ -437,7 +429,6 @@ async function generate_questions(guessedLetters, letterColor) {
         letterColor[guessedLetters[i][0]] = guessedLetters[i][1];
       }
       else {
-        console.log("Respuesta incorrecta: no se hace shade");
         letterColor[guessedLetters[i][0]] = "none";
       }
     } catch (error) {
@@ -472,9 +463,6 @@ function toggleDaltonicMode() {
   let isDaltonic = body.classList.toggle("colorblind");
 
   localStorage.setItem("daltonicMode", isDaltonic ? "enabled" : "disabled");
-
-  console.log("Modo daltónico activado:", document.body.classList.contains("colorblind"));
-  console.log("Valor en localStorage:", localStorage.getItem("daltonicMode"));
 
 }
 

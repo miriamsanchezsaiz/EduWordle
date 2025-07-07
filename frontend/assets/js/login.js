@@ -29,8 +29,6 @@ loginForm.addEventListener('submit', async (event) => {
     sessionStorage.setItem('authToken', data.token);
     sessionStorage.setItem('currentUser', JSON.stringify(data.user));
 
-    console.log("Login successful:", data.user);
-
     // Guardar rol e ID en sessionStorage
     // sessionStorage.setItem('role', data.role);
     // const params = new URL(data.redirect, window.location.origin).searchParams;
@@ -59,7 +57,6 @@ loginForm.addEventListener('submit', async (event) => {
       targetURL = `dashboard.html?type=${tipo}&${idParam}=${userId}`;
     }
 
-    console.log("Redirecting to:", targetURL);
     // Redirigir sin dejar historial
     window.location.replace(targetURL);
 

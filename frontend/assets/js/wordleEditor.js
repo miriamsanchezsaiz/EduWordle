@@ -401,11 +401,9 @@ async function saveWordleEditor() {
 
   try {
     if (sessionWordle.id !== undefined && sessionWordle.id !== null) {
-      console.log('📦 Payload enviado al backend:', JSON.stringify(payload, null, 2));
       await apiService.updateWordle(sessionWordle.id, payload);
       toastr.success("Wordle actualizado correctamente.");
     } else {
-      console.log('📦 Payload enviado al backend:', JSON.stringify(payload, null, 2));
       await apiService.createWordle(payload);
       toastr.success("Wordle creado correctamente. Redirigiendo...");
     }

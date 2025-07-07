@@ -12,7 +12,6 @@ if (authToken && currentUserString) {
     const currentUser = JSON.parse(currentUserString); 
     role = currentUser.role; 
     userId = currentUser.id; 
-    console.log("Dashboard: User autenticated. Rol:", role, "ID:", userId);
   } catch (e) {
     console.error("Dashboard: Error parsing currentUser from sessionStorage:", e);
     sessionStorage.clear();

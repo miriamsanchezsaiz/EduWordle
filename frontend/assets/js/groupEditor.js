@@ -13,7 +13,6 @@ if (authToken && currentUserString) {
     const currentUser = JSON.parse(currentUserString);
     role = currentUser.role;
     userId = currentUser.id;
-    console.log("List: User autenticated. Rol:", role, "ID:", userId);
   } catch (e) {
     console.error("List: Error parsing currentUser from sessionStorage:", e);
     sessionStorage.clear();
@@ -96,7 +95,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
       sessionGroup.students = uniqueByEmail;
-      console.log(sessionGroup);
       window.sessionGroup = sessionGroup;
       originalStudentIds = sessionGroup.students.map(s => s.id);
       displayData(sessionGroup);
@@ -357,7 +355,6 @@ window.saveGroup = async function () {
 
     if (!sessionGroup.id) {
       // Crear grupo nuevo
-      console.log("Payload enviado a la API:", JSON.stringify(payload, null, 2));
       res = await apiService.createGroup(payload);
       sessionGroup.id = res.id;
       toastr.success('Grupo creado correctamente');
@@ -366,7 +363,6 @@ window.saveGroup = async function () {
       );
     } else {
       // Actualizar grupo existente
-      console.log("Payload enviado a la API:", JSON.stringify(payload, null, 2));
       await apiService.updateGroup(sessionGroup.id, payload);
       toastr.success('Grupo actualizado correctamente');
     }

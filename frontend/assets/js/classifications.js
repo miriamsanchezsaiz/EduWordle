@@ -20,7 +20,6 @@ if (currentUserString) {
 
 
 if (role !== 'teacher' || !sessionStorage.getItem('authToken')) {
-  console.log('DEBUG: Redirigiendo a login.html. Razón: rol incorrecto o token ausente.');
   window.location.replace('login.html');
 }
 

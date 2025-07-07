@@ -12,7 +12,6 @@ if (authToken && currentUserString) {
     const currentUser = JSON.parse(currentUserString); 
     role = currentUser.role; 
     userId = currentUser.id; 
-    console.log("List: User authenticated. Role:", role, "ID:", userId);
   } catch (e) {
     console.error("List: Error parsing currentUser from sessionStorage:", e);
     sessionStorage.clear();
@@ -83,8 +82,6 @@ function handleSearch(event) {
 async function fetchGroups(userRole) {
     try {
         const data = await apiService.fetchGroups(userRole);
-        console.log("[list.js] Datos de grupos recibidos del API:", data); 
-
         displayedItems = data;  // Guardamos los grupos mostrados para filtrarlos
         if (userRole === 'student') {
             displayItemsForStudentGroups(data);
