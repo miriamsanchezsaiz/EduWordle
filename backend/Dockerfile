@@ -1,26 +1,32 @@
 # backend/Dockerfile
 
-FROM node:18-slim
+# backend/Dockerfile
+FROM node:18-alpine AS builder
+
+RUN apk add --no-cache \
+        netcat-openbsd \
+        bash
 
 WORKDIR /app/backend
 
-RUN apt-get update && \
-    apt-get install -y netcat-openbsd && \
-    rm -rf /var/lib/apt/lists/*
+COPY backend/package*.json ./
 
+RUN npm ci --omit=dev
 
-COPY backend/package.json ./
-COPY backend/package-lock.json ./
+COPY backend/. .
 
+FROM node:18-alpine
 
-RUN npm cache clean --force && npm install
+WORKDIR /app/backend
+
+COPY --from=builder /app/backend /app/backend
+
 RUN npm install -g sequelize-cli
-    
-COPY backend/. ./
 
-COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-
+COPY backend/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENV NODE_ENV=production
 
 EXPOSE 5000
 
