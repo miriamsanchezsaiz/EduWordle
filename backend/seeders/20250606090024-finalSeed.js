@@ -16,6 +16,12 @@
     async up(queryInterface, Sequelize) {
       console.log('--- Starting initial data seeding for TFG presentation ---');
       const now = new Date();
+
+      const existingUsers = await User.count();
+      if (existingUsers > 0) {
+        console.log('Ya existen usuarios. Se omite el seeding.');
+        return;
+      }
  
     //--- 1. Crear Usuarios ---
       console.log('1. Creating users...');
